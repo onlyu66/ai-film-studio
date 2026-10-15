@@ -1,0 +1,140 @@
+from pathlib import Path
+from typing import Dict, List, Optional
+import shutil
+import subprocess
+import time
+from pydub import AudioSegment
+
+from studio.storyboard import Storyboard
+from studio.config import StudioConfig
+from studio.state import StateManager
+from studio.subtitles import generate_srt
+
+def create_concat_file(video_paths: List[Path], output_path: Path) -> Path:
+    """Write FFmpeg concat demuxer file listing all video clips."""
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    lines = [f"file '{p.resolve()}'" for p in video_paths]
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+    return output_path
+
+def build_master_audio(
+    storyboard: Storyboard,
+    audio_dir: Path,
+    durations: Dict[str, float],
+    output_audio_path: Path,
+    bgm_path: Optional[Path] = None,
+    ducking_db: float = -14.0
+) -> Path:
+    """Concatenate narration clips and overlay looped background music with ducking."""
+    output_audio_path = Path(output_audio_path)
+    output_audio_path.parent.mkdir(parents=True, exist_ok=True)
+
+    master = AudioSegment.silent(duration=0)
+
+    for shot in storyboard.shots:
+        shot_dur = durations.get(shot.id, shot.duration or 5.0)
+        shot_dur_ms = int(round(shot_dur * 1000))
+
+        audio_file = audio_dir / f"{shot.id}.mp3"
+        if audio_file.exists() and shot.dialogue and shot.dialogue.strip():
+            segment = AudioSegment.from_file(str(audio_file))
+            # Match duration
+            if len(segment) < shot_dur_ms:
+                silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
+                segment = segment + silence_gap
+            else:
+                segment = segment[:shot_dur_ms]
+            master += segment
+        else:
+            master += AudioSegment.silent(duration=shot_dur_ms)
+
+    # Mix BGM if provided and exists
+    if bgm_path and Path(bgm_path).exists() and len(master) > 0:
+        bgm = AudioSegment.from_file(str(bgm_path))
+        # Lower BGM volume by ducking_db
+        ducked_bgm = bgm + ducking_db
+        # Loop BGM to match or exceed master narration length
+        loops = (len(master) // len(ducked_bgm)) + 1
+        full_bgm = (ducked_bgm * loops)[:len(master)]
+        master = master.overlay(full_bgm)
+
+    master.export(str(output_audio_path), format="mp3")
+    return output_audio_path
+
+def run_assembly_stage(
+    storyboard: Storyboard,
+    config: StudioConfig,
+    state: StateManager,
+    durations: Optional[Dict[str, float]] = None
+) -> Path:
+    """Assemble all video clips, narration audio, BGM, and subtitles into master movie."""
+    if not shutil.which("ffmpeg"):
+        raise RuntimeError("FFmpeg executable not found.")
+
+    durations = durations or {}
+    vid_dir = config.output_dir / "videos"
+    audio_dir = config.output_dir / "audio"
+    final_dir = config.output_dir / "final"
+    final_dir.mkdir(parents=True, exist_ok=True)
+
+    # Collect video paths in order
+    video_paths: List[Path] = []
+    for shot in storyboard.shots:
+        v_file = vid_dir / f"{shot.id}.mp4"
+        if v_file.exists():
+            video_paths.append(v_file)
+
+    if not video_paths:
+        raise RuntimeError("No video clips found to assemble.")
+
+    timestamp = int(time.time())
+    concat_list_file = final_dir / f"concat_{timestamp}.txt"
+    create_concat_file(video_paths, concat_list_file)
+
+    # 1. Concat video clips
+    raw_video = final_dir / f"raw_video_{timestamp}.mp4"
+    cmd_concat = [
+        "ffmpeg", "-y",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", str(concat_list_file),
+        "-c", "copy",
+        str(raw_video)
+    ]
+    subprocess.run(cmd_concat, check=True)
+
+    # 2. Build master audio track
+    master_audio = final_dir / f"master_audio_{timestamp}.mp3"
+    build_master_audio(
+        storyboard=storyboard,
+        audio_dir=audio_dir,
+        durations=durations,
+        output_audio_path=master_audio,
+        bgm_path=config.bgm_path,
+    )
+
+    # 3. Generate SRT subtitle file
+    master_srt = final_dir / f"movie_{timestamp}.srt"
+    generate_srt(storyboard, durations, master_srt)
+
+    # 4. Mux final video with audio
+    final_movie = final_dir / f"movie_{timestamp}.mp4"
+    cmd_mux = [
+        "ffmpeg", "-y",
+        "-i", str(raw_video),
+        "-i", str(master_audio),
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-shortest",
+        str(final_movie)
+    ]
+    subprocess.run(cmd_mux, check=True)
+
+    # Clean up intermediate files
+    if concat_list_file.exists():
+        concat_list_file.unlink()
+    if raw_video.exists():
+        raw_video.unlink()
+
+    return final_movie
