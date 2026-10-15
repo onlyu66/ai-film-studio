@@ -1,6 +1,6 @@
 import click
-from pathlib import Path
 from studio.config import load_config
+from studio.orchestrator import run_pipeline
 
 @click.group()
 def main():
@@ -18,7 +18,7 @@ def main():
 def run(**kwargs):
     """Run the end-to-end studio pipeline."""
     config = load_config(kwargs)
-    click.echo(f"Initialized AI Film Studio with topic: '{config.topic}' ({config.lang}, {config.duration}m, {config.style})")
+    run_pipeline(config)
 
 if __name__ == "__main__":
     main()
