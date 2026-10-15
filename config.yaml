@@ -1,0 +1,4 @@
+lang: en
+duration: 30
+style: cinematic
+llm_provider: gemini

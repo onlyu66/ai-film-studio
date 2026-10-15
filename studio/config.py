@@ -1,0 +1,59 @@
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Optional, Any, Dict
+import yaml
+
+@dataclass
+class StudioConfig:
+    topic: str
+    lang: str = "en"
+    duration: int = 30
+    style: str = "cinematic"
+    llm_provider: str = "gemini"
+    bgm_path: Optional[Path] = None
+    output_dir: Path = field(default_factory=lambda: Path("outputs"))
+    project_dir: Path = field(default_factory=lambda: Path("."))
+
+def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) -> StudioConfig:
+    """Load configuration from config.yaml merged with CLI kwargs."""
+    file_cfg: Dict[str, Any] = {}
+    cfg_path = config_file or Path("config.yaml")
+    if cfg_path.exists():
+        with open(cfg_path, "r", encoding="utf-8") as f:
+            loaded = yaml.safe_load(f)
+            if isinstance(loaded, dict):
+                file_cfg = loaded
+
+    # Handle alias mappings in cli_kwargs
+    merged: Dict[str, Any] = dict(file_cfg)
+    for k, v in cli_kwargs.items():
+        if v is not None:
+            if k == "llm":
+                merged["llm_provider"] = v
+            elif k == "bgm":
+                merged["bgm_path"] = Path(v) if v else None
+            elif k == "output_dir":
+                merged["output_dir"] = Path(v) if v else Path("outputs")
+            else:
+                merged[k] = v
+
+    # Fallback defaults
+    topic = merged.get("topic", "")
+    lang = merged.get("lang", "en")
+    duration = int(merged.get("duration", 30))
+    style = merged.get("style", "cinematic")
+    llm_provider = merged.get("llm_provider", "gemini")
+    bgm_path = Path(merged["bgm_path"]) if merged.get("bgm_path") else None
+    output_dir = Path(merged.get("output_dir", "outputs"))
+    project_dir = Path(merged.get("project_dir", "."))
+
+    return StudioConfig(
+        topic=topic,
+        lang=lang,
+        duration=duration,
+        style=style,
+        llm_provider=llm_provider,
+        bgm_path=bgm_path,
+        output_dir=output_dir,
+        project_dir=project_dir,
+    )
