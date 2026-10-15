@@ -1,0 +1,128 @@
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Any
+import json
+import re
+from studio.config import StudioConfig
+from studio.llm.base import LLMProvider
+from studio.prompts import STORYBOARD_SYSTEM_PROMPT, get_storyboard_user_prompt
+
+@dataclass
+class Character:
+    name: str
+    visual_anchor: str
+    voice: str = "en-US-GuyNeural"
+    seed: int = 42
+
+@dataclass
+class Shot:
+    id: str
+    chapter: int
+    character_id: Optional[str]
+    dialogue: str
+    image_prompt: str
+    motion: str = "zoom_in"
+    duration: Optional[float] = None
+
+@dataclass
+class Storyboard:
+    title: str
+    language: str
+    characters: Dict[str, Character] = field(default_factory=dict)
+    shots: List[Shot] = field(default_factory=list)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "title": self.title,
+            "language": self.language,
+            "characters": {
+                k: {
+                    "name": v.name,
+                    "visual_anchor": v.visual_anchor,
+                    "voice": v.voice,
+                    "seed": v.seed,
+                }
+                for k, v in self.characters.items()
+            },
+            "shots": [
+                {
+                    "id": s.id,
+                    "chapter": s.chapter,
+                    "character_id": s.character_id,
+                    "dialogue": s.dialogue,
+                    "image_prompt": s.image_prompt,
+                    "motion": s.motion,
+                    "duration": s.duration,
+                }
+                for s in self.shots
+            ],
+        }
+
+def repair_json_string(raw: str) -> str:
+    """Clean markdown fences and repair common LLM JSON syntax errors."""
+    text = raw.strip()
+    # Strip markdown code blocks
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"\s*```$", "", text)
+    text = text.strip()
+
+    # Find the outermost JSON object bounds if there's surrounding conversational text
+    start_idx = text.find("{")
+    end_idx = text.rfind("}")
+    if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
+        text = text[start_idx : end_idx + 1]
+
+    # Remove trailing commas before closing braces or brackets: ,] or ,}
+    text = re.sub(r",\s*([\]}])", r"\1", text)
+    return text
+
+def parse_storyboard_json(raw: str) -> Storyboard:
+    """Parse raw LLM output string into a Storyboard instance."""
+    cleaned = repair_json_string(raw)
+    data = json.loads(cleaned)
+
+    title = data.get("title", "Untitled Film")
+    language = data.get("language", "en")
+
+    characters: Dict[str, Character] = {}
+    for char_id, char_data in data.get("characters", {}).items():
+        if isinstance(char_data, dict):
+            characters[char_id] = Character(
+                name=char_data.get("name", char_id),
+                visual_anchor=char_data.get("visual_anchor", ""),
+                voice=char_data.get("voice", "en-US-GuyNeural"),
+                seed=int(char_data.get("seed", 42)),
+            )
+
+    shots: List[Shot] = []
+    for s in data.get("shots", []):
+        if isinstance(s, dict):
+            shots.append(
+                Shot(
+                    id=str(s.get("id", f"shot_{len(shots)+1:03d}")),
+                    chapter=int(s.get("chapter", 1)),
+                    character_id=s.get("character_id"),
+                    dialogue=s.get("dialogue", "") or "",
+                    image_prompt=s.get("image_prompt", ""),
+                    motion=s.get("motion", "zoom_in") or "zoom_in",
+                    duration=float(s["duration"]) if s.get("duration") is not None else None,
+                )
+            )
+
+    return Storyboard(
+        title=title,
+        language=language,
+        characters=characters,
+        shots=shots,
+    )
+
+def generate_storyboard(config: StudioConfig, llm: LLMProvider) -> Storyboard:
+    """Generate and parse a complete storyboard via LLM provider."""
+    user_prompt = get_storyboard_user_prompt(
+        topic=config.topic,
+        lang=config.lang,
+        duration_minutes=config.duration,
+        style=config.style,
+    )
+    raw_response = llm.generate(STORYBOARD_SYSTEM_PROMPT, user_prompt)
+    return parse_storyboard_json(raw_response)
