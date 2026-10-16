@@ -28,9 +28,19 @@ export GEMINI_API_KEY="your-gemini-api-key"   # Miễn phí tại aistudio.googl
 export GROQ_API_KEY="your-groq-api-key"       # Miễn phí tại console.groq.com
 ```
 
-### 2. Chạy sản xuất phim bằng một câu lệnh
-Sử dụng script `./run.sh`:
+### 2. Sử dụng Giao diện Web Trực quan (React + Vite)
+Chỉ cần 1 lệnh để mở Studio trên trình duyệt:
+```bash
+./run.sh ui
+```
+Mở trình duyệt tại **http://localhost:8080** để xem:
+- Form nhập đề tài, thời lượng, chọn diễn viên, phong cách hình ảnh.
+- Bảng theo dõi tiến trình 5 giai đoạn thời gian thực kèm log console.
+- Thư viện kịch bản (Storyboard) xem từng phân cảnh, lời thoại, ảnh render.
+- Trình phát video tích hợp sẵn để xem ngay phim thành phẩm và tải về `.mp4`, `.srt`.
 
+### 3. Hoặc chạy qua dòng lệnh CLI (Nếu muốn)
+Sử dụng script `./run.sh`:
 ```bash
 # Phim tiếng Việt, 30 phút, phong cách điện ảnh (cinematic)
 ./run.sh run --topic "Bí ẩn thành phố Atlantis dưới đáy đại dương" --lang vi --duration 30 --style cinematic

@@ -9,5 +9,12 @@ if [ "$1" = "clean" ]; then
     exit 0
 fi
 
+if [ "$1" = "ui" ] || [ "$1" = "web" ]; then
+    echo "🎬 Đang khởi động AI Film Studio Web UI tại http://localhost:8080..."
+    docker compose up -d ollama
+    docker compose up ui
+    exit 0
+fi
+
 docker compose run --rm studio -m studio "$@"
 
