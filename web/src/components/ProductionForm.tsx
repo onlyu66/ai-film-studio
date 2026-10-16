@@ -253,7 +253,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
           </button>
 
           {showAdvanced && (
-            <div className="mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3.5 transition-all animate-fadeIn">
+            <div className="relative z-30 mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3.5 transition-all animate-fadeIn">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                   <Bot className="w-3 h-3 text-amber-400" />

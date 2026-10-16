@@ -21,9 +21,36 @@ export function CustomSelect({
   className,
 }: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [openUpward, setOpenUpward] = useState(false)
+  const [alignRight, setAlignRight] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const selectedOption = options.find((opt) => opt.value === value)
+
+  const handleToggle = () => {
+    if (disabled) return
+    if (!isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      const spaceRight = window.innerWidth - rect.left
+
+      // Flip upward if space below is limited (< 280px) and there's more space above
+      if (spaceBelow < 280 && spaceAbove > 200) {
+        setOpenUpward(true)
+      } else {
+        setOpenUpward(false)
+      }
+
+      // Align right if close to the right edge of the screen (< 360px)
+      if (spaceRight < 360 && rect.right > 360) {
+        setAlignRight(true)
+      } else {
+        setAlignRight(false)
+      }
+    }
+    setIsOpen(!isOpen)
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -31,17 +58,30 @@ export function CustomSelect({
         setIsOpen(false)
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
     document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("keydown", handleKeyDown)
+    }
   }, [])
 
   return (
-    <div ref={containerRef} className={cn("relative w-full", className)}>
+    <div
+      ref={containerRef}
+      className={cn("relative w-full", isOpen ? "z-50" : "z-10", className)}
+    >
       {/* Trigger Button */}
       <button
         type="button"
         disabled={disabled}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className={cn(
           "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs font-medium transition-all duration-200 select-none cursor-pointer",
           "bg-slate-950/80 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/90 text-slate-100",
@@ -68,14 +108,20 @@ export function CustomSelect({
         <ChevronDown
           className={cn(
             "w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ml-1.5",
-            isOpen && "rotate-180 text-amber-400"
+            isOpen && (openUpward ? "-rotate-180 text-amber-400" : "rotate-180 text-amber-400")
           )}
         />
       </button>
 
-      {/* Dropdown Popover */}
+      {/* Dropdown Popover with Smart Upward/Downward and Left/Right Positioning */}
       {isOpen && (
-        <div className="absolute z-50 left-0 mt-1.5 min-w-full w-max max-w-[calc(100vw-2rem)] sm:max-w-md p-1.5 rounded-2xl bg-[#090D18]/95 backdrop-blur-2xl border border-slate-700/80 shadow-2xl shadow-black/90 max-h-72 overflow-y-auto animate-fadeIn space-y-1">
+        <div
+          className={cn(
+            "absolute z-[100] min-w-full w-max max-w-[calc(100vw-2rem)] sm:max-w-md p-1.5 rounded-2xl bg-[#090D18]/95 backdrop-blur-2xl border border-slate-700/80 shadow-2xl shadow-black/95 max-h-64 overflow-y-auto animate-fadeIn space-y-1",
+            openUpward ? "bottom-full mb-2" : "top-full mt-2",
+            alignRight ? "right-0" : "left-0"
+          )}
+        >
           {options.map((opt) => {
             const isSelected = opt.value === value
             return (

@@ -159,7 +159,7 @@ export default function App() {
         />
 
         {/* Middle: Balanced Production Studio Workspace */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch relative z-20">
           <div className="lg:col-span-7 flex flex-col">
             <ProductionForm
               onSubmit={handleStartProduction}

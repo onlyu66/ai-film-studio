@@ -20615,78 +20615,126 @@ function CustomSelect({
   className
 }) {
   const [isOpen, setIsOpen] = reactExports.useState(false);
+  const [openUpward, setOpenUpward] = reactExports.useState(false);
+  const [alignRight, setAlignRight] = reactExports.useState(false);
   const containerRef = reactExports.useRef(null);
   const selectedOption = options.find((opt) => opt.value === value);
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const spaceRight = window.innerWidth - rect.left;
+      if (spaceBelow < 280 && spaceAbove > 200) {
+        setOpenUpward(true);
+      } else {
+        setOpenUpward(false);
+      }
+      if (spaceRight < 360 && rect.right > 360) {
+        setAlignRight(true);
+      } else {
+        setAlignRight(false);
+      }
+    }
+    setIsOpen(!isOpen);
+  };
   reactExports.useEffect(() => {
     function handleClickOutside(event) {
       if (containerRef.current && !containerRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { ref: containerRef, className: cn("relative w-full", className), children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-      "button",
-      {
-        type: "button",
-        disabled,
-        onClick: () => setIsOpen(!isOpen),
-        className: cn(
-          "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs font-medium transition-all duration-200 select-none cursor-pointer",
-          "bg-slate-950/80 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/90 text-slate-100",
-          isOpen && "ring-2 ring-amber-500/40 border-amber-500/80 bg-slate-900",
-          disabled && "opacity-50 cursor-not-allowed hover:border-slate-800"
-        ),
-        children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 min-w-0 pr-2", children: [
-            (selectedOption == null ? void 0 : selectedOption.icon) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base flex-shrink-0", children: selectedOption.icon }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col min-w-0", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 text-xs truncate", children: selectedOption ? selectedOption.label : placeholder }),
-              (selectedOption == null ? void 0 : selectedOption.subtext) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-400 truncate", children: selectedOption.subtext })
-            ] })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(
-            ChevronDown,
-            {
-              className: cn(
-                "w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ml-1.5",
-                isOpen && "rotate-180 text-amber-400"
-              )
-            }
-          )
-        ]
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
       }
-    ),
-    isOpen && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute z-50 left-0 mt-1.5 min-w-full w-max max-w-[calc(100vw-2rem)] sm:max-w-md p-1.5 rounded-2xl bg-[#090D18]/95 backdrop-blur-2xl border border-slate-700/80 shadow-2xl shadow-black/90 max-h-72 overflow-y-auto animate-fadeIn space-y-1", children: options.map((opt) => {
-      const isSelected = opt.value === value;
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "div",
-        {
-          onClick: () => {
-            onChange(opt.value);
-            setIsOpen(false);
-          },
-          className: cn(
-            "flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all select-none gap-3",
-            isSelected ? "bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/30" : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
-          ),
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-2.5 min-w-0", children: [
-              opt.icon && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base flex-shrink-0 mt-0.5", children: opt.icon }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col text-left", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-semibold leading-snug", children: opt.label }),
-                opt.subtext && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-400 mt-0.5 leading-snug font-normal", children: opt.subtext })
-              ] })
-            ] }),
-            isSelected && /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-4 h-4 text-amber-400 flex-shrink-0 ml-2" })
-          ]
-        },
-        opt.value
-      );
-    }) })
-  ] });
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      ref: containerRef,
+      className: cn("relative w-full", isOpen ? "z-50" : "z-10", className),
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            type: "button",
+            disabled,
+            onClick: handleToggle,
+            className: cn(
+              "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs font-medium transition-all duration-200 select-none cursor-pointer",
+              "bg-slate-950/80 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/90 text-slate-100",
+              isOpen && "ring-2 ring-amber-500/40 border-amber-500/80 bg-slate-900",
+              disabled && "opacity-50 cursor-not-allowed hover:border-slate-800"
+            ),
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 min-w-0 pr-2", children: [
+                (selectedOption == null ? void 0 : selectedOption.icon) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base flex-shrink-0", children: selectedOption.icon }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col min-w-0", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 text-xs truncate", children: selectedOption ? selectedOption.label : placeholder }),
+                  (selectedOption == null ? void 0 : selectedOption.subtext) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-400 truncate", children: selectedOption.subtext })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                ChevronDown,
+                {
+                  className: cn(
+                    "w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ml-1.5",
+                    isOpen && (openUpward ? "-rotate-180 text-amber-400" : "rotate-180 text-amber-400")
+                  )
+                }
+              )
+            ]
+          }
+        ),
+        isOpen && /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "div",
+          {
+            className: cn(
+              "absolute z-[100] min-w-full w-max max-w-[calc(100vw-2rem)] sm:max-w-md p-1.5 rounded-2xl bg-[#090D18]/95 backdrop-blur-2xl border border-slate-700/80 shadow-2xl shadow-black/95 max-h-64 overflow-y-auto animate-fadeIn space-y-1",
+              openUpward ? "bottom-full mb-2" : "top-full mt-2",
+              alignRight ? "right-0" : "left-0"
+            ),
+            children: options.map((opt) => {
+              const isSelected = opt.value === value;
+              return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "div",
+                {
+                  onClick: () => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  },
+                  className: cn(
+                    "flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all select-none gap-3",
+                    isSelected ? "bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/30" : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+                  ),
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-start gap-2.5 min-w-0", children: [
+                      opt.icon && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base flex-shrink-0 mt-0.5", children: opt.icon }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col text-left", children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-semibold leading-snug", children: opt.label }),
+                        opt.subtext && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-400 mt-0.5 leading-snug font-normal", children: opt.subtext })
+                      ] })
+                    ] }),
+                    isSelected && /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-4 h-4 text-amber-400 flex-shrink-0 ml-2" })
+                  ]
+                },
+                opt.value
+              );
+            })
+          }
+        )
+      ]
+    }
+  );
 }
 const LANG_OPTIONS = [
   { value: "vi", label: "Tiếng Việt", subtext: "Nam/Nữ AI mượt mà", icon: "🇻🇳" },
@@ -20892,7 +20940,7 @@ function ProductionForm({ onSubmit, isRunning }) {
             ]
           }
         ),
-        showAdvanced && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3.5 transition-all animate-fadeIn", children: [
+        showAdvanced && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative z-30 mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3.5 transition-all animate-fadeIn", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Bot, { className: "w-3 h-3 text-amber-400" }),
@@ -21549,7 +21597,7 @@ function App() {
           progress: status.progress
         }
       ),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch relative z-20", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "lg:col-span-7 flex flex-col", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
           ProductionForm,
           {
