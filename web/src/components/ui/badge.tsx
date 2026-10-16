@@ -1,8 +1,14 @@
 import React from "react"
 import { cn } from "../../lib/utils"
 
-export function Badge({ className, variant = "default", ...props }) {
-  const variants = {
+export type BadgeVariant = "default" | "secondary" | "success" | "danger" | "outline"
+
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: BadgeVariant
+}
+
+export function Badge({ className, variant = "default", ...props }: BadgeProps) {
+  const variants: Record<BadgeVariant, string> = {
     default: "border-transparent bg-amber-500/10 text-amber-300 border border-amber-500/30",
     secondary: "border-transparent bg-slate-800 text-slate-300 border border-slate-700",
     success: "border-transparent bg-emerald-500/10 text-emerald-400 border border-emerald-500/30",

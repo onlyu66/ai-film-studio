@@ -1,15 +1,41 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Film, PlayCircle, Eye, Volume2, Search, Sparkles, X, Maximize2, Camera } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
+import { Film, Volume2, Search, X, Maximize2 } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
+import type { StoryboardData } from '../types'
 
-export default function StoryboardView({ storyboard }) {
-  const [activeTab, setActiveTab] = useState('shots')
+interface CharacterData {
+  name?: string
+  visual_anchor?: string | Record<string, unknown>
+  voice?: string
+  seed?: number | string
+  [key: string]: unknown
+}
+
+interface ShotData {
+  id: string
+  character_id?: string
+  dialogue?: string
+  image_prompt?: string
+  motion?: string
+  chapter?: number | string
+  [key: string]: unknown
+}
+
+export interface StoryboardViewProps {
+  storyboard: StoryboardData | null
+}
+
+export default function StoryboardView({ storyboard }: StoryboardViewProps) {
+  const [activeTab, setActiveTab] = useState<'shots' | 'characters'>('shots')
   const [searchQuery, setSearchQuery] = useState('')
-  const [lightboxImage, setLightboxImage] = useState(null)
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
 
-  if (!storyboard || (!storyboard.shots?.length && !Object.keys(storyboard.characters || {}).length)) {
+  const rawCharacters = (storyboard?.characters || {}) as Record<string, CharacterData>
+  const rawShots = (storyboard?.shots || []) as ShotData[]
+
+  if (!storyboard || (!rawShots.length && !Object.keys(rawCharacters).length)) {
     return (
       <Card className="border-slate-800/80 bg-[#0A0E1A]/80 p-12 text-center">
         <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto mb-4 text-slate-600 shadow-inner">
@@ -23,10 +49,10 @@ export default function StoryboardView({ storyboard }) {
     )
   }
 
-  const characters = storyboard.characters || {}
-  const shots = storyboard.shots || []
+  const characters = rawCharacters
+  const shots = rawShots
 
-  const filteredShots = shots.filter(s => {
+  const filteredShots = shots.filter((s) => {
     if (!searchQuery.trim()) return true
     const q = searchQuery.toLowerCase()
     return (
@@ -69,8 +95,9 @@ export default function StoryboardView({ storyboard }) {
 
             <div className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800/80">
               <button
+                type="button"
                 onClick={() => setActiveTab('shots')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'shots'
                     ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                     : 'text-slate-400 hover:text-white'
@@ -79,8 +106,9 @@ export default function StoryboardView({ storyboard }) {
                 Phân cảnh ({shots.length})
               </button>
               <button
+                type="button"
                 onClick={() => setActiveTab('characters')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   activeTab === 'characters'
                     ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
                     : 'text-slate-400 hover:text-white'
@@ -131,7 +159,7 @@ export default function StoryboardView({ storyboard }) {
                     <Volume2 className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
                     <span className="truncate">{char.voice}</span>
                   </div>
-                  <span className="font-mono text-slate-500 text-[10px]">Seed: {char.seed}</span>
+                  <span className="font-mono text-slate-500 text-[10px]">Seed: {String(char.seed ?? '')}</span>
                 </div>
               </motion.div>
             ))}
@@ -158,9 +186,9 @@ export default function StoryboardView({ storyboard }) {
                     <img
                       src={imgSrc}
                       alt={shot.id}
-                      onError={(e) => {
-                        e.target.onerror = null
-                        e.target.style.display = 'none'
+                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                        const target = e.currentTarget
+                        target.style.display = 'none'
                       }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -229,8 +257,9 @@ export default function StoryboardView({ storyboard }) {
             >
               <img src={lightboxImage} alt="Expanded" className="w-full h-full object-contain" />
               <button
+                type="button"
                 onClick={() => setLightboxImage(null)}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-colors"
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>

@@ -1,6 +1,16 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Check } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import type { SelectOption } from '../../types'
+
+export interface CustomSelectProps {
+  value: string
+  onChange: (value: string) => void
+  options?: SelectOption[]
+  placeholder?: string
+  disabled?: boolean
+  className?: string
+}
 
 export function CustomSelect({
   value,
@@ -9,15 +19,15 @@ export function CustomSelect({
   placeholder = "Chọn...",
   disabled = false,
   className,
-}) {
+}: CustomSelectProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const containerRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const selectedOption = options.find((opt) => opt.value === value)
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false)
       }
     }

@@ -20739,6 +20739,19 @@ function ProductionForm({ onSubmit, isRunning }) {
     setTopic(p.topic);
     setStyle2(p.style);
   };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!topic.trim()) return;
+    onSubmit({
+      topic,
+      lang,
+      duration: Number(duration),
+      style,
+      llm,
+      motion: motion2,
+      lip_sync: lipSync
+    });
+  };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(CardHeader, { className: "pb-4 border-b border-slate-800/80", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
@@ -20838,7 +20851,7 @@ function ProductionForm({ onSubmit, isRunning }) {
               type: "button",
               onClick: () => setDuration(d),
               disabled: isRunning,
-              className: `py-2 rounded-xl text-xs font-bold border transition-all ${duration === d ? "bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20" : "bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800"}`,
+              className: `py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${duration === d ? "bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20" : "bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800"}`,
               children: [
                 d,
                 "m"
@@ -20854,7 +20867,7 @@ function ProductionForm({ onSubmit, isRunning }) {
           {
             type: "button",
             onClick: () => setShowAdvanced(!showAdvanced),
-            className: "flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-amber-400 transition-colors",
+            className: "flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Settings2, { className: "w-3.5 h-3.5" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: showAdvanced ? "Thu gọn cài đặt động cơ" : "Tùy chỉnh động cơ LLM, Motion & Lip-Sync" })
@@ -20904,6 +20917,7 @@ function ProductionForm({ onSubmit, isRunning }) {
         Button,
         {
           type: "submit",
+          onClick: handleSubmit,
           variant: "gradient",
           size: "lg",
           disabled: isRunning || !topic.trim(),
@@ -20953,7 +20967,7 @@ function ProgressStage({ currentStage, status, progress: progress2 }) {
           transition: { duration: 0.5, ease: "easeOut" }
         }
       ) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3", children: STAGES.map((s, idx) => {
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3", children: STAGES.map((s) => {
         const Icon2 = s.icon;
         const isDone = isCompleted || currentStage > s.id;
         const isActive = isRunning && currentStage === s.id;
@@ -21028,7 +21042,7 @@ function TerminalLogs({ logs }) {
           "button",
           {
             onClick: () => setAutoScroll(!autoScroll),
-            className: `text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors ${autoScroll ? "bg-amber-500/10 text-amber-300 border-amber-500/30" : "bg-slate-800 text-slate-400 border-slate-700"}`,
+            className: `text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${autoScroll ? "bg-amber-500/10 text-amber-300 border-amber-500/30" : "bg-slate-800 text-slate-400 border-slate-700"}`,
             title: "Tự động cuộn theo log mới nhất",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(CircleArrowDown, { className: "w-3 h-3" }),
@@ -21041,7 +21055,7 @@ function TerminalLogs({ logs }) {
           {
             onClick: handleCopy,
             disabled: !(logs == null ? void 0 : logs.length),
-            className: "p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors disabled:opacity-30",
+            className: "p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors disabled:opacity-30 cursor-pointer",
             title: "Sao chép toàn bộ nhật ký",
             children: copied ? /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-3.5 h-3.5 text-emerald-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Copy, { className: "w-3.5 h-3.5" })
           }
@@ -21071,19 +21085,21 @@ function TerminalLogs({ logs }) {
   ] });
 }
 function StoryboardView({ storyboard }) {
-  var _a, _b;
+  var _a;
   const [activeTab, setActiveTab] = reactExports.useState("shots");
   const [searchQuery, setSearchQuery] = reactExports.useState("");
   const [lightboxImage, setLightboxImage] = reactExports.useState(null);
-  if (!storyboard || !((_a = storyboard.shots) == null ? void 0 : _a.length) && !Object.keys(storyboard.characters || {}).length) {
+  const rawCharacters = (storyboard == null ? void 0 : storyboard.characters) || {};
+  const rawShots = (storyboard == null ? void 0 : storyboard.shots) || [];
+  if (!storyboard || !rawShots.length && !Object.keys(rawCharacters).length) {
     return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "border-slate-800/80 bg-[#0A0E1A]/80 p-12 text-center", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto mb-4 text-slate-600 shadow-inner", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-8 h-8" }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-base font-bold text-slate-300", children: "Chưa có Kịch bản & Phân cảnh" }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-500 mt-1.5 max-w-md mx-auto leading-relaxed", children: "Toàn bộ danh sách nhân vật, mô tả Visual DNA và bảng phân cảnh 35mm sẽ xuất hiện tại đây ngay khi bạn bấm sản xuất phim." })
     ] });
   }
-  const characters = storyboard.characters || {};
-  const shots = storyboard.shots || [];
+  const characters = rawCharacters;
+  const shots = rawShots;
   const filteredShots = shots.filter((s) => {
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
@@ -21094,7 +21110,7 @@ function StoryboardView({ storyboard }) {
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 mb-1", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "default", className: "text-[10px] font-mono uppercase", children: [
-            ((_b = storyboard.language) == null ? void 0 : _b.toUpperCase()) || "VI",
+            ((_a = storyboard.language) == null ? void 0 : _a.toUpperCase()) || "VI",
             " CINEMA"
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs text-slate-500 font-mono", children: [
@@ -21123,8 +21139,9 @@ function StoryboardView({ storyboard }) {
           /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "button",
             {
+              type: "button",
               onClick: () => setActiveTab("shots"),
-              className: `px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === "shots" ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20" : "text-slate-400 hover:text-white"}`,
+              className: `px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === "shots" ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20" : "text-slate-400 hover:text-white"}`,
               children: [
                 "Phân cảnh (",
                 shots.length,
@@ -21135,8 +21152,9 @@ function StoryboardView({ storyboard }) {
           /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "button",
             {
+              type: "button",
               onClick: () => setActiveTab("characters"),
-              className: `px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${activeTab === "characters" ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20" : "text-slate-400 hover:text-white"}`,
+              className: `px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${activeTab === "characters" ? "bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20" : "text-slate-400 hover:text-white"}`,
               children: [
                 "Diễn viên (",
                 Object.keys(characters).length,
@@ -21177,7 +21195,7 @@ function StoryboardView({ storyboard }) {
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "font-mono text-slate-500 text-[10px]", children: [
                 "Seed: ",
-                char.seed
+                String(char.seed ?? "")
               ] })
             ] })
           ]
@@ -21205,8 +21223,8 @@ function StoryboardView({ storyboard }) {
                         src: imgSrc,
                         alt: shot.id,
                         onError: (e) => {
-                          e.target.onerror = null;
-                          e.target.style.display = "none";
+                          const target = e.currentTarget;
+                          target.style.display = "none";
                         },
                         className: "w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       }
@@ -21264,8 +21282,9 @@ function StoryboardView({ storyboard }) {
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "button",
                 {
+                  type: "button",
                   onClick: () => setLightboxImage(null),
-                  className: "absolute top-4 right-4 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-colors",
+                  className: "absolute top-4 right-4 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-colors cursor-pointer",
                   children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-5 h-5" })
                 }
               )
@@ -21307,8 +21326,9 @@ function VideoPlayerModal({ videoUrl, srtUrl, onClose }) {
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
             {
+              type: "button",
               onClick: onClose,
-              className: "p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors",
+              className: "p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer",
               children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-5 h-5" })
             }
           )
@@ -21386,7 +21406,7 @@ function App() {
         }
         setStatus(data);
       }
-    } catch (err) {
+    } catch {
     }
   };
   const fetchStoryboard = async () => {
@@ -21396,7 +21416,7 @@ function App() {
         const data = await res.json();
         setStoryboard(data);
       }
-    } catch (err) {
+    } catch {
     }
   };
   reactExports.useEffect(() => {
@@ -21421,7 +21441,7 @@ function App() {
         return;
       }
       fetchStatus();
-    } catch (err) {
+    } catch {
       alert("Lỗi kết nối tới Studio Server");
     }
   };
@@ -21434,7 +21454,7 @@ function App() {
         fetchStatus();
         setStoryboard(null);
       }
-    } catch (err) {
+    } catch {
       alert("Lỗi khi xóa outputs");
     } finally {
       setIsCleaning(false);
@@ -21516,9 +21536,13 @@ function App() {
         onClose: () => setShowVideoModal(false)
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("footer", { className: "border-t border-slate-900/90 py-6 text-center text-xs text-slate-600 font-medium", children: "AI Film Studio © 2026 — Designed with React, Vite, Tailwind CSS, shadcn/ui & FastAPI" })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("footer", { className: "border-t border-slate-900/90 py-6 text-center text-xs text-slate-600 font-medium", children: "AI Film Studio © 2026 — Designed with React, TypeScript, Vite, Tailwind CSS, shadcn/ui & FastAPI" })
   ] });
 }
-ReactDOM.createRoot(document.getElementById("root")).render(
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Failed to find root element");
+}
+ReactDOM.createRoot(rootElement).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );

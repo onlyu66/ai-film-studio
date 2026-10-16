@@ -1,36 +1,37 @@
 import React, { useState } from 'react'
-import { Sparkles, Play, Settings2, Languages, Clock, Palette, Bot, Film, Zap, Layers, Wand2 } from 'lucide-react'
+import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
+import type { PresetIdea, StyleOption, SelectOption, ProductionFormData } from '../types'
 
-const LANG_OPTIONS = [
+const LANG_OPTIONS: SelectOption[] = [
   { value: 'vi', label: 'Tiếng Việt', subtext: 'Nam/Nữ AI mượt mà', icon: '🇻🇳' },
   { value: 'en', label: 'English (US)', subtext: 'Natural American voice', icon: '🇺🇸' },
   { value: 'ja', label: 'Japanese', subtext: 'Anime & Studio style', icon: '🇯🇵' },
   { value: 'fr', label: 'French', subtext: 'Studio narration', icon: '🇫🇷' },
 ]
 
-const LLM_OPTIONS = [
+const LLM_OPTIONS: SelectOption[] = [
   { value: 'gemini', label: 'Google Gemini', subtext: 'Khuyên dùng - Siêu tốc, 0% CPU', icon: '⚡' },
   { value: 'groq', label: 'Groq Cloud', subtext: 'Llama 3.3 70B & Mixtral', icon: '🚀' },
   { value: 'ollama', label: 'Ollama Local', subtext: '100% Offline, bảo mật', icon: '💻' },
   { value: 'openai', label: 'OpenAI ChatGPT', subtext: 'GPT-4o & tương thích', icon: '🤖' },
 ]
 
-const MOTION_OPTIONS = [
+const MOTION_OPTIONS: SelectOption[] = [
   { value: 'vfx', label: 'Cinematic VFX', subtext: 'Khuyên dùng - Góc tối, film look (Free)', icon: '🌟' },
   { value: 'kenburns', label: 'Ken Burns 2.5D', subtext: 'Zoom/Pan cổ điển (Free)', icon: '🎥' },
   { value: 'replicate', label: 'Replicate AI Video', subtext: 'Image-to-Video Cloud động', icon: '🎬' },
 ]
 
-const LIPSYNC_OPTIONS = [
+const LIPSYNC_OPTIONS: SelectOption[] = [
   { value: 'none', label: 'Tắt nhép môi', subtext: 'Render nhanh, máy nhẹ', icon: '🚫' },
   { value: 'cloud', label: 'Cloud Lip-Sync', subtext: 'SadTalker khớp khẩu hình', icon: '👄' },
 ]
 
-const PRESET_IDEAS = [
+const PRESET_IDEAS: PresetIdea[] = [
   {
     title: "Bí ẩn Atlantis",
     topic: "Bí ẩn thành phố Atlantis chìm sâu dưới đáy đại dương và đoàn thám hiểm cổ vật",
@@ -57,14 +58,19 @@ const PRESET_IDEAS = [
   }
 ]
 
-const STYLES = [
+const STYLES: StyleOption[] = [
   { id: 'cinematic', label: 'Cinematic', desc: 'Điện ảnh 35mm, ánh sáng kịch tính', emoji: '🎬', gradient: 'from-amber-500/20 to-orange-500/10' },
   { id: 'anime', label: 'Anime', desc: 'Phong cách Makoto Shinkai rực rỡ', emoji: '🌸', gradient: 'from-pink-500/20 to-purple-500/10' },
   { id: 'noir', label: 'Film Noir', desc: 'Độ tương phản cao, bóng tối cổ điển', emoji: '🕵️', gradient: 'from-slate-700/30 to-slate-900/40' },
   { id: 'documentary', label: 'Documentary', desc: 'Ảnh tư liệu National Geographic 8K', emoji: '🌍', gradient: 'from-emerald-500/20 to-teal-500/10' },
 ]
 
-export default function ProductionForm({ onSubmit, isRunning }) {
+export interface ProductionFormProps {
+  onSubmit: (data: ProductionFormData) => void
+  isRunning: boolean
+}
+
+export default function ProductionForm({ onSubmit, isRunning }: ProductionFormProps) {
   const [topic, setTopic] = useState('Bí ẩn thành phố Atlantis chìm sâu dưới đáy đại dương và đoàn thám hiểm cổ vật')
   const [lang, setLang] = useState('vi')
   const [duration, setDuration] = useState(5)
@@ -74,12 +80,12 @@ export default function ProductionForm({ onSubmit, isRunning }) {
   const [lipSync, setLipSync] = useState('none')
   const [showAdvanced, setShowAdvanced] = useState(false)
 
-  const handleApplyPreset = (p) => {
+  const handleApplyPreset = (p: PresetIdea) => {
     setTopic(p.topic)
     setStyle(p.style)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!topic.trim()) return
     onSubmit({
@@ -221,7 +227,7 @@ export default function ProductionForm({ onSubmit, isRunning }) {
                   type="button"
                   onClick={() => setDuration(d)}
                   disabled={isRunning}
-                  className={`py-2 rounded-xl text-xs font-bold border transition-all ${
+                  className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                     duration === d
                       ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
                       : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800'
@@ -239,7 +245,7 @@ export default function ProductionForm({ onSubmit, isRunning }) {
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-amber-400 transition-colors"
+            className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
           >
             <Settings2 className="w-3.5 h-3.5" />
             <span>{showAdvanced ? 'Thu gọn cài đặt động cơ' : 'Tùy chỉnh động cơ LLM, Motion & Lip-Sync'}</span>
@@ -290,6 +296,7 @@ export default function ProductionForm({ onSubmit, isRunning }) {
         <div className="pt-2">
           <Button
             type="submit"
+            onClick={handleSubmit}
             variant="gradient"
             size="lg"
             disabled={isRunning || !topic.trim()}

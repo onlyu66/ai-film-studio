@@ -1,10 +1,18 @@
-import React from 'react'
+
 import { motion } from 'framer-motion'
-import { FileText, Mic, Image, Video, Sparkles, CheckCircle2, Loader2, ArrowRight } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
+import { FileText, Mic, Image, Video, Sparkles, CheckCircle2, Loader2, type LucideIcon } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 
-const STAGES = [
+export interface StageItem {
+  id: number
+  name: string
+  desc: string
+  icon: LucideIcon
+  tag: string
+}
+
+const STAGES: StageItem[] = [
   { id: 1, name: "Kịch bản & Phân cảnh", desc: "Viết kịch bản & nhân vật", icon: FileText, tag: "LLM" },
   { id: 2, name: "Giọng đọc (TTS)", desc: "Lồng tiếng cảm xúc Edge-TTS", icon: Mic, tag: "Audio" },
   { id: 3, name: "Tạo hình ảnh (Flux)", desc: "Kết xuất visual 8K điện ảnh", icon: Image, tag: "Visual" },
@@ -12,7 +20,13 @@ const STAGES = [
   { id: 5, name: "Hậu kỳ & Xuất phim", desc: "Ghép BGM ducking & Subtitle", icon: Sparkles, tag: "Master" },
 ]
 
-export default function ProgressStage({ currentStage, status, progress }) {
+export interface ProgressStageProps {
+  currentStage: number
+  status: string
+  progress: number
+}
+
+export default function ProgressStage({ currentStage, status, progress }: ProgressStageProps) {
   const isRunning = status === 'running'
   const isCompleted = status === 'completed'
 
@@ -54,7 +68,7 @@ export default function ProgressStage({ currentStage, status, progress }) {
 
         {/* Stages Timeline Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-          {STAGES.map((s, idx) => {
+          {STAGES.map((s) => {
             const Icon = s.icon
             const isDone = isCompleted || currentStage > s.id
             const isActive = isRunning && currentStage === s.id

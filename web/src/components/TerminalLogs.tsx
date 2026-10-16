@@ -1,9 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Terminal, Copy, Check, ArrowDownCircle } from 'lucide-react'
 import { Badge } from './ui/badge'
 
-export default function TerminalLogs({ logs }) {
-  const scrollRef = useRef(null)
+export interface TerminalLogsProps {
+  logs?: string[]
+}
+
+export default function TerminalLogs({ logs }: TerminalLogsProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
   const [autoScroll, setAutoScroll] = useState(true)
 
@@ -41,7 +45,7 @@ export default function TerminalLogs({ logs }) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setAutoScroll(!autoScroll)}
-            className={`text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors ${
+            className={`text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${
               autoScroll
                 ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
                 : 'bg-slate-800 text-slate-400 border-slate-700'
@@ -55,7 +59,7 @@ export default function TerminalLogs({ logs }) {
           <button
             onClick={handleCopy}
             disabled={!logs?.length}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors disabled:opacity-30"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors disabled:opacity-30 cursor-pointer"
             title="Sao chép toàn bộ nhật ký"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}

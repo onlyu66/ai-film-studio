@@ -1,11 +1,16 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
-import { X, Download, FileText, Film, Sparkles, MonitorPlay } from 'lucide-react'
-import { Button } from './ui/button'
+import { X, Download, FileText, Film, Sparkles } from 'lucide-react'
 import { Badge } from './ui/badge'
 
-export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }) {
+export interface VideoPlayerModalProps {
+  videoUrl: string | null
+  srtUrl?: string | null
+  onClose: () => void
+}
+
+export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPlayerModalProps) {
   useEffect(() => {
     // Fire festive fireworks confetti
     confetti({
@@ -46,8 +51,9 @@ export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }) {
             </div>
 
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>

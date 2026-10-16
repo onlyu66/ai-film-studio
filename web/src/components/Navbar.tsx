@@ -1,10 +1,18 @@
-import React from 'react'
+
 import { motion } from 'framer-motion'
-import { Clapperboard, Trash2, CheckCircle2, Loader2, AlertCircle, Sparkles, MonitorPlay } from 'lucide-react'
+import { Clapperboard, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
+import type { StudioStatus } from '../types'
 
-export default function Navbar({ status, onClean, isCleaning, onWatchMovie }) {
+export interface NavbarProps {
+  status: StudioStatus | null
+  onClean: () => void
+  isCleaning: boolean
+  onWatchMovie: () => void
+}
+
+export default function Navbar({ status, onClean, isCleaning, onWatchMovie }: NavbarProps) {
   const getStatusBadge = () => {
     switch (status?.status) {
       case 'running':

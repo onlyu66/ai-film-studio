@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import Navbar from './components/Navbar'
@@ -8,10 +8,11 @@ import TerminalLogs from './components/TerminalLogs'
 import StoryboardView from './components/StoryboardView'
 import VideoPlayerModal from './components/VideoPlayerModal'
 import { Button } from './components/ui/button'
-import { Play, Film, CheckCircle2, Sparkles, MonitorPlay } from 'lucide-react'
+import { CheckCircle2, MonitorPlay } from 'lucide-react'
+import type { StudioStatus, StoryboardData, ProductionFormData } from './types'
 
 export default function App() {
-  const [status, setStatus] = useState({
+  const [status, setStatus] = useState<StudioStatus>({
     status: 'idle',
     stage: 0,
     stage_name: 'Sẵn sàng',
@@ -20,16 +21,16 @@ export default function App() {
     final_video: null,
     final_srt: null,
   })
-  const [storyboard, setStoryboard] = useState(null)
-  const [isCleaning, setIsCleaning] = useState(false)
-  const [showVideoModal, setShowVideoModal] = useState(false)
+  const [storyboard, setStoryboard] = useState<StoryboardData | null>(null)
+  const [isCleaning, setIsCleaning] = useState<boolean>(false)
+  const [showVideoModal, setShowVideoModal] = useState<boolean>(false)
 
   // Fetch status polling
   const fetchStatus = async () => {
     try {
       const res = await fetch('/api/status')
       if (res.ok) {
-        const data = await res.json()
+        const data: StudioStatus = await res.json()
         // If just transitioned to completed, trigger confetti
         if (data.status === 'completed' && status.status === 'running') {
           confetti({
@@ -40,7 +41,7 @@ export default function App() {
         }
         setStatus(data)
       }
-    } catch (err) {
+    } catch {
       // Ignore network hiccup
     }
   }
@@ -50,10 +51,10 @@ export default function App() {
     try {
       const res = await fetch('/api/storyboard')
       if (res.ok) {
-        const data = await res.json()
+        const data: StoryboardData = await res.json()
         setStoryboard(data)
       }
-    } catch (err) {
+    } catch {
       // Ignore
     }
   }
@@ -70,7 +71,7 @@ export default function App() {
     return () => clearInterval(interval)
   }, [status.status])
 
-  const handleStartProduction = async (formData) => {
+  const handleStartProduction = async (formData: ProductionFormData) => {
     try {
       const res = await fetch('/api/produce', {
         method: 'POST',
@@ -83,7 +84,7 @@ export default function App() {
         return
       }
       fetchStatus()
-    } catch (err) {
+    } catch {
       alert('Lỗi kết nối tới Studio Server')
     }
   }
@@ -97,7 +98,7 @@ export default function App() {
         fetchStatus()
         setStoryboard(null)
       }
-    } catch (err) {
+    } catch {
       alert('Lỗi khi xóa outputs')
     } finally {
       setIsCleaning(false)
@@ -185,7 +186,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900/90 py-6 text-center text-xs text-slate-600 font-medium">
-        AI Film Studio &copy; 2026 — Designed with React, Vite, Tailwind CSS, shadcn/ui & FastAPI
+        AI Film Studio &copy; 2026 — Designed with React, TypeScript, Vite, Tailwind CSS, shadcn/ui & FastAPI
       </footer>
     </div>
   )
