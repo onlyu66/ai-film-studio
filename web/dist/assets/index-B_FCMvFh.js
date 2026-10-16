@@ -16767,8 +16767,16 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$q = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("Check", __iconNode$q);
+const __iconNode$r = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("Check", __iconNode$r);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$q = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
+const ChevronDown = createLucideIcon("ChevronDown", __iconNode$q);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20583,6 +20591,109 @@ function CardDescription({ className, ...props }) {
 function CardContent({ className, ...props }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn("p-6 pt-0", className), ...props });
 }
+function CustomSelect({
+  value,
+  onChange,
+  options = [],
+  placeholder = "Chọn...",
+  disabled = false,
+  className
+}) {
+  const [isOpen, setIsOpen] = reactExports.useState(false);
+  const containerRef = reactExports.useRef(null);
+  const selectedOption = options.find((opt) => opt.value === value);
+  reactExports.useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { ref: containerRef, className: cn("relative w-full", className), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "button",
+      {
+        type: "button",
+        disabled,
+        onClick: () => setIsOpen(!isOpen),
+        className: cn(
+          "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs font-medium transition-all duration-200 select-none cursor-pointer",
+          "bg-slate-950/80 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/90 text-slate-100",
+          isOpen && "ring-2 ring-amber-500/40 border-amber-500/80 bg-slate-900",
+          disabled && "opacity-50 cursor-not-allowed hover:border-slate-800"
+        ),
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 truncate", children: [
+            (selectedOption == null ? void 0 : selectedOption.icon) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base flex-shrink-0", children: selectedOption.icon }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "truncate", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-semibold text-slate-200 block truncate", children: selectedOption ? selectedOption.label : placeholder }),
+              (selectedOption == null ? void 0 : selectedOption.subtext) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-400 block truncate", children: selectedOption.subtext })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            ChevronDown,
+            {
+              className: cn(
+                "w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ml-2",
+                isOpen && "rotate-180 text-amber-400"
+              )
+            }
+          )
+        ]
+      }
+    ),
+    isOpen && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute z-50 left-0 right-0 mt-1.5 p-1.5 rounded-2xl bg-[#090D18]/95 backdrop-blur-2xl border border-slate-700/80 shadow-2xl shadow-black/80 max-h-64 overflow-y-auto animate-fadeIn space-y-1", children: options.map((opt) => {
+      const isSelected = opt.value === value;
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          onClick: () => {
+            onChange(opt.value);
+            setIsOpen(false);
+          },
+          className: cn(
+            "flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all select-none",
+            isSelected ? "bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/30" : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
+          ),
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 truncate", children: [
+              opt.icon && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-base flex-shrink-0", children: opt.icon }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "truncate", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-semibold block truncate", children: opt.label }),
+                opt.subtext && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] text-slate-400 block truncate", children: opt.subtext })
+              ] })
+            ] }),
+            isSelected && /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-4 h-4 text-amber-400 flex-shrink-0 ml-2" })
+          ]
+        },
+        opt.value
+      );
+    }) })
+  ] });
+}
+const LANG_OPTIONS = [
+  { value: "vi", label: "Tiếng Việt", subtext: "Nam/Nữ AI mượt mà", icon: "🇻🇳" },
+  { value: "en", label: "English (US)", subtext: "Natural American voice", icon: "🇺🇸" },
+  { value: "ja", label: "Japanese", subtext: "Anime & Studio style", icon: "🇯🇵" },
+  { value: "fr", label: "French", subtext: "Studio narration", icon: "🇫🇷" }
+];
+const LLM_OPTIONS = [
+  { value: "gemini", label: "Google Gemini", subtext: "Khuyên dùng - Siêu tốc, 0% CPU", icon: "⚡" },
+  { value: "groq", label: "Groq Cloud", subtext: "Llama 3.3 70B & Mixtral", icon: "🚀" },
+  { value: "ollama", label: "Ollama Local", subtext: "100% Offline, bảo mật", icon: "💻" },
+  { value: "openai", label: "OpenAI ChatGPT", subtext: "GPT-4o & tương thích", icon: "🤖" }
+];
+const MOTION_OPTIONS = [
+  { value: "vfx", label: "Cinematic VFX", subtext: "Khuyên dùng - Góc tối, film look (Free)", icon: "🌟" },
+  { value: "kenburns", label: "Ken Burns 2.5D", subtext: "Zoom/Pan cổ điển (Free)", icon: "🎥" },
+  { value: "replicate", label: "Replicate AI Video", subtext: "Image-to-Video Cloud động", icon: "🎬" }
+];
+const LIPSYNC_OPTIONS = [
+  { value: "none", label: "Tắt nhép môi", subtext: "Render nhanh, máy nhẹ", icon: "🚫" },
+  { value: "cloud", label: "Cloud Lip-Sync", subtext: "SadTalker khớp khẩu hình", icon: "👄" }
+];
 const PRESET_IDEAS = [
   {
     title: "Bí ẩn Atlantis",
@@ -20706,19 +20817,13 @@ function ProductionForm({ onSubmit, isRunning }) {
             /* @__PURE__ */ jsxRuntimeExports.jsx(Languages, { className: "w-3.5 h-3.5 text-indigo-400" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Ngôn ngữ thoại" })
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "select",
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            CustomSelect,
             {
               value: lang,
-              onChange: (e) => setLang(e.target.value),
-              disabled: isRunning,
-              className: "w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/40",
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "vi", children: "Tiếng Việt (Nam/Nữ AI mượt mà)" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "en", children: "Tiếng Anh (English US)" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "ja", children: "Tiếng Nhật (Japanese)" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "fr", children: "Tiếng Pháp (French)" })
-              ]
+              onChange: setLang,
+              options: LANG_OPTIONS,
+              disabled: isRunning
             }
           )
         ] }),
@@ -20759,52 +20864,37 @@ function ProductionForm({ onSubmit, isRunning }) {
         showAdvanced && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3 transition-all animate-fadeIn", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Động cơ LLM" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "select",
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              CustomSelect,
               {
                 value: llm,
-                onChange: (e) => setLlm(e.target.value),
-                disabled: isRunning,
-                className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "gemini", children: "Google Gemini (Khuyên dùng)" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "groq", children: "Groq Cloud (Llama 3.3)" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "ollama", children: "Ollama (Offline local)" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "openai", children: "OpenAI ChatGPT" })
-                ]
+                onChange: setLlm,
+                options: LLM_OPTIONS,
+                disabled: isRunning
               }
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Chuyển động máy quay" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "select",
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              CustomSelect,
               {
                 value: motion2,
-                onChange: (e) => setMotion(e.target.value),
-                disabled: isRunning,
-                className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "vfx", children: "Cinematic VFX (Free - Khuyên dùng)" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "kenburns", children: "Ken Burns Zoom/Pan (Free)" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "replicate", children: "Replicate AI Video (I2V Cloud)" })
-                ]
+                onChange: setMotion,
+                options: MOTION_OPTIONS,
+                disabled: isRunning
               }
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Cử động môi (Lip-Sync)" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "select",
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              CustomSelect,
               {
                 value: lipSync,
-                onChange: (e) => setLipSync(e.target.value),
-                disabled: isRunning,
-                className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "none", children: "Tắt nhép môi" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "cloud", children: "Bật Cloud Lip-Sync (SadTalker)" })
-                ]
+                onChange: setLipSync,
+                options: LIPSYNC_OPTIONS,
+                disabled: isRunning
               }
             )
           ] })

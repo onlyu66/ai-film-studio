@@ -3,6 +3,32 @@ import { Sparkles, Play, Settings2, Languages, Clock, Palette, Bot, Film, Zap, L
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
+import { CustomSelect } from './ui/select'
+
+const LANG_OPTIONS = [
+  { value: 'vi', label: 'Tiếng Việt', subtext: 'Nam/Nữ AI mượt mà', icon: '🇻🇳' },
+  { value: 'en', label: 'English (US)', subtext: 'Natural American voice', icon: '🇺🇸' },
+  { value: 'ja', label: 'Japanese', subtext: 'Anime & Studio style', icon: '🇯🇵' },
+  { value: 'fr', label: 'French', subtext: 'Studio narration', icon: '🇫🇷' },
+]
+
+const LLM_OPTIONS = [
+  { value: 'gemini', label: 'Google Gemini', subtext: 'Khuyên dùng - Siêu tốc, 0% CPU', icon: '⚡' },
+  { value: 'groq', label: 'Groq Cloud', subtext: 'Llama 3.3 70B & Mixtral', icon: '🚀' },
+  { value: 'ollama', label: 'Ollama Local', subtext: '100% Offline, bảo mật', icon: '💻' },
+  { value: 'openai', label: 'OpenAI ChatGPT', subtext: 'GPT-4o & tương thích', icon: '🤖' },
+]
+
+const MOTION_OPTIONS = [
+  { value: 'vfx', label: 'Cinematic VFX', subtext: 'Khuyên dùng - Góc tối, film look (Free)', icon: '🌟' },
+  { value: 'kenburns', label: 'Ken Burns 2.5D', subtext: 'Zoom/Pan cổ điển (Free)', icon: '🎥' },
+  { value: 'replicate', label: 'Replicate AI Video', subtext: 'Image-to-Video Cloud động', icon: '🎬' },
+]
+
+const LIPSYNC_OPTIONS = [
+  { value: 'none', label: 'Tắt nhép môi', subtext: 'Render nhanh, máy nhẹ', icon: '🚫' },
+  { value: 'cloud', label: 'Cloud Lip-Sync', subtext: 'SadTalker khớp khẩu hình', icon: '👄' },
+]
 
 const PRESET_IDEAS = [
   {
@@ -175,17 +201,12 @@ export default function ProductionForm({ onSubmit, isRunning }) {
               <Languages className="w-3.5 h-3.5 text-indigo-400" />
               <span>Ngôn ngữ thoại</span>
             </label>
-            <select
+            <CustomSelect
               value={lang}
-              onChange={(e) => setLang(e.target.value)}
+              onChange={setLang}
+              options={LANG_OPTIONS}
               disabled={isRunning}
-              className="w-full px-3 py-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-white text-xs font-medium focus:outline-none focus:ring-2 focus:ring-amber-500/40"
-            >
-              <option value="vi">Tiếng Việt (Nam/Nữ AI mượt mà)</option>
-              <option value="en">Tiếng Anh (English US)</option>
-              <option value="ja">Tiếng Nhật (Japanese)</option>
-              <option value="fr">Tiếng Pháp (French)</option>
-            </select>
+            />
           </div>
 
           <div>
@@ -230,48 +251,36 @@ export default function ProductionForm({ onSubmit, isRunning }) {
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Động cơ LLM
                 </label>
-                <select
+                <CustomSelect
                   value={llm}
-                  onChange={(e) => setLlm(e.target.value)}
+                  onChange={setLlm}
+                  options={LLM_OPTIONS}
                   disabled={isRunning}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white"
-                >
-                  <option value="gemini">Google Gemini (Khuyên dùng)</option>
-                  <option value="groq">Groq Cloud (Llama 3.3)</option>
-                  <option value="ollama">Ollama (Offline local)</option>
-                  <option value="openai">OpenAI ChatGPT</option>
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Chuyển động máy quay
                 </label>
-                <select
+                <CustomSelect
                   value={motion}
-                  onChange={(e) => setMotion(e.target.value)}
+                  onChange={setMotion}
+                  options={MOTION_OPTIONS}
                   disabled={isRunning}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white"
-                >
-                  <option value="vfx">Cinematic VFX (Free - Khuyên dùng)</option>
-                  <option value="kenburns">Ken Burns Zoom/Pan (Free)</option>
-                  <option value="replicate">Replicate AI Video (I2V Cloud)</option>
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Cử động môi (Lip-Sync)
                 </label>
-                <select
+                <CustomSelect
                   value={lipSync}
-                  onChange={(e) => setLipSync(e.target.value)}
+                  onChange={setLipSync}
+                  options={LIPSYNC_OPTIONS}
                   disabled={isRunning}
-                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white"
-                >
-                  <option value="none">Tắt nhép môi</option>
-                  <option value="cloud">Bật Cloud Lip-Sync (SadTalker)</option>
-                </select>
+                />
               </div>
             </div>
           )}
