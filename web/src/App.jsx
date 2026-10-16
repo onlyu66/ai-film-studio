@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import confetti from 'canvas-confetti'
 import Navbar from './components/Navbar'
 import ProductionForm from './components/ProductionForm'
 import ProgressStage from './components/ProgressStage'
 import TerminalLogs from './components/TerminalLogs'
 import StoryboardView from './components/StoryboardView'
 import VideoPlayerModal from './components/VideoPlayerModal'
-import { Play, Film, CheckCircle2 } from 'lucide-react'
+import { Button } from './components/ui/button'
+import { Play, Film, CheckCircle2, Sparkles, MonitorPlay } from 'lucide-react'
 
 export default function App() {
   const [status, setStatus] = useState({
@@ -27,6 +30,14 @@ export default function App() {
       const res = await fetch('/api/status')
       if (res.ok) {
         const data = await res.json()
+        // If just transitioned to completed, trigger confetti
+        if (data.status === 'completed' && status.status === 'running') {
+          confetti({
+            particleCount: 100,
+            spread: 80,
+            origin: { y: 0.5 }
+          })
+        }
         setStatus(data)
       }
     } catch (err) {
@@ -94,35 +105,53 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#080B11] text-slate-100 flex flex-col">
-      <Navbar status={status} onClean={handleClean} isCleaning={isCleaning} />
+    <div className="min-h-screen bg-[#06080F] text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-300">
+      <Navbar
+        status={status}
+        onClean={handleClean}
+        isCleaning={isCleaning}
+        onWatchMovie={() => setShowVideoModal(true)}
+      />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
         {/* Banner when movie completed */}
-        {status.status === 'completed' && status.final_video && (
-          <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-indigo-950/80 border border-emerald-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                <CheckCircle2 className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white">Bộ phim của bạn đã sẵn sàng!</h3>
-                <p className="text-xs text-slate-300">Hoàn tất quy trình 5 giai đoạn: Kịch bản, Audio, Hình ảnh, Chuyển động & Hậu kỳ.</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowVideoModal(true)}
-              className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+        <AnimatePresence>
+          {status.status === 'completed' && status.final_video && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-950/90 via-[#0B1322] to-indigo-950/90 border border-emerald-500/50 shadow-2xl shadow-emerald-500/10 flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
             >
-              <Play className="w-4 h-4 fill-current" />
-              <span>Xem Phim Ngay</span>
-            </button>
-          </div>
-        )}
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-inner">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Master Production Finished</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300">100% COMPLETE</span>
+                  </div>
+                  <h3 className="text-lg font-black text-white mt-0.5">Bộ phim của bạn đã sẵn sàng trình chiếu!</h3>
+                  <p className="text-xs text-slate-300 mt-1">Đã hoàn tất quy trình 5 giai đoạn: Kịch bản, Audio, Hình ảnh Flux, Chuyển động & Hậu kỳ.</p>
+                </div>
+              </div>
+
+              <Button
+                variant="default"
+                size="lg"
+                onClick={() => setShowVideoModal(true)}
+                className="gap-2.5 font-black text-sm bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 shadow-lg shadow-emerald-500/30"
+              >
+                <MonitorPlay className="w-5 h-5 fill-current" />
+                <span>Xem Phim Ngay</span>
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Top Grid: Form & Realtime Progress */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-6 xl:col-span-5">
             <ProductionForm
               onSubmit={handleStartProduction}
@@ -130,7 +159,7 @@ export default function App() {
             />
           </div>
 
-          <div className="lg:col-span-6 xl:col-span-7 space-y-6 flex flex-col justify-between">
+          <div className="lg:col-span-6 xl:col-span-7 space-y-6">
             <ProgressStage
               currentStage={status.stage}
               status={status.status}
@@ -155,8 +184,8 @@ export default function App() {
       )}
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-600">
-        AI Film Studio &copy; 2026 — Thiết kế với React, Vite, Tailwind CSS & FastAPI
+      <footer className="border-t border-slate-900/90 py-6 text-center text-xs text-slate-600 font-medium">
+        AI Film Studio &copy; 2026 — Designed with React, Vite, Tailwind CSS, shadcn/ui & FastAPI
       </footer>
     </div>
   )

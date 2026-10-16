@@ -1,144 +1,243 @@
 import React, { useState } from 'react'
-import { Users, Film, PlayCircle, Eye, Volume2, Video } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Users, Film, PlayCircle, Eye, Volume2, Search, Sparkles, X, Maximize2, Camera } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
+import { Badge } from './ui/badge'
 
 export default function StoryboardView({ storyboard }) {
   const [activeTab, setActiveTab] = useState('shots')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [lightboxImage, setLightboxImage] = useState(null)
 
   if (!storyboard || (!storyboard.shots?.length && !Object.keys(storyboard.characters || {}).length)) {
     return (
-      <div className="bg-[#0F1626]/80 border border-slate-800 rounded-2xl p-8 text-center backdrop-blur-sm">
-        <Film className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-        <h3 className="text-sm font-bold text-slate-300">Chưa có Kịch bản & Phân cảnh</h3>
-        <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-          Khi bấm khởi tạo dự án, toàn bộ hệ thống nhân vật và danh sách phân cảnh (Storyboard) chi tiết sẽ tự động hiển thị tại đây.
+      <Card className="border-slate-800/80 bg-[#0A0E1A]/80 p-12 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto mb-4 text-slate-600 shadow-inner">
+          <Film className="w-8 h-8" />
+        </div>
+        <h3 className="text-base font-bold text-slate-300">Chưa có Kịch bản & Phân cảnh</h3>
+        <p className="text-xs text-slate-500 mt-1.5 max-w-md mx-auto leading-relaxed">
+          Toàn bộ danh sách nhân vật, mô tả Visual DNA và bảng phân cảnh 35mm sẽ xuất hiện tại đây ngay khi bạn bấm sản xuất phim.
         </p>
-      </div>
+      </Card>
     )
   }
 
   const characters = storyboard.characters || {}
   const shots = storyboard.shots || []
 
+  const filteredShots = shots.filter(s => {
+    if (!searchQuery.trim()) return true
+    const q = searchQuery.toLowerCase()
+    return (
+      s.id.toLowerCase().includes(q) ||
+      (s.dialogue && s.dialogue.toLowerCase().includes(q)) ||
+      (s.image_prompt && s.image_prompt.toLowerCase().includes(q))
+    )
+  })
+
   return (
-    <div className="bg-[#0F1626]/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-5">
-        <div>
-          <h2 className="text-base font-bold text-white flex items-center gap-2">
-            <span>{storyboard.title || 'Kịch bản Phim'}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-normal">
-              {shots.length} phân cảnh
-            </span>
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">Ngôn ngữ: {storyboard.language?.toUpperCase() || 'VI'}</p>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex items-center p-1 bg-slate-900 rounded-xl border border-slate-800">
-          <button
-            onClick={() => setActiveTab('shots')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'shots'
-                ? 'bg-amber-500 text-slate-950 shadow'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Phân cảnh ({shots.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('characters')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'characters'
-                ? 'bg-amber-500 text-slate-950 shadow'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Nhân vật ({Object.keys(characters).length})
-          </button>
-        </div>
-      </div>
-
-      {/* Characters Tab */}
-      {activeTab === 'characters' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Object.entries(characters).map(([id, char]) => (
-            <div
-              key={id}
-              className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all"
-            >
-              <div className="flex items-center justify-between mb-2">
-                <h4 className="text-sm font-bold text-amber-400">{char.name}</h4>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
-                  Seed: {char.seed}
-                </span>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed mb-3">
-                <span className="font-semibold text-slate-400">Visual DNA: </span>
-                {typeof char.visual_anchor === 'string'
-                  ? char.visual_anchor
-                  : JSON.stringify(char.visual_anchor)}
-              </p>
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
-                <Volume2 className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                <span className="truncate">Giọng: {char.voice}</span>
-              </div>
+    <Card className="border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl">
+      <CardHeader className="pb-4 border-b border-slate-800/80">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Badge variant="default" className="text-[10px] font-mono uppercase">
+                {storyboard.language?.toUpperCase() || 'VI'} CINEMA
+              </Badge>
+              <span className="text-xs text-slate-500 font-mono">#{shots.length} SHOTS TOTAL</span>
             </div>
-          ))}
-        </div>
-      )}
+            <CardTitle className="text-lg font-black text-white flex items-center gap-2.5">
+              <span>{storyboard.title || 'Kịch bản Sản Xuất Phim'}</span>
+            </CardTitle>
+          </div>
 
-      {/* Shots Tab */}
-      {activeTab === 'shots' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {shots.map((shot) => {
-            const imgSrc = `/api/outputs/images/${shot.id}.png`
-            const vidSrc = `/api/outputs/videos/${shot.id}.mp4`
+          {/* Controls: Search & Tabs */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {activeTab === 'shots' && (
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm phân cảnh..."
+                  className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50 w-44 sm:w-56"
+                />
+              </div>
+            )}
 
-            return (
-              <div
-                key={shot.id}
-                className="group rounded-xl bg-slate-900/60 border border-slate-800 overflow-hidden hover:border-amber-500/40 transition-all flex flex-col"
+            <div className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800/80">
+              <button
+                onClick={() => setActiveTab('shots')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  activeTab === 'shots'
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
               >
-                {/* Visual Thumbnail */}
-                <div className="relative aspect-video bg-slate-950 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={imgSrc}
-                    alt={shot.id}
-                    onError={(e) => {
-                      e.target.onerror = null
-                      e.target.style.display = 'none'
-                    }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-sm text-[10px] font-mono text-white font-bold">
-                    {shot.id}
-                  </div>
-                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-amber-500/80 backdrop-blur-sm text-[10px] text-slate-950 font-bold uppercase">
-                    {shot.motion || 'zoom_in'}
-                  </div>
-                </div>
+                Phân cảnh ({shots.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('characters')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  activeTab === 'characters'
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Diễn viên ({Object.keys(characters).length})
+              </button>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
 
-                {/* Content */}
-                <div className="p-3.5 flex-1 flex flex-col justify-between">
-                  <div>
-                    {shot.character_id && (
-                      <span className="inline-block text-[11px] font-bold text-amber-400 mb-1">
-                        👤 {characters[shot.character_id]?.name || shot.character_id}
-                      </span>
-                    )}
-                    <p className="text-xs text-slate-200 line-clamp-2 leading-relaxed">
-                      {shot.dialogue ? `"${shot.dialogue}"` : <span className="text-slate-500 italic">(Cảnh quay tư liệu / âm nhạc)</span>}
+      <CardContent className="pt-6">
+        {/* Characters Tab */}
+        {activeTab === 'characters' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {Object.entries(characters).map(([id, char]) => (
+              <motion.div
+                key={id}
+                whileHover={{ y: -3 }}
+                className="p-5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/90 hover:border-amber-500/50 transition-all flex flex-col justify-between shadow-lg"
+              >
+                <div>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-rose-500/20 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner">
+                      👤
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-extrabold text-white">{char.name}</h4>
+                      <span className="text-[10px] font-mono text-amber-400/80">ID: {id}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/60 mb-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                      Visual DNA Anchor:
+                    </span>
+                    <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                      {typeof char.visual_anchor === 'string'
+                        ? char.visual_anchor
+                        : JSON.stringify(char.visual_anchor)}
                     </p>
                   </div>
-
-                  <p className="text-[11px] text-slate-500 line-clamp-1 mt-2 pt-2 border-t border-slate-800/80">
-                    {typeof shot.image_prompt === 'string' ? shot.image_prompt : JSON.stringify(shot.image_prompt)}
-                  </p>
                 </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-    </div>
+
+                <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+                  <div className="flex items-center gap-1.5 truncate">
+                    <Volume2 className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
+                    <span className="truncate">{char.voice}</span>
+                  </div>
+                  <span className="font-mono text-slate-500 text-[10px]">Seed: {char.seed}</span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {/* Shots Tab */}
+        {activeTab === 'shots' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {filteredShots.map((shot) => {
+              const imgSrc = `/api/outputs/images/${shot.id}.png`
+
+              return (
+                <motion.div
+                  key={shot.id}
+                  whileHover={{ y: -3 }}
+                  className="group rounded-2xl bg-[#090D18] border border-slate-800/80 overflow-hidden hover:border-amber-500/50 hover:shadow-xl hover:shadow-amber-500/5 transition-all flex flex-col"
+                >
+                  {/* Thumbnail / Lightbox click */}
+                  <div
+                    onClick={() => setLightboxImage(imgSrc)}
+                    className="relative aspect-video bg-slate-950 flex items-center justify-center overflow-hidden cursor-pointer"
+                  >
+                    <img
+                      src={imgSrc}
+                      alt={shot.id}
+                      onError={(e) => {
+                        e.target.onerror = null
+                        e.target.style.display = 'none'
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+
+                    {/* Film grain overlay & badges */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 opacity-70 group-hover:opacity-40 transition-opacity" />
+
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-mono text-amber-400 font-extrabold border border-white/10">
+                      {shot.id}
+                    </div>
+
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-amber-500 text-slate-950 text-[10px] font-bold uppercase tracking-wider shadow">
+                      {shot.motion || 'zoom_in'}
+                    </div>
+
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 backdrop-blur-[2px]">
+                      <div className="px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg border border-white/20">
+                        <Maximize2 className="w-3.5 h-3.5" />
+                        <span>Xem ảnh HD</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Shot details */}
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      {shot.character_id && (
+                        <div className="text-[11px] font-bold text-amber-400 mb-1 flex items-center gap-1">
+                          <span>👤</span>
+                          <span className="truncate">{characters[shot.character_id]?.name || shot.character_id}</span>
+                        </div>
+                      )}
+                      <p className="text-xs text-slate-200 line-clamp-2 leading-relaxed font-medium">
+                        {shot.dialogue ? `"${shot.dialogue}"` : <span className="text-slate-500 italic">(Cảnh quay tĩnh tư liệu & âm nhạc)</span>}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
+                      <span className="truncate max-w-[150px]">{shot.image_prompt}</span>
+                      <span className="font-mono">Ch. {shot.chapter || 1}</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+      </CardContent>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="relative max-w-5xl max-h-[90vh] rounded-2xl overflow-hidden border border-slate-700 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img src={lightboxImage} alt="Expanded" className="w-full h-full object-contain" />
+              <button
+                onClick={() => setLightboxImage(null)}
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Card>
   )
 }

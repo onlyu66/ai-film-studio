@@ -1,22 +1,33 @@
 import React from 'react'
-import { Clapperboard, Trash2, Film, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Clapperboard, Trash2, CheckCircle2, Loader2, AlertCircle, Sparkles, MonitorPlay } from 'lucide-react'
+import { Button } from './ui/button'
+import { Badge } from './ui/badge'
 
-export default function Navbar({ status, onClean, isCleaning }) {
+export default function Navbar({ status, onClean, isCleaning, onWatchMovie }) {
   const getStatusBadge = () => {
     switch (status?.status) {
       case 'running':
         return (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-semibold animate-pulse">
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            <span>Đang sản xuất phim ({status.stage_name})</span>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold shadow-sm shadow-amber-500/20"
+          >
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+            <span>{status.stage_name || 'Đang sản xuất...'}</span>
+          </motion.div>
         )
       case 'completed':
         return (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold shadow-sm shadow-emerald-500/20"
+          >
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Phim hoàn tất!</span>
-          </div>
+            <span>Phim hoàn tất</span>
+          </motion.div>
         )
       case 'error':
         return (
@@ -27,8 +38,11 @@ export default function Navbar({ status, onClean, isCleaning }) {
         )
       default:
         return (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-400 text-xs font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-slate-400 text-xs font-medium">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
             <span>Studio Sẵn Sàng</span>
           </div>
         )
@@ -36,35 +50,57 @@ export default function Navbar({ status, onClean, isCleaning }) {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-800/80 px-6 py-4">
+    <header className="sticky top-0 z-40 bg-[#070A11]/80 backdrop-blur-xl border-b border-slate-800/80 px-6 py-3.5 transition-all">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+        {/* Brand Logo & Name */}
+        <div className="flex items-center gap-3.5">
+          <motion.div
+            whileHover={{ scale: 1.05, rotate: 2 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-amber-500/25 ring-1 ring-white/20"
+          >
             <Clapperboard className="w-5 h-5 text-white" />
-          </div>
+          </motion.div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-lg font-bold tracking-tight text-white">AI FILM STUDIO</span>
-              <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 uppercase">PRO</span>
+              <span className="text-base font-extrabold tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">
+                AI FILM STUDIO
+              </span>
+              <Badge variant="default" className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0">
+                2.0 PRO
+              </Badge>
             </div>
-            <p className="text-xs text-slate-400">Hệ thống sản xuất phim tự động 1-chạm</p>
+            <p className="text-[11px] text-slate-400 font-medium">Automated Hollywood-Grade Cinema Pipeline</p>
           </div>
         </div>
 
-        {/* Status & Actions */}
-        <div className="flex items-center gap-4">
+        {/* Status Badges & Quick Action Buttons */}
+        <div className="flex items-center gap-3">
           {getStatusBadge()}
 
-          <button
+          {status?.status === 'completed' && status?.final_video && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onWatchMovie}
+              className="gap-1.5 text-xs shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950"
+            >
+              <MonitorPlay className="w-3.5 h-3.5 fill-current" />
+              <span>Xem Phim</span>
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onClean}
             disabled={status?.status === 'running' || isCleaning}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 bg-slate-800 hover:bg-rose-950/40 hover:text-rose-300 hover:border-rose-800/50 border border-slate-700/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="gap-1.5 text-xs hover:border-rose-500/40 hover:text-rose-400 hover:bg-rose-500/10 text-slate-400"
             title="Dọn dẹp thư mục outputs để bắt đầu dự án mới"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>{isCleaning ? 'Đang dọn...' : 'Xóa Output'}</span>
-          </button>
+          </Button>
         </div>
       </div>
     </header>
