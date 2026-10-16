@@ -30,10 +30,11 @@ export interface ProductionFormData {
   llm: string
   motion: string
   lip_sync: string
+  pause_after_script?: boolean
 }
 
 export interface StudioStatus {
-  status: 'idle' | 'running' | 'completed' | 'error' | string
+  status: 'idle' | 'running' | 'script_ready' | 'completed' | 'error' | string
   stage: number
   stage_name: string
   progress: number

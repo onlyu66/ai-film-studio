@@ -32,3 +32,24 @@ export async function updateCharacterVoice(
   return response.data
 }
 
+export async function continueProduction(): Promise<{ message: string; status: string }> {
+  const response = await apiClient.post<{ message: string; status: string }>('/api/continue')
+  return response.data
+}
+
+export interface UpdateShotParams {
+  shot_id: string
+  dialogue?: string
+  image_prompt?: string
+  motion?: string
+}
+
+export async function updateShot(params: UpdateShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
+  const response = await apiClient.post<{ success: boolean; message: string; shot: unknown }>(
+    '/api/storyboard/update-shot',
+    params
+  )
+  return response.data
+}
+
+

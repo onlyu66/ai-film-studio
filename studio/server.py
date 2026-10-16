@@ -32,10 +32,11 @@ class ProduceRequest(BaseModel):
     llm: str = "gemini"
     motion: str = "kenburns"
     lip_sync: str = "none"
+    pause_after_script: bool = False
 
 # Global pipeline execution state
 pipeline_state: Dict[str, Any] = {
-    "status": "idle",       # idle, running, completed, error
+    "status": "idle",       # idle, running, script_ready, completed, error
     "stage": 0,            # 0 to 5
     "stage_name": "Sẵn sàng",
     "progress": 0,         # 0 - 100
@@ -46,6 +47,8 @@ pipeline_state: Dict[str, Any] = {
     "final_srt": None,
 }
 
+last_produce_request: Optional[ProduceRequest] = None
+
 def log_message(msg: str):
     timestamp = time.strftime("%H:%M:%S")
     formatted = f"[{timestamp}] {msg}"
@@ -53,17 +56,12 @@ def log_message(msg: str):
     if len(pipeline_state["logs"]) > 200:
         pipeline_state["logs"] = pipeline_state["logs"][-200:]
 
-def execute_pipeline_task(req: ProduceRequest):
-    global pipeline_state
+def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
+    global pipeline_state, last_produce_request
+    last_produce_request = req
     pipeline_state["status"] = "running"
-    pipeline_state["stage"] = 1
-    pipeline_state["stage_name"] = "Soạn kịch bản & Phân cảnh..."
-    pipeline_state["progress"] = 15
     pipeline_state["topic"] = req.topic
     pipeline_state["error"] = None
-    pipeline_state["final_video"] = None
-    pipeline_state["final_srt"] = None
-    log_message(f"Khởi động sản xuất: {req.topic} ({req.lang}, {req.duration}m, {req.style})")
 
     try:
         cfg = StudioConfig(
@@ -77,10 +75,25 @@ def execute_pipeline_task(req: ProduceRequest):
             output_dir=Path("outputs"),
         )
 
+        if not resume_only and req.pause_after_script:
+            pipeline_state["stage"] = 1
+            pipeline_state["stage_name"] = "Đang soạn kịch bản & phân cảnh..."
+            pipeline_state["progress"] = 20
+            log_message(f"Soạn kịch bản: {req.topic} ({req.lang}, {req.duration}m, {req.style})")
+
+            run_pipeline(cfg, stop_after_stage=1)
+
+            pipeline_state["status"] = "script_ready"
+            pipeline_state["stage"] = 1
+            pipeline_state["stage_name"] = "Kịch bản đã sẵn sàng - Chờ duyệt"
+            pipeline_state["progress"] = 20
+            log_message("Kịch bản và phân cảnh đã được tạo xong! Bạn có thể chỉnh sửa lời thoại, nhân vật và giọng đọc trước khi bấm 'Tiếp tục sản xuất phim'.")
+            return
+
         pipeline_state["stage"] = 2
-        pipeline_state["stage_name"] = "Đang sản xuất phim (5 giai đoạn)..."
+        pipeline_state["stage_name"] = "Đang sản xuất phim (Stages 2 - 5)..."
         pipeline_state["progress"] = 40
-        log_message("Đang thực hiện quy trình biên tập tự động...")
+        log_message("Đang thực hiện quy trình sản xuất (Audio, Visuals, Motion & Assembly)...")
 
         final_video_path = run_pipeline(cfg)
 
@@ -185,6 +198,70 @@ def update_character_voice(req: UpdateVoiceRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+class UpdateShotRequest(BaseModel):
+    shot_id: str
+    dialogue: Optional[str] = None
+    image_prompt: Optional[str] = None
+    motion: Optional[str] = None
+
+@app.post("/api/storyboard/update-shot")
+def update_shot(req: UpdateShotRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json để cập nhật.")
+
+    try:
+        with open(sb_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        shots = data.get("shots", [])
+        target_shot = None
+        for s in shots:
+            if s.get("id") == req.shot_id:
+                target_shot = s
+                break
+
+        if not target_shot:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
+
+        if req.dialogue is not None:
+            target_shot["dialogue"] = req.dialogue
+            audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
+            if audio_file.exists():
+                audio_file.unlink(missing_ok=True)
+
+        if req.image_prompt is not None:
+            target_shot["image_prompt"] = req.image_prompt
+            image_file = Path(f"outputs/images/{req.shot_id}.png")
+            if image_file.exists():
+                image_file.unlink(missing_ok=True)
+
+        if req.motion is not None:
+            target_shot["motion"] = req.motion
+
+        with open(sb_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        log_message(f"Đã cập nhật phân cảnh '{req.shot_id}'.")
+        return {"success": True, "message": f"Đã cập nhật phân cảnh {req.shot_id}", "shot": target_shot}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/continue")
+def continue_film():
+    if pipeline_state["status"] == "running":
+        raise HTTPException(status_code=400, detail="Quy trình sản xuất đang chạy, vui lòng đợi hoàn tất.")
+
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=400, detail="Chưa có kịch bản outputs/storyboard.json để tiếp tục.")
+
+    req = last_produce_request or ProduceRequest(topic=pipeline_state.get("topic") or "AI Cinema Project")
+    threading.Thread(target=execute_pipeline_task, args=(req, True), daemon=True).start()
+    return {"message": "Đang tiếp tục sản xuất từ kịch bản đã duyệt", "status": "running"}
 
 @app.post("/api/clean")
 def clean_outputs():

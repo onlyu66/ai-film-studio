@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion'
-import { Clapperboard, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay } from 'lucide-react'
+import { Clapperboard, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import type { StudioStatus } from '../types'
@@ -15,6 +15,17 @@ export interface NavbarProps {
 export default function Navbar({ status, onClean, isCleaning, onWatchMovie }: NavbarProps) {
   const getStatusBadge = () => {
     switch (status?.status) {
+      case 'script_ready':
+        return (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/50 text-amber-300 text-xs font-bold shadow-sm shadow-amber-500/20"
+          >
+            <FileEdit className="w-3.5 h-3.5 text-amber-400" />
+            <span>Kịch bản chờ duyệt</span>
+          </motion.div>
+        )
       case 'running':
         return (
           <motion.div

@@ -15,7 +15,7 @@ from studio.assembly import run_assembly_stage
 
 console = Console()
 
-def run_pipeline(config: StudioConfig) -> Path:
+def run_pipeline(config: StudioConfig, stop_after_stage: int | None = None) -> Path:
     """Execute the end-to-end automated film production pipeline."""
     # Step 0: Pre-flight requirement checks
     if not shutil.which("ffmpeg"):
@@ -46,6 +46,15 @@ def run_pipeline(config: StudioConfig) -> Path:
         with open(storyboard_file, "w", encoding="utf-8") as f:
             json.dump(storyboard.to_dict(), f, indent=2, ensure_ascii=False)
         console.print(f"  [green]✓ Storyboard created with {len(storyboard.shots)} shots.[/green]")
+
+    if stop_after_stage == 1:
+        console.print(Panel.fit(
+            f"[bold yellow]⏸️ Pipeline Paused After Stage 1 (Script Review Mode)[/bold yellow]\n"
+            f"[green]Storyboard:[/green] {storyboard_file}\n"
+            f"[dim]You can now review characters, change voices, and edit shot dialogues in the Web UI before continuing.[/dim]",
+            title="📝 Script Ready for Review"
+        ))
+        return storyboard_file
 
     # Stage 2: Voice & Audio (TTS)
     console.print("\n[bold yellow][Stage 2/5] Synthesizing Voiceover (TTS)...[/bold yellow]")

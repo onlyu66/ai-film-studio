@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Film, Volume2, Search, X, Maximize2, Loader2, Check } from 'lucide-react'
+import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
-import { useUpdateCharacterVoice } from '../api/queries'
+import { useUpdateCharacterVoice, useUpdateShot } from '../api/queries'
 import type { StoryboardData, SelectOption } from '../types'
 
 interface CharacterData {
@@ -28,6 +28,13 @@ interface ShotData {
 export interface StoryboardViewProps {
   storyboard: StoryboardData | null
 }
+
+const MOTION_OPTIONS: SelectOption[] = [
+  { value: 'zoom_in', label: 'Zoom In (Tiến tới)', subtext: 'Camera phóng to dần vào cận cảnh', icon: '🔍' },
+  { value: 'zoom_out', label: 'Zoom Out (Lùi xa)', subtext: 'Camera lùi dần tạo cảm giác bao quát', icon: '🔭' },
+  { value: 'pan_left', label: 'Pan Left (Lia trái)', subtext: 'Ống kính lia ngang mượt mà sang trái', icon: '⬅️' },
+  { value: 'pan_right', label: 'Pan Right (Lia phải)', subtext: 'Ống kính lia ngang mượt mà sang phải', icon: '➡️' },
+]
 
 const VOICE_OPTIONS_BY_LANG: Record<string, SelectOption[]> = {
   vi: [
@@ -57,7 +64,14 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
   const [savingCharId, setSavingCharId] = useState<string | null>(null)
   const [savedCharId, setSavedCharId] = useState<string | null>(null)
 
+  // Shot editing state
+  const [editingShot, setEditingShot] = useState<ShotData | null>(null)
+  const [editDialogue, setEditDialogue] = useState('')
+  const [editPrompt, setEditPrompt] = useState('')
+  const [editMotion, setEditMotion] = useState('zoom_in')
+
   const updateVoiceMutation = useUpdateCharacterVoice()
+  const updateShotMutation = useUpdateShot()
 
   const rawCharacters = (storyboard?.characters || {}) as Record<string, CharacterData>
   const rawShots = (storyboard?.shots || []) as ShotData[]
@@ -104,6 +118,34 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
         onError: (err) => {
           setSavingCharId(null)
           alert(err.message || 'Không thể cập nhật giọng cho nhân vật')
+        },
+      }
+    )
+  }
+
+  const handleOpenEditShot = (shot: ShotData) => {
+    setEditingShot(shot)
+    setEditDialogue(shot.dialogue || '')
+    setEditPrompt(shot.image_prompt || '')
+    setEditMotion(shot.motion || 'zoom_in')
+  }
+
+  const handleSaveShot = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingShot) return
+    updateShotMutation.mutate(
+      {
+        shot_id: editingShot.id,
+        dialogue: editDialogue,
+        image_prompt: editPrompt,
+        motion: editMotion,
+      },
+      {
+        onSuccess: () => {
+          setEditingShot(null)
+        },
+        onError: (err) => {
+          alert(err.message || 'Lỗi khi cập nhật phân cảnh')
         },
       }
     )
@@ -295,12 +337,27 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                   {/* Shot details */}
                   <div className="p-4 flex-1 flex flex-col justify-between">
                     <div>
-                      {shot.character_id && (
-                        <div className="text-[11px] font-bold text-amber-400 mb-1 flex items-center gap-1">
-                          <span>👤</span>
-                          <span className="truncate">{characters[shot.character_id]?.name || shot.character_id}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        {shot.character_id ? (
+                          <div className="text-[11px] font-bold text-amber-400 flex items-center gap-1 min-w-0">
+                            <span>👤</span>
+                            <span className="truncate">{characters[shot.character_id]?.name || shot.character_id}</span>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Cảnh quay chung</span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditShot(shot)}
+                          className="px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0"
+                          title="Sửa lời thoại, visual prompt hoặc góc máy"
+                        >
+                          <Edit3 className="w-3 h-3" />
+                          <span>Sửa</span>
+                        </button>
+                      </div>
+
                       <p className="text-xs text-slate-200 leading-relaxed font-medium">
                         {shot.dialogue ? `"${shot.dialogue}"` : <span className="text-slate-500 italic">(Cảnh quay tĩnh tư liệu & âm nhạc)</span>}
                       </p>
@@ -345,6 +402,128 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
               >
                 <X className="w-5 h-5" />
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Shot Edit Modal */}
+      <AnimatePresence>
+        {editingShot && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !updateShotMutation.isPending && setEditingShot(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-xl rounded-2xl bg-gradient-to-b from-[#0F1628] to-[#0A0E1A] border border-amber-500/40 p-6 shadow-2xl text-left cursor-default overflow-hidden"
+            >
+              {/* Glow accent */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500" />
+
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-xs font-black border border-amber-500/30">
+                    {editingShot.id}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-white">Chỉnh sửa phân cảnh</h3>
+                    {editingShot.character_id && (
+                      <span className="text-[11px] text-slate-400">
+                        Nhân vật: <strong className="text-amber-400">{characters[editingShot.character_id]?.name || editingShot.character_id}</strong>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={updateShotMutation.isPending}
+                  onClick={() => setEditingShot(null)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveShot} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Lời thoại nhân vật (Dialogue):
+                  </label>
+                  <textarea
+                    value={editDialogue}
+                    onChange={(e) => setEditDialogue(e.target.value)}
+                    rows={3}
+                    placeholder="Nhập lời thoại của nhân vật trong phân cảnh này..."
+                    className="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/60 focus:border-amber-500/60 transition-all font-sans leading-relaxed"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    * Khi thay đổi lời thoại, hệ thống sẽ tự động tổng hợp lại giọng nói TTS cho phân cảnh này.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Mô tả hình ảnh điện ảnh (Flux Prompt):
+                  </label>
+                  <textarea
+                    value={editPrompt}
+                    onChange={(e) => setEditPrompt(e.target.value)}
+                    rows={3}
+                    placeholder="Prompt tạo hình ảnh (tiếng Anh hoặc tiếng Việt)..."
+                    className="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/60 focus:border-amber-500/60 transition-all font-mono leading-relaxed"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    * Khi thay đổi prompt, hình ảnh của phân cảnh này sẽ tự động được vẽ lại bằng Flux.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Góc máy & Chuyển động (Camera Motion):
+                  </label>
+                  <CustomSelect
+                    value={editMotion}
+                    onChange={setEditMotion}
+                    options={MOTION_OPTIONS}
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                  <button
+                    type="button"
+                    disabled={updateShotMutation.isPending}
+                    onClick={() => setEditingShot(null)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updateShotMutation.isPending}
+                    className="px-5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {updateShotMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Đang lưu...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-3.5 h-3.5" />
+                        <span>Lưu Thay Đổi</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </motion.div>
           </motion.div>
         )}

@@ -8,8 +8,14 @@ import TerminalLogs from './components/TerminalLogs'
 import StoryboardView from './components/StoryboardView'
 import VideoPlayerModal from './components/VideoPlayerModal'
 import { Button } from './components/ui/button'
-import { CheckCircle2, MonitorPlay } from 'lucide-react'
-import { useStudioStatus, useStoryboard, useProduceMovie, useCleanOutputs } from './api/queries'
+import { CheckCircle2, MonitorPlay, FileEdit, Play, Loader2 } from 'lucide-react'
+import {
+  useStudioStatus,
+  useStoryboard,
+  useProduceMovie,
+  useCleanOutputs,
+  useContinueProduction,
+} from './api/queries'
 import type { StudioStatus, ProductionFormData } from './types'
 
 export default function App() {
@@ -21,6 +27,7 @@ export default function App() {
   const { data: storyboardData } = useStoryboard(isRunning)
   const produceMutation = useProduceMovie()
   const cleanMutation = useCleanOutputs()
+  const continueMutation = useContinueProduction()
 
   const status: StudioStatus = statusData ?? {
     status: 'idle',
@@ -50,6 +57,14 @@ export default function App() {
     produceMutation.mutate(formData, {
       onError: (err) => {
         alert(err.message || 'Không thể bắt đầu sản xuất')
+      },
+    })
+  }
+
+  const handleContinue = () => {
+    continueMutation.mutate(undefined, {
+      onError: (err) => {
+        alert(err.message || 'Không thể tiếp tục sản xuất')
       },
     })
   }
@@ -104,6 +119,54 @@ export default function App() {
               >
                 <MonitorPlay className="w-5 h-5 fill-current" />
                 <span>Xem Phim Ngay</span>
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Banner when script is ready for review */}
+        <AnimatePresence>
+          {status.status === 'script_ready' && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.98 }}
+              className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-950/90 via-[#181206] to-amber-950/90 border border-amber-500/50 shadow-2xl shadow-amber-500/10 flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-inner shrink-0">
+                  <FileEdit className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Review & Edit Screenplay Mode</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300">STAGE 1 HOÀN TẤT</span>
+                  </div>
+                  <h3 className="text-lg font-black text-white mt-0.5">Kịch bản & Phân cảnh đã sẵn sàng để bạn duyệt!</h3>
+                  <p className="text-xs text-slate-300 mt-1">
+                    Hãy kiểm tra và chỉnh sửa lời thoại, visual prompt, góc máy hoặc đổi giọng nhân vật ở bảng phân cảnh bên dưới. Khi đã ưng ý, bấm nút tiếp tục để bắt đầu quay phim.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant="default"
+                size="lg"
+                onClick={handleContinue}
+                disabled={continueMutation.isPending}
+                className="gap-2.5 font-black text-sm bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-500/30 shrink-0 cursor-pointer"
+              >
+                {continueMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Đang kích hoạt...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5 fill-current" />
+                    <span>TIẾP TỤC SẢN XUẤT (STAGES 2 - 5)</span>
+                  </>
+                )}
               </Button>
             </motion.div>
           )}

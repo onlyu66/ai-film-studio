@@ -20406,7 +20406,7 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$s = [
+const __iconNode$v = [
   ["path", { d: "M12 8V4H8", key: "hb8ula" }],
   ["rect", { width: "16", height: "12", x: "4", y: "8", rx: "2", key: "enze0r" }],
   ["path", { d: "M2 14h2", key: "vft8re" }],
@@ -20414,23 +20414,58 @@ const __iconNode$s = [
   ["path", { d: "M15 13v2", key: "1xurst" }],
   ["path", { d: "M9 13v2", key: "rq6x2g" }]
 ];
-const Bot = createLucideIcon("Bot", __iconNode$s);
+const Bot = createLucideIcon("Bot", __iconNode$v);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$r = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("Check", __iconNode$r);
+const __iconNode$u = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("Check", __iconNode$u);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$q = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
-const ChevronDown = createLucideIcon("ChevronDown", __iconNode$q);
+const __iconNode$t = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
+const ChevronDown = createLucideIcon("ChevronDown", __iconNode$t);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$s = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
+  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+];
+const CircleAlert = createLucideIcon("CircleAlert", __iconNode$s);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$r = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 8v8", key: "napkw2" }],
+  ["path", { d: "m8 12 4 4 4-4", key: "k98ssh" }]
+];
+const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$r);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$q = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+];
+const CircleCheck = createLucideIcon("CircleCheck", __iconNode$q);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20438,41 +20473,6 @@ const ChevronDown = createLucideIcon("ChevronDown", __iconNode$q);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$p = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
-  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
-];
-const CircleAlert = createLucideIcon("CircleAlert", __iconNode$p);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$o = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "M12 8v8", key: "napkw2" }],
-  ["path", { d: "m8 12 4 4 4-4", key: "k98ssh" }]
-];
-const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$o);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$n = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
-];
-const CircleCheck = createLucideIcon("CircleCheck", __iconNode$n);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$m = [
   [
     "path",
     { d: "M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z", key: "1tn4o7" }
@@ -20481,7 +20481,41 @@ const __iconNode$m = [
   ["path", { d: "m12.4 3.4 3.1 4", key: "6hsd6n" }],
   ["path", { d: "M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z", key: "ltgou9" }]
 ];
-const Clapperboard = createLucideIcon("Clapperboard", __iconNode$m);
+const Clapperboard = createLucideIcon("Clapperboard", __iconNode$p);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$o = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["polyline", { points: "12 6 12 12 16 14", key: "68esgv" }]
+];
+const Clock = createLucideIcon("Clock", __iconNode$o);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$n = [
+  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+];
+const Copy = createLucideIcon("Copy", __iconNode$n);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$m = [
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
+  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
+];
+const Download = createLucideIcon("Download", __iconNode$m);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20489,10 +20523,17 @@ const Clapperboard = createLucideIcon("Clapperboard", __iconNode$m);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$l = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["polyline", { points: "12 6 12 12 16 14", key: "68esgv" }]
+  ["path", { d: "M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5", key: "1couwa" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  [
+    "path",
+    {
+      d: "M13.378 15.626a1 1 0 1 0-3.004-3.004l-5.01 5.012a2 2 0 0 0-.506.854l-.837 2.87a.5.5 0 0 0 .62.62l2.87-.837a2 2 0 0 0 .854-.506z",
+      key: "1y4qbx"
+    }
+  ]
 ];
-const Clock = createLucideIcon("Clock", __iconNode$l);
+const FilePen = createLucideIcon("FilePen", __iconNode$l);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20500,10 +20541,13 @@ const Clock = createLucideIcon("Clock", __iconNode$l);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$k = [
-  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
-  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M10 9H8", key: "b1mrlr" }],
+  ["path", { d: "M16 13H8", key: "t4e002" }],
+  ["path", { d: "M16 17H8", key: "z1uh3a" }]
 ];
-const Copy = createLucideIcon("Copy", __iconNode$k);
+const FileText = createLucideIcon("FileText", __iconNode$k);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20511,32 +20555,6 @@ const Copy = createLucideIcon("Copy", __iconNode$k);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$j = [
-  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
-  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
-  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
-];
-const Download = createLucideIcon("Download", __iconNode$j);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$i = [
-  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["path", { d: "M10 9H8", key: "b1mrlr" }],
-  ["path", { d: "M16 13H8", key: "t4e002" }],
-  ["path", { d: "M16 17H8", key: "z1uh3a" }]
-];
-const FileText = createLucideIcon("FileText", __iconNode$i);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$h = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }],
   ["path", { d: "M7 3v18", key: "bbkbws" }],
   ["path", { d: "M3 7.5h4", key: "zfgn84" }],
@@ -20546,26 +20564,26 @@ const __iconNode$h = [
   ["path", { d: "M17 7.5h4", key: "myr1c1" }],
   ["path", { d: "M17 16.5h4", key: "go4c1d" }]
 ];
-const Film = createLucideIcon("Film", __iconNode$h);
+const Film = createLucideIcon("Film", __iconNode$j);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$g = [
+const __iconNode$i = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
   ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
   ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
 ];
-const Image = createLucideIcon("Image", __iconNode$g);
+const Image = createLucideIcon("Image", __iconNode$i);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$f = [
+const __iconNode$h = [
   ["path", { d: "m5 8 6 6", key: "1wu5hv" }],
   ["path", { d: "m4 14 6-6 2-3", key: "1k1g8d" }],
   ["path", { d: "M2 5h12", key: "or177f" }],
@@ -20573,15 +20591,40 @@ const __iconNode$f = [
   ["path", { d: "m22 22-5-10-5 10", key: "don7ne" }],
   ["path", { d: "M14 18h6", key: "1m8k6r" }]
 ];
-const Languages = createLucideIcon("Languages", __iconNode$f);
+const Languages = createLucideIcon("Languages", __iconNode$h);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$e = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
-const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$e);
+const __iconNode$g = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
+const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$g);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$f = [
+  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
+  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
+  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
+  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
+];
+const Maximize2 = createLucideIcon("Maximize2", __iconNode$f);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$e = [
+  ["path", { d: "M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z", key: "131961" }],
+  ["path", { d: "M19 10v2a7 7 0 0 1-14 0v-2", key: "1vc78b" }],
+  ["line", { x1: "12", x2: "12", y1: "19", y2: "22", key: "x3vr5v" }]
+];
+const Mic = createLucideIcon("Mic", __iconNode$e);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20589,31 +20632,6 @@ const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$e);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$d = [
-  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
-  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
-  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
-  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
-];
-const Maximize2 = createLucideIcon("Maximize2", __iconNode$d);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$c = [
-  ["path", { d: "M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z", key: "131961" }],
-  ["path", { d: "M19 10v2a7 7 0 0 1-14 0v-2", key: "1vc78b" }],
-  ["line", { x1: "12", x2: "12", y1: "19", y2: "22", key: "x3vr5v" }]
-];
-const Mic = createLucideIcon("Mic", __iconNode$c);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$b = [
   [
     "path",
     {
@@ -20625,14 +20643,14 @@ const __iconNode$b = [
   ["path", { d: "M8 21h8", key: "1ev6f3" }],
   ["rect", { x: "2", y: "3", width: "20", height: "14", rx: "2", key: "x3v2xh" }]
 ];
-const MonitorPlay = createLucideIcon("MonitorPlay", __iconNode$b);
+const MonitorPlay = createLucideIcon("MonitorPlay", __iconNode$d);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$a = [
+const __iconNode$c = [
   ["circle", { cx: "13.5", cy: "6.5", r: ".5", fill: "currentColor", key: "1okk4w" }],
   ["circle", { cx: "17.5", cy: "10.5", r: ".5", fill: "currentColor", key: "f64h9f" }],
   ["circle", { cx: "8.5", cy: "7.5", r: ".5", fill: "currentColor", key: "fotxhn" }],
@@ -20645,15 +20663,50 @@ const __iconNode$a = [
     }
   ]
 ];
-const Palette = createLucideIcon("Palette", __iconNode$a);
+const Palette = createLucideIcon("Palette", __iconNode$c);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$9 = [["polygon", { points: "6 3 20 12 6 21 6 3", key: "1oa8hb" }]];
-const Play = createLucideIcon("Play", __iconNode$9);
+const __iconNode$b = [
+  ["path", { d: "M12 20h9", key: "t2du7b" }],
+  [
+    "path",
+    {
+      d: "M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z",
+      key: "1ykcvy"
+    }
+  ]
+];
+const PenLine = createLucideIcon("PenLine", __iconNode$b);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$a = [["polygon", { points: "6 3 20 12 6 21 6 3", key: "1oa8hb" }]];
+const Play = createLucideIcon("Play", __iconNode$a);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$9 = [
+  [
+    "path",
+    {
+      d: "M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z",
+      key: "1c8476"
+    }
+  ],
+  ["path", { d: "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7", key: "1ydtos" }],
+  ["path", { d: "M7 3v4a1 1 0 0 0 1 1h7", key: "t51u73" }]
+];
+const Save = createLucideIcon("Save", __iconNode$9);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -24122,6 +24175,19 @@ function Badge({ className, variant = "default", ...props }) {
 function Navbar({ status, onClean, isCleaning, onWatchMovie }) {
   const getStatusBadge = () => {
     switch (status == null ? void 0 : status.status) {
+      case "script_ready":
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          motion.div,
+          {
+            initial: { opacity: 0, scale: 0.9 },
+            animate: { opacity: 1, scale: 1 },
+            className: "flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/50 text-amber-300 text-xs font-bold shadow-sm shadow-amber-500/20",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-3.5 h-3.5 text-amber-400" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Kịch bản chờ duyệt" })
+            ]
+          }
+        );
       case "running":
         return /* @__PURE__ */ jsxRuntimeExports.jsxs(
           motion.div,
@@ -24387,7 +24453,7 @@ const LLM_OPTIONS = [
   { value: "ollama", label: "Ollama Local", subtext: "100% Offline, bảo mật", icon: "💻" },
   { value: "openai", label: "OpenAI ChatGPT", subtext: "GPT-4o & tương thích", icon: "🤖" }
 ];
-const MOTION_OPTIONS = [
+const MOTION_OPTIONS$1 = [
   { value: "vfx", label: "Cinematic VFX", subtext: "Khuyên dùng - Góc tối, film look (Free)", icon: "🌟" },
   { value: "kenburns", label: "Ken Burns 2.5D", subtext: "Zoom/Pan cổ điển (Free)", icon: "🎥" },
   { value: "replicate", label: "Replicate AI Video", subtext: "Image-to-Video Cloud động", icon: "🎬" }
@@ -24436,6 +24502,7 @@ function ProductionForm({ onSubmit, isRunning }) {
   const [llm, setLlm] = reactExports.useState("gemini");
   const [motion2, setMotion] = reactExports.useState("vfx");
   const [lipSync, setLipSync] = reactExports.useState("none");
+  const [pauseAfterScript, setPauseAfterScript] = reactExports.useState(false);
   const [showAdvanced, setShowAdvanced] = reactExports.useState(false);
   const handleApplyPreset = (p) => {
     setTopic(p.topic);
@@ -24451,7 +24518,8 @@ function ProductionForm({ onSubmit, isRunning }) {
       style,
       llm,
       motion: motion2,
-      lip_sync: lipSync
+      lip_sync: lipSync,
+      pause_after_script: pauseAfterScript
     });
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl", children: [
@@ -24605,7 +24673,7 @@ function ProductionForm({ onSubmit, isRunning }) {
               {
                 value: motion2,
                 onChange: setMotion,
-                options: MOTION_OPTIONS,
+                options: MOTION_OPTIONS$1,
                 disabled: isRunning
               }
             )
@@ -24627,7 +24695,38 @@ function ProductionForm({ onSubmit, isRunning }) {
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          onClick: () => setPauseAfterScript(!pauseAfterScript),
+          className: `p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${pauseAfterScript ? "bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/10" : "bg-slate-900/60 border-slate-800/80 hover:border-slate-700"}`,
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "div",
+                {
+                  className: `w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${pauseAfterScript ? "bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/30" : "bg-slate-800 text-slate-400"}`,
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-4 h-4" })
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `text-xs font-bold block ${pauseAfterScript ? "text-amber-300" : "text-slate-200"}`, children: "Duyệt & Sửa Kịch Bản Trước Khi Quay" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-400 block leading-tight mt-0.5", children: "Studio sẽ tạm dừng sau Giai đoạn 1 để bạn xem, sửa lời thoại, đổi giọng trước khi render phim" })
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "input",
+              {
+                type: "checkbox",
+                checked: pauseAfterScript,
+                onChange: (e) => setPauseAfterScript(e.target.checked),
+                className: "w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-700 cursor-pointer"
+              }
+            )
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-1", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
         Button,
         {
           type: "submit",
@@ -24638,7 +24737,7 @@ function ProductionForm({ onSubmit, isRunning }) {
           className: "w-full py-6 text-sm tracking-wide gap-3 uppercase font-extrabold shadow-amber-500/25",
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-5 h-5 fill-current" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: isRunning ? "ĐANG SẢN XUẤT PHIM THEO YÊU CẦU..." : "BẮT ĐẦU SẢN XUẤT PHIM" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: isRunning ? pauseAfterScript ? "ĐANG SOẠN KỊCH BẢN..." : "ĐANG SẢN XUẤT PHIM THEO YÊU CẦU..." : pauseAfterScript ? "TẠO KỊCH BẢN & CHỜ DUYỆT" : "BẮT ĐẦU SẢN XUẤT PHIM" })
           ]
         }
       ) })
@@ -28494,6 +28593,17 @@ async function updateCharacterVoice(characterId, voice) {
   );
   return response.data;
 }
+async function continueProduction() {
+  const response = await apiClient.post("/api/continue");
+  return response.data;
+}
+async function updateShot(params) {
+  const response = await apiClient.post(
+    "/api/storyboard/update-shot",
+    params
+  );
+  return response.data;
+}
 const QUERY_KEYS = {
   status: ["studio", "status"],
   storyboard: ["studio", "storyboard"]
@@ -28546,6 +28656,31 @@ function useUpdateCharacterVoice() {
     }
   });
 }
+function useContinueProduction() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: continueProduction,
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: QUERY_KEYS.status });
+      queryClient2.invalidateQueries({ queryKey: QUERY_KEYS.storyboard });
+    }
+  });
+}
+function useUpdateShot() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: (params) => updateShot(params),
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: QUERY_KEYS.storyboard });
+    }
+  });
+}
+const MOTION_OPTIONS = [
+  { value: "zoom_in", label: "Zoom In (Tiến tới)", subtext: "Camera phóng to dần vào cận cảnh", icon: "🔍" },
+  { value: "zoom_out", label: "Zoom Out (Lùi xa)", subtext: "Camera lùi dần tạo cảm giác bao quát", icon: "🔭" },
+  { value: "pan_left", label: "Pan Left (Lia trái)", subtext: "Ống kính lia ngang mượt mà sang trái", icon: "⬅️" },
+  { value: "pan_right", label: "Pan Right (Lia phải)", subtext: "Ống kính lia ngang mượt mà sang phải", icon: "➡️" }
+];
 const VOICE_OPTIONS_BY_LANG = {
   vi: [
     { value: "vi-VN-NamMinhNeural", label: "Nam Minh (Giọng Nam)", subtext: "Trầm ấm, hào hùng, điện ảnh", icon: "👨" },
@@ -28567,13 +28702,18 @@ const VOICE_OPTIONS_BY_LANG = {
   ]
 };
 function StoryboardView({ storyboard }) {
-  var _a2;
+  var _a2, _b2;
   const [activeTab, setActiveTab] = reactExports.useState("shots");
   const [searchQuery, setSearchQuery] = reactExports.useState("");
   const [lightboxImage, setLightboxImage] = reactExports.useState(null);
   const [savingCharId, setSavingCharId] = reactExports.useState(null);
   const [savedCharId, setSavedCharId] = reactExports.useState(null);
+  const [editingShot, setEditingShot] = reactExports.useState(null);
+  const [editDialogue, setEditDialogue] = reactExports.useState("");
+  const [editPrompt, setEditPrompt] = reactExports.useState("");
+  const [editMotion, setEditMotion] = reactExports.useState("zoom_in");
   const updateVoiceMutation = useUpdateCharacterVoice();
+  const updateShotMutation = useUpdateShot();
   const rawCharacters = (storyboard == null ? void 0 : storyboard.characters) || {};
   const rawShots = (storyboard == null ? void 0 : storyboard.shots) || [];
   const currentLang = ((storyboard == null ? void 0 : storyboard.language) || "vi").toLowerCase().split("-")[0];
@@ -28605,6 +28745,32 @@ function StoryboardView({ storyboard }) {
         onError: (err) => {
           setSavingCharId(null);
           alert(err.message || "Không thể cập nhật giọng cho nhân vật");
+        }
+      }
+    );
+  };
+  const handleOpenEditShot = (shot) => {
+    setEditingShot(shot);
+    setEditDialogue(shot.dialogue || "");
+    setEditPrompt(shot.image_prompt || "");
+    setEditMotion(shot.motion || "zoom_in");
+  };
+  const handleSaveShot = (e) => {
+    e.preventDefault();
+    if (!editingShot) return;
+    updateShotMutation.mutate(
+      {
+        shot_id: editingShot.id,
+        dialogue: editDialogue,
+        image_prompt: editPrompt,
+        motion: editMotion
+      },
+      {
+        onSuccess: () => {
+          setEditingShot(null);
+        },
+        onError: (err) => {
+          alert(err.message || "Lỗi khi cập nhật phân cảnh");
         }
       }
     );
@@ -28769,9 +28935,24 @@ function StoryboardView({ storyboard }) {
               ),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-4 flex-1 flex flex-col justify-between", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                  shot.character_id && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[11px] font-bold text-amber-400 mb-1 flex items-center gap-1", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "👤" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: ((_a3 = characters[shot.character_id]) == null ? void 0 : _a3.name) || shot.character_id })
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-1 mb-2", children: [
+                    shot.character_id ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-[11px] font-bold text-amber-400 flex items-center gap-1 min-w-0", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "👤" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: ((_a3 = characters[shot.character_id]) == null ? void 0 : _a3.name) || shot.character_id })
+                    ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono text-slate-500 uppercase tracking-wider", children: "Cảnh quay chung" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => handleOpenEditShot(shot),
+                        className: "px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0",
+                        title: "Sửa lời thoại, visual prompt hoặc góc máy",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(PenLine, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Sửa" })
+                        ]
+                      }
+                    )
                   ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-200 leading-relaxed font-medium", children: shot.dialogue ? `"${shot.dialogue}"` : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-500 italic", children: "(Cảnh quay tĩnh tư liệu & âm nhạc)" }) })
                 ] }),
@@ -28816,6 +28997,119 @@ function StoryboardView({ storyboard }) {
                   children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-5 h-5" })
                 }
               )
+            ]
+          }
+        )
+      }
+    ) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: editingShot && /* @__PURE__ */ jsxRuntimeExports.jsx(
+      motion.div,
+      {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0 },
+        onClick: () => !updateShotMutation.isPending && setEditingShot(null),
+        className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer",
+        children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          motion.div,
+          {
+            initial: { scale: 0.95, opacity: 0, y: 15 },
+            animate: { scale: 1, opacity: 1, y: 0 },
+            exit: { scale: 0.95, opacity: 0, y: 15 },
+            onClick: (e) => e.stopPropagation(),
+            className: "relative w-full max-w-xl rounded-2xl bg-gradient-to-b from-[#0F1628] to-[#0A0E1A] border border-amber-500/40 p-6 shadow-2xl text-left cursor-default overflow-hidden",
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between pb-4 border-b border-slate-800", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-xs font-black border border-amber-500/30", children: editingShot.id }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-black text-white", children: "Chỉnh sửa phân cảnh" }),
+                    editingShot.character_id && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[11px] text-slate-400", children: [
+                      "Nhân vật: ",
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { className: "text-amber-400", children: ((_b2 = characters[editingShot.character_id]) == null ? void 0 : _b2.name) || editingShot.character_id })
+                    ] })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    type: "button",
+                    disabled: updateShotMutation.isPending,
+                    onClick: () => setEditingShot(null),
+                    className: "p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer",
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-5 h-5" })
+                  }
+                )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleSaveShot, className: "mt-4 space-y-4", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5", children: "Lời thoại nhân vật (Dialogue):" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "textarea",
+                    {
+                      value: editDialogue,
+                      onChange: (e) => setEditDialogue(e.target.value),
+                      rows: 3,
+                      placeholder: "Nhập lời thoại của nhân vật trong phân cảnh này...",
+                      className: "w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/60 focus:border-amber-500/60 transition-all font-sans leading-relaxed"
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-slate-500 mt-1", children: "* Khi thay đổi lời thoại, hệ thống sẽ tự động tổng hợp lại giọng nói TTS cho phân cảnh này." })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5", children: "Mô tả hình ảnh điện ảnh (Flux Prompt):" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "textarea",
+                    {
+                      value: editPrompt,
+                      onChange: (e) => setEditPrompt(e.target.value),
+                      rows: 3,
+                      placeholder: "Prompt tạo hình ảnh (tiếng Anh hoặc tiếng Việt)...",
+                      className: "w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/60 focus:border-amber-500/60 transition-all font-mono leading-relaxed"
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-slate-500 mt-1", children: "* Khi thay đổi prompt, hình ảnh của phân cảnh này sẽ tự động được vẽ lại bằng Flux." })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5", children: "Góc máy & Chuyển động (Camera Motion):" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    CustomSelect,
+                    {
+                      value: editMotion,
+                      onChange: setEditMotion,
+                      options: MOTION_OPTIONS
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-end gap-3 pt-3 border-t border-slate-800", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      disabled: updateShotMutation.isPending,
+                      onClick: () => setEditingShot(null),
+                      className: "px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer",
+                      children: "Hủy bỏ"
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "submit",
+                      disabled: updateShotMutation.isPending,
+                      className: "px-5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50",
+                      children: updateShotMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Đang lưu..." })
+                      ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                        /* @__PURE__ */ jsxRuntimeExports.jsx(Save, { className: "w-3.5 h-3.5" }),
+                        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Lưu Thay Đổi" })
+                      ] })
+                    }
+                  )
+                ] })
+              ] })
             ]
           }
         )
@@ -28914,6 +29208,7 @@ function App() {
   const { data: storyboardData } = useStoryboard(isRunning);
   const produceMutation = useProduceMovie();
   const cleanMutation = useCleanOutputs();
+  const continueMutation = useContinueProduction();
   const status = statusData ?? {
     status: "idle",
     stage: 0,
@@ -28939,6 +29234,13 @@ function App() {
     produceMutation.mutate(formData, {
       onError: (err) => {
         alert(err.message || "Không thể bắt đầu sản xuất");
+      }
+    });
+  };
+  const handleContinue = () => {
+    continueMutation.mutate(void 0, {
+      onError: (err) => {
+        alert(err.message || "Không thể tiếp tục sản xuất");
       }
     });
   };
@@ -28991,6 +29293,45 @@ function App() {
                   /* @__PURE__ */ jsxRuntimeExports.jsx(MonitorPlay, { className: "w-5 h-5 fill-current" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Xem Phim Ngay" })
                 ]
+              }
+            )
+          ]
+        }
+      ) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: status.status === "script_ready" && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        motion.div,
+        {
+          initial: { opacity: 0, y: -20, scale: 0.98 },
+          animate: { opacity: 1, y: 0, scale: 1 },
+          exit: { opacity: 0, y: -20, scale: 0.98 },
+          className: "p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-950/90 via-[#181206] to-amber-950/90 border border-amber-500/50 shadow-2xl shadow-amber-500/10 flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-inner shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-7 h-7" }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-bold uppercase tracking-wider text-amber-400", children: "Review & Edit Screenplay Mode" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300", children: "STAGE 1 HOÀN TẤT" })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-lg font-black text-white mt-0.5", children: "Kịch bản & Phân cảnh đã sẵn sàng để bạn duyệt!" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-300 mt-1", children: "Hãy kiểm tra và chỉnh sửa lời thoại, visual prompt, góc máy hoặc đổi giọng nhân vật ở bảng phân cảnh bên dưới. Khi đã ưng ý, bấm nút tiếp tục để bắt đầu quay phim." })
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              Button,
+              {
+                variant: "default",
+                size: "lg",
+                onClick: handleContinue,
+                disabled: continueMutation.isPending,
+                className: "gap-2.5 font-black text-sm bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-500/30 shrink-0 cursor-pointer",
+                children: continueMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-5 h-5 animate-spin" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Đang kích hoạt..." })
+                ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-5 h-5 fill-current" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "TIẾP TỤC SẢN XUẤT (STAGES 2 - 5)" })
+                ] })
               }
             )
           ]

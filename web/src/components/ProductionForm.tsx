@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic } from 'lucide-react'
+import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic, FileEdit } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
@@ -78,6 +78,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
   const [llm, setLlm] = useState('gemini')
   const [motion, setMotion] = useState('vfx')
   const [lipSync, setLipSync] = useState('none')
+  const [pauseAfterScript, setPauseAfterScript] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   const handleApplyPreset = (p: PresetIdea) => {
@@ -96,6 +97,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
       llm,
       motion,
       lip_sync: lipSync,
+      pause_after_script: pauseAfterScript,
     })
   }
 
@@ -296,8 +298,44 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
           )}
         </div>
 
+        {/* Pause for Review Switch */}
+        <div
+          onClick={() => setPauseAfterScript(!pauseAfterScript)}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+            pauseAfterScript
+              ? 'bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/10'
+              : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                pauseAfterScript
+                  ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/30'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              <FileEdit className="w-4 h-4" />
+            </div>
+            <div>
+              <span className={`text-xs font-bold block ${pauseAfterScript ? 'text-amber-300' : 'text-slate-200'}`}>
+                Duyệt & Sửa Kịch Bản Trước Khi Quay
+              </span>
+              <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
+                Studio sẽ tạm dừng sau Giai đoạn 1 để bạn xem, sửa lời thoại, đổi giọng trước khi render phim
+              </span>
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={pauseAfterScript}
+            onChange={(e) => setPauseAfterScript(e.target.checked)}
+            className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-700 cursor-pointer"
+          />
+        </div>
+
         {/* Submit Button */}
-        <div className="pt-2">
+        <div className="pt-1">
           <Button
             type="submit"
             onClick={handleSubmit}
@@ -307,7 +345,15 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
             className="w-full py-6 text-sm tracking-wide gap-3 uppercase font-extrabold shadow-amber-500/25"
           >
             <Play className="w-5 h-5 fill-current" />
-            <span>{isRunning ? 'ĐANG SẢN XUẤT PHIM THEO YÊU CẦU...' : 'BẮT ĐẦU SẢN XUẤT PHIM'}</span>
+            <span>
+              {isRunning
+                ? pauseAfterScript
+                  ? 'ĐANG SOẠN KỊCH BẢN...'
+                  : 'ĐANG SẢN XUẤT PHIM THEO YÊU CẦU...'
+                : pauseAfterScript
+                ? 'TẠO KỊCH BẢN & CHỜ DUYỆT'
+                : 'BẮT ĐẦU SẢN XUẤT PHIM'}
+            </span>
           </Button>
         </div>
       </CardContent>
