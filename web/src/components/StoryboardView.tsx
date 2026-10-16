@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Film, Volume2, Search, X, Maximize2 } from 'lucide-react'
+import { Film, Volume2, Search, X, Maximize2, Loader2, Check } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
-import type { StoryboardData } from '../types'
+import { CustomSelect } from './ui/select'
+import { useUpdateCharacterVoice } from '../api/queries'
+import type { StoryboardData, SelectOption } from '../types'
 
 interface CharacterData {
   name?: string
@@ -27,13 +29,40 @@ export interface StoryboardViewProps {
   storyboard: StoryboardData | null
 }
 
+const VOICE_OPTIONS_BY_LANG: Record<string, SelectOption[]> = {
+  vi: [
+    { value: 'vi-VN-NamMinhNeural', label: 'Nam Minh (Giọng Nam)', subtext: 'Trầm ấm, hào hùng, điện ảnh', icon: '👨' },
+    { value: 'vi-VN-HoaiMyNeural', label: 'Hoài My (Giọng Nữ)', subtext: 'Ngọt ngào, trong trẻo, truyền cảm', icon: '👩' },
+  ],
+  en: [
+    { value: 'en-US-GuyNeural', label: 'Guy (Giọng Nam)', subtext: 'Deep cinematic documentary narrator', icon: '👨' },
+    { value: 'en-US-ChristopherNeural', label: 'Christopher (Giọng Nam)', subtext: 'Authoritative, clear American male', icon: '👨' },
+    { value: 'en-US-JennyNeural', label: 'Jenny (Giọng Nữ)', subtext: 'Natural, warm expressive female', icon: '👩' },
+    { value: 'en-US-AriaNeural', label: 'Aria (Giọng Nữ)', subtext: 'Dramatic, vivid storytelling female', icon: '👩' },
+  ],
+  ja: [
+    { value: 'ja-JP-KeitaNeural', label: 'Keita (Giọng Nam)', subtext: 'Shonen & Studio anime male', icon: '👨' },
+    { value: 'ja-JP-NanamiNeural', label: 'Nanami (Giọng Nữ)', subtext: 'Gentle, expressive anime female', icon: '👩' },
+  ],
+  fr: [
+    { value: 'fr-FR-HenriNeural', label: 'Henri (Giọng Nam)', subtext: 'Classic French cinema male', icon: '👨' },
+    { value: 'fr-FR-DeniseNeural', label: 'Denise (Giọng Nữ)', subtext: 'Poetic French narrative female', icon: '👩' },
+  ],
+}
+
 export default function StoryboardView({ storyboard }: StoryboardViewProps) {
   const [activeTab, setActiveTab] = useState<'shots' | 'characters'>('shots')
   const [searchQuery, setSearchQuery] = useState('')
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const [savingCharId, setSavingCharId] = useState<string | null>(null)
+  const [savedCharId, setSavedCharId] = useState<string | null>(null)
+
+  const updateVoiceMutation = useUpdateCharacterVoice()
 
   const rawCharacters = (storyboard?.characters || {}) as Record<string, CharacterData>
   const rawShots = (storyboard?.shots || []) as ShotData[]
+  const currentLang = (storyboard?.language || 'vi').toLowerCase().split('-')[0]
+  const currentVoiceOptions = VOICE_OPTIONS_BY_LANG[currentLang] || VOICE_OPTIONS_BY_LANG['vi']
 
   if (!storyboard || (!rawShots.length && !Object.keys(rawCharacters).length)) {
     return (
@@ -61,6 +90,24 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
       (s.image_prompt && s.image_prompt.toLowerCase().includes(q))
     )
   })
+
+  const handleVoiceChange = (charId: string, newVoice: string) => {
+    setSavingCharId(charId)
+    updateVoiceMutation.mutate(
+      { characterId: charId, voice: newVoice },
+      {
+        onSuccess: () => {
+          setSavingCharId(null)
+          setSavedCharId(charId)
+          setTimeout(() => setSavedCharId((prev) => (prev === charId ? null : prev)), 2500)
+        },
+        onError: (err) => {
+          setSavingCharId(null)
+          alert(err.message || 'Không thể cập nhật giọng cho nhân vật')
+        },
+      }
+    )
+  }
 
   return (
     <Card className="border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl">
@@ -125,44 +172,77 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
         {/* Characters Tab */}
         {activeTab === 'characters' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(characters).map(([id, char]) => (
-              <motion.div
-                key={id}
-                whileHover={{ y: -3 }}
-                className="p-5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/90 hover:border-amber-500/50 transition-all flex flex-col justify-between shadow-lg"
-              >
-                <div>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-rose-500/20 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner">
-                      👤
+            {Object.entries(characters).map(([id, char]) => {
+              const currentVoice = char.voice || currentVoiceOptions[0]?.value || 'vi-VN-NamMinhNeural'
+
+              return (
+                <motion.div
+                  key={id}
+                  whileHover={{ y: -3 }}
+                  className="p-5 rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-950/90 border border-slate-800/90 hover:border-amber-500/50 transition-all flex flex-col justify-between shadow-lg"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-rose-500/20 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner">
+                          {currentVoice.toLowerCase().includes('female') ||
+                          currentVoice.toLowerCase().includes('hoaimy') ||
+                          currentVoice.toLowerCase().includes('jenny') ||
+                          currentVoice.toLowerCase().includes('aria') ||
+                          currentVoice.toLowerCase().includes('nanami') ||
+                          currentVoice.toLowerCase().includes('denise')
+                            ? '👩'
+                            : '👨'}
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-extrabold text-white">{char.name}</h4>
+                          <span className="text-[10px] font-mono text-amber-400/80">ID: {id}</span>
+                        </div>
+                      </div>
+
+                      <span className="font-mono text-slate-500 text-[10px]">Seed: {String(char.seed ?? '')}</span>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-extrabold text-white">{char.name}</h4>
-                      <span className="text-[10px] font-mono text-amber-400/80">ID: {id}</span>
+
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/60 mb-4">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                        Visual DNA Anchor:
+                      </span>
+                      <p className="text-xs text-slate-300 leading-relaxed font-normal">
+                        {typeof char.visual_anchor === 'string'
+                          ? char.visual_anchor
+                          : JSON.stringify(char.visual_anchor)}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/60 mb-3">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                      Visual DNA Anchor:
-                    </span>
-                    <p className="text-xs text-slate-300 leading-relaxed font-normal">
-                      {typeof char.visual_anchor === 'string'
-                        ? char.visual_anchor
-                        : JSON.stringify(char.visual_anchor)}
-                    </p>
-                  </div>
-                </div>
+                  {/* Interactive Voice Customization */}
+                  <div className="pt-3 border-t border-slate-800/60 space-y-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <Volume2 className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>Giọng lồng tiếng (Voice)</span>
+                      </label>
+                      {savingCharId === id ? (
+                        <span className="text-[10px] text-amber-400 flex items-center gap-1 font-mono font-bold">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Đang lưu...
+                        </span>
+                      ) : savedCharId === id ? (
+                        <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono font-bold">
+                          <Check className="w-3 h-3" /> Đã lưu
+                        </span>
+                      ) : null}
+                    </div>
 
-                <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Volume2 className="w-3.5 h-3.5 text-indigo-400 flex-shrink-0" />
-                    <span className="truncate">{char.voice}</span>
+                    <CustomSelect
+                      value={currentVoice}
+                      onChange={(newVoice) => handleVoiceChange(id, newVoice)}
+                      options={currentVoiceOptions}
+                      disabled={savingCharId === id}
+                    />
                   </div>
-                  <span className="font-mono text-slate-500 text-[10px]">Seed: {String(char.seed ?? '')}</span>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              )
+            })}
           </div>
         )}
 
@@ -212,7 +292,7 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                     </div>
                   </div>
 
-                    {/* Shot details */}
+                  {/* Shot details */}
                   <div className="p-4 flex-1 flex flex-col justify-between">
                     <div>
                       {shot.character_id && (

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchStatus, fetchStoryboard, produceMovie, cleanOutputs } from './studio'
+import { fetchStatus, fetchStoryboard, produceMovie, cleanOutputs, updateCharacterVoice } from './studio'
 import type { StudioStatus, StoryboardData, ProductionFormData } from '../types'
 
 export const QUERY_KEYS = {
@@ -51,3 +51,16 @@ export function useCleanOutputs() {
     },
   })
 }
+
+export function useUpdateCharacterVoice() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ characterId, voice }: { characterId: string; voice: string }) =>
+      updateCharacterVoice(characterId, voice),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+

@@ -137,6 +137,55 @@ def get_storyboard():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class UpdateVoiceRequest(BaseModel):
+    character_id: str
+    voice: str
+
+@app.post("/api/storyboard/character-voice")
+def update_character_voice(req: UpdateVoiceRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json để cập nhật.")
+
+    try:
+        with open(sb_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        characters = data.get("characters", {})
+        if req.character_id not in characters:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy nhân vật '{req.character_id}' trong kịch bản.")
+
+        old_voice = characters[req.character_id].get("voice", "")
+        characters[req.character_id]["voice"] = req.voice
+        data["characters"] = characters
+
+        with open(sb_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        # Invalidate existing audio files for this character so TTS will regenerate if rerun
+        audio_dir = Path("outputs/audio")
+        if audio_dir.exists():
+            for shot in data.get("shots", []):
+                if shot.get("character_id") == req.character_id:
+                    shot_id = shot.get("id")
+                    audio_file = audio_dir / f"{shot_id}.mp3"
+                    if audio_file.exists():
+                        audio_file.unlink(missing_ok=True)
+
+        char_name = characters[req.character_id].get("name", req.character_id)
+        log_message(f"Đã cập nhật giọng cho nhân vật '{char_name}': {old_voice} -> {req.voice}")
+
+        return {
+            "success": True,
+            "message": f"Đã cập nhật giọng cho nhân vật {char_name}",
+            "character_id": req.character_id,
+            "voice": req.voice,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/api/clean")
 def clean_outputs():
     if pipeline_state["status"] == "running":
