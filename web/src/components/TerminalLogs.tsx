@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Terminal, Copy, Check, ArrowDownCircle } from 'lucide-react'
 import { Badge } from './ui/badge'
+import { cn } from '../lib/utils'
 
 export interface TerminalLogsProps {
   logs?: string[]
+  className?: string
 }
 
-export default function TerminalLogs({ logs }: TerminalLogsProps) {
+export default function TerminalLogs({ logs, className }: TerminalLogsProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
   const [autoScroll, setAutoScroll] = useState(true)
@@ -25,9 +27,9 @@ export default function TerminalLogs({ logs }: TerminalLogsProps) {
   }
 
   return (
-    <div className="bg-[#06080F] border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+    <div className={cn("bg-[#06080F] border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full min-h-[420px]", className)}>
       {/* Console Header */}
-      <div className="px-4 py-3 bg-[#0A0E18] border-b border-slate-800 flex items-center justify-between">
+      <div className="px-4 py-3 bg-[#0A0E18] border-b border-slate-800 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
             <Terminal className="w-3.5 h-3.5" />
@@ -44,6 +46,7 @@ export default function TerminalLogs({ logs }: TerminalLogsProps) {
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => setAutoScroll(!autoScroll)}
             className={`text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${
               autoScroll
@@ -57,6 +60,7 @@ export default function TerminalLogs({ logs }: TerminalLogsProps) {
           </button>
 
           <button
+            type="button"
             onClick={handleCopy}
             disabled={!logs?.length}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors disabled:opacity-30 cursor-pointer"
@@ -70,11 +74,12 @@ export default function TerminalLogs({ logs }: TerminalLogsProps) {
       {/* Logs Output Body */}
       <div
         ref={scrollRef}
-        className="p-4 h-56 overflow-y-auto font-mono text-[11px] sm:text-xs space-y-1.5 text-slate-300 select-text leading-relaxed bg-[#05070D]"
+        className="p-4 flex-1 overflow-y-auto font-mono text-[11px] sm:text-xs space-y-1.5 text-slate-300 select-text leading-relaxed bg-[#05070D]"
       >
         {(!logs || logs.length === 0) ? (
-          <div className="text-slate-600 italic py-4 text-center">
-            [Studio Idle] Hệ thống đang ở trạng thái chờ lệnh sản xuất phim...
+          <div className="text-slate-600 italic py-12 text-center flex flex-col items-center justify-center gap-2">
+            <span className="text-2xl">⏳</span>
+            <span>[Studio Idle] Hệ thống đang ở trạng thái chờ lệnh sản xuất phim...</span>
           </div>
         ) : (
           logs.map((log, index) => {
@@ -85,7 +90,7 @@ export default function TerminalLogs({ logs }: TerminalLogsProps) {
             return (
               <div
                 key={index}
-                className={`font-mono transition-colors ${
+                className={`font-mono transition-colors break-words ${
                   isError
                     ? 'text-rose-400 bg-rose-500/5 px-2 py-0.5 rounded border-l-2 border-rose-500'
                     : isSuccess

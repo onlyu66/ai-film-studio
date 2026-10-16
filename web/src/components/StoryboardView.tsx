@@ -212,7 +212,7 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                     </div>
                   </div>
 
-                  {/* Shot details */}
+                    {/* Shot details */}
                   <div className="p-4 flex-1 flex flex-col justify-between">
                     <div>
                       {shot.character_id && (
@@ -221,14 +221,16 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                           <span className="truncate">{characters[shot.character_id]?.name || shot.character_id}</span>
                         </div>
                       )}
-                      <p className="text-xs text-slate-200 line-clamp-2 leading-relaxed font-medium">
+                      <p className="text-xs text-slate-200 leading-relaxed font-medium">
                         {shot.dialogue ? `"${shot.dialogue}"` : <span className="text-slate-500 italic">(Cảnh quay tĩnh tư liệu & âm nhạc)</span>}
                       </p>
                     </div>
 
-                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
-                      <span className="truncate max-w-[150px]">{shot.image_prompt}</span>
-                      <span className="font-mono">Ch. {shot.chapter || 1}</span>
+                    <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2 text-[10px] text-slate-500">
+                      <span className="line-clamp-2 leading-tight flex-1" title={shot.image_prompt}>
+                        {shot.image_prompt}
+                      </span>
+                      <span className="font-mono flex-shrink-0">Ch. {shot.chapter || 1}</span>
                     </div>
                   </div>
                 </motion.div>

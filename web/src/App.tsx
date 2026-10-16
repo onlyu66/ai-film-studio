@@ -151,23 +151,24 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Top Grid: Form & Realtime Progress */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          <div className="lg:col-span-6 xl:col-span-5">
+        {/* Top: Full-width Cinema Pipeline Progress */}
+        <ProgressStage
+          currentStage={status.stage}
+          status={status.status}
+          progress={status.progress}
+        />
+
+        {/* Middle: Balanced Production Studio Workspace */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          <div className="lg:col-span-7 flex flex-col">
             <ProductionForm
               onSubmit={handleStartProduction}
               isRunning={status.status === 'running'}
             />
           </div>
 
-          <div className="lg:col-span-6 xl:col-span-7 space-y-6">
-            <ProgressStage
-              currentStage={status.stage}
-              status={status.status}
-              progress={status.progress}
-            />
-
-            <TerminalLogs logs={status.logs} />
+          <div className="lg:col-span-5 flex flex-col">
+            <TerminalLogs logs={status.logs} className="h-full" />
           </div>
         </div>
 

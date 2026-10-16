@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2 } from 'lucide-react'
+import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
@@ -131,18 +131,19 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
               <span>Gợi ý ý tưởng bom tấn</span>
             </label>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {PRESET_IDEAS.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleApplyPreset(p)}
                 disabled={isRunning}
-                className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-amber-500/40 text-left transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 cursor-pointer"
+                className="p-3 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-amber-500/40 text-left transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 cursor-pointer flex items-start gap-2.5"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-base">{p.emoji}</span>
-                  <span className="text-xs font-bold text-slate-200 line-clamp-1">{p.title}</span>
+                <span className="text-lg flex-shrink-0 mt-0.5">{p.emoji}</span>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-slate-200 block leading-snug">{p.title}</span>
+                  <span className="text-[11px] text-slate-400 block mt-0.5 leading-snug line-clamp-1">{p.topic}</span>
                 </div>
               </button>
             ))}
@@ -172,7 +173,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
             <Palette className="w-3.5 h-3.5 text-rose-400" />
             <span>Phong cách hình ảnh nghệ thuật (Flux DNA)</span>
           </label>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {STYLES.map((st) => {
               const isSelected = style === st.id
               return (
@@ -193,7 +194,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
                       {st.label}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 line-clamp-1">{st.desc}</p>
+                  <p className="text-[11px] text-slate-400 leading-snug">{st.desc}</p>
                 </button>
               )
             })}
@@ -252,10 +253,11 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
           </button>
 
           {showAdvanced && (
-            <div className="mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3 transition-all animate-fadeIn">
+            <div className="mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3.5 transition-all animate-fadeIn">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Động cơ LLM
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Bot className="w-3 h-3 text-amber-400" />
+                  <span>Động cơ LLM</span>
                 </label>
                 <CustomSelect
                   value={llm}
@@ -266,8 +268,9 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Chuyển động máy quay
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Film className="w-3 h-3 text-rose-400" />
+                  <span>Chuyển động máy quay</span>
                 </label>
                 <CustomSelect
                   value={motion}
@@ -278,8 +281,9 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                  Cử động môi (Lip-Sync)
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Mic className="w-3 h-3 text-indigo-400" />
+                  <span>Cử động môi (Lip-Sync)</span>
                 </label>
                 <CustomSelect
                   value={lipSync}
