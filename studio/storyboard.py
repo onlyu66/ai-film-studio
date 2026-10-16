@@ -118,11 +118,19 @@ def parse_storyboard_json(raw: str) -> Storyboard:
 
 def generate_storyboard(config: StudioConfig, llm: LLMProvider) -> Storyboard:
     """Generate and parse a complete storyboard via LLM provider."""
+    from studio.llm.ollama import OllamaProvider
+    # For CPU-based Ollama, cap shots to keep generation time manageable.
+    # Cloud providers (Gemini, Groq, OpenAI) can handle the full shot count.
+    max_shots = 25 if isinstance(llm, OllamaProvider) else None
+    if max_shots:
+        print(f"  [Ollama/CPU] Capping storyboard to {max_shots} shots for performance. "
+              f"Use --llm gemini or --llm groq for full {config.duration}-minute films.")
     user_prompt = get_storyboard_user_prompt(
         topic=config.topic,
         lang=config.lang,
         duration_minutes=config.duration,
         style=config.style,
+        max_shots=max_shots,
     )
     raw_response = llm.generate(STORYBOARD_SYSTEM_PROMPT, user_prompt)
     return parse_storyboard_json(raw_response)

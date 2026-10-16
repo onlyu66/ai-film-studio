@@ -40,9 +40,11 @@ Return ONLY valid JSON matching this schema, without conversational text:
 }
 """
 
-def get_storyboard_user_prompt(topic: str, lang: str = "en", duration_minutes: int = 30, style: str = "cinematic") -> str:
-    # Scale number of shots based on duration (for test/short durations ~5-10 shots; for full long-form ~100-200 shots)
+def get_storyboard_user_prompt(topic: str, lang: str = "en", duration_minutes: int = 30, style: str = "cinematic", max_shots: int | None = None) -> str:
+    # Scale number of shots based on duration (for test/short durations ~5-10 shots; for full long-form ~100-150 shots)
     estimated_shots = max(5, min(int(duration_minutes * 5), 150))
+    if max_shots is not None:
+        estimated_shots = min(estimated_shots, max_shots)
     return f"""Topic: {topic}
 Language: {lang}
 Target duration: {duration_minutes} minutes (Aim for approximately {estimated_shots} detailed narrative shots across multiple chapters)

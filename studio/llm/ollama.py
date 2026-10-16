@@ -28,13 +28,30 @@ class OllamaProvider(LLMProvider):
 
     def generate(self, system_prompt: str, user_prompt: str) -> str:
         self._ensure_model_exists()
+        import json as _json
         payload = {
             "model": self.model,
             "system": system_prompt,
             "prompt": user_prompt,
-            "stream": False,
+            "stream": True,  # Stream token-by-token — no read timeout on slow CPU
         }
-        resp = requests.post(f"{self.base_url}/api/generate", json=payload, timeout=300)
+        # Use a short connect timeout (30s) but no read timeout (None) since we stream
+        resp = requests.post(
+            f"{self.base_url}/api/generate",
+            json=payload,
+            timeout=(30, None),
+            stream=True,
+        )
         resp.raise_for_status()
-        data = resp.json()
-        return data.get("response", "")
+        chunks: list[str] = []
+        for raw_line in resp.iter_lines():
+            if not raw_line:
+                continue
+            try:
+                data = _json.loads(raw_line)
+            except _json.JSONDecodeError:
+                continue
+            chunks.append(data.get("response", ""))
+            if data.get("done"):
+                break
+        return "".join(chunks)
