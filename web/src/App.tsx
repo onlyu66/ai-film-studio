@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import Navbar from './components/Navbar'
@@ -9,10 +9,20 @@ import StoryboardView from './components/StoryboardView'
 import VideoPlayerModal from './components/VideoPlayerModal'
 import { Button } from './components/ui/button'
 import { CheckCircle2, MonitorPlay } from 'lucide-react'
-import type { StudioStatus, StoryboardData, ProductionFormData } from './types'
+import { useStudioStatus, useStoryboard, useProduceMovie, useCleanOutputs } from './api/queries'
+import type { StudioStatus, ProductionFormData } from './types'
 
 export default function App() {
-  const [status, setStatus] = useState<StudioStatus>({
+  const [showVideoModal, setShowVideoModal] = useState<boolean>(false)
+
+  // TanStack Query hooks for real-time status & storyboard
+  const { data: statusData } = useStudioStatus()
+  const isRunning = statusData?.status === 'running'
+  const { data: storyboardData } = useStoryboard(isRunning)
+  const produceMutation = useProduceMovie()
+  const cleanMutation = useCleanOutputs()
+
+  const status: StudioStatus = statusData ?? {
     status: 'idle',
     stage: 0,
     stage_name: 'Sẵn sàng',
@@ -20,89 +30,37 @@ export default function App() {
     logs: [],
     final_video: null,
     final_srt: null,
-  })
-  const [storyboard, setStoryboard] = useState<StoryboardData | null>(null)
-  const [isCleaning, setIsCleaning] = useState<boolean>(false)
-  const [showVideoModal, setShowVideoModal] = useState<boolean>(false)
-
-  // Fetch status polling
-  const fetchStatus = async () => {
-    try {
-      const res = await fetch('/api/status')
-      if (res.ok) {
-        const data: StudioStatus = await res.json()
-        // If just transitioned to completed, trigger confetti
-        if (data.status === 'completed' && status.status === 'running') {
-          confetti({
-            particleCount: 100,
-            spread: 80,
-            origin: { y: 0.5 }
-          })
-        }
-        setStatus(data)
-      }
-    } catch {
-      // Ignore network hiccup
-    }
   }
+  const storyboard = storyboardData ?? null
 
-  // Fetch storyboard
-  const fetchStoryboard = async () => {
-    try {
-      const res = await fetch('/api/storyboard')
-      if (res.ok) {
-        const data: StoryboardData = await res.json()
-        setStoryboard(data)
-      }
-    } catch {
-      // Ignore
-    }
-  }
-
+  // Trigger celebration confetti when project transitions from running to completed
+  const prevStatusRef = useRef(status.status)
   useEffect(() => {
-    fetchStatus()
-    fetchStoryboard()
-
-    const interval = setInterval(() => {
-      fetchStatus()
-      fetchStoryboard()
-    }, status.status === 'running' ? 2000 : 5000)
-
-    return () => clearInterval(interval)
+    if (status.status === 'completed' && prevStatusRef.current === 'running') {
+      confetti({
+        particleCount: 100,
+        spread: 80,
+        origin: { y: 0.5 }
+      })
+    }
+    prevStatusRef.current = status.status
   }, [status.status])
 
-  const handleStartProduction = async (formData: ProductionFormData) => {
-    try {
-      const res = await fetch('/api/produce', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        alert(err.detail || 'Không thể bắt đầu sản xuất')
-        return
-      }
-      fetchStatus()
-    } catch {
-      alert('Lỗi kết nối tới Studio Server')
-    }
+  const handleStartProduction = (formData: ProductionFormData) => {
+    produceMutation.mutate(formData, {
+      onError: (err) => {
+        alert(err.message || 'Không thể bắt đầu sản xuất')
+      },
+    })
   }
 
-  const handleClean = async () => {
+  const handleClean = () => {
     if (!window.confirm('Bạn có chắc muốn xóa sạch toàn bộ outputs để tạo phim mới từ đầu?')) return
-    setIsCleaning(true)
-    try {
-      const res = await fetch('/api/clean', { method: 'POST' })
-      if (res.ok) {
-        fetchStatus()
-        setStoryboard(null)
-      }
-    } catch {
-      alert('Lỗi khi xóa outputs')
-    } finally {
-      setIsCleaning(false)
-    }
+    cleanMutation.mutate(undefined, {
+      onError: (err) => {
+        alert(err.message || 'Lỗi khi xóa outputs')
+      },
+    })
   }
 
   return (
@@ -110,7 +68,7 @@ export default function App() {
       <Navbar
         status={status}
         onClean={handleClean}
-        isCleaning={isCleaning}
+        isCleaning={cleanMutation.isPending}
         onWatchMovie={() => setShowVideoModal(true)}
       />
 
@@ -163,7 +121,7 @@ export default function App() {
           <div className="lg:col-span-7 flex flex-col">
             <ProductionForm
               onSubmit={handleStartProduction}
-              isRunning={status.status === 'running'}
+              isRunning={status.status === 'running' || produceMutation.isPending}
             />
           </div>
 
@@ -187,7 +145,7 @@ export default function App() {
 
       {/* Footer */}
       <footer className="border-t border-slate-900/90 py-6 text-center text-xs text-slate-600 font-medium">
-        AI Film Studio &copy; 2026 — Designed with React, TypeScript, Vite, Tailwind CSS, shadcn/ui & FastAPI
+        AI Film Studio &copy; 2026 — Built with React, TypeScript, TanStack Query, Axios, Vite & Tailwind CSS
       </footer>
     </div>
   )
