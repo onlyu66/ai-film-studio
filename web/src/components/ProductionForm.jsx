@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
 import { Sparkles, Play, Settings2, Languages, Clock, Palette, Bot, Film, Zap, Layers, Wand2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
@@ -226,11 +225,7 @@ export default function ProductionForm({ onSubmit, isRunning }) {
           </button>
 
           {showAdvanced && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3"
-            >
+            <div className="mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3 transition-all animate-fadeIn">
               <div>
                 <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Động cơ LLM
@@ -278,7 +273,7 @@ export default function ProductionForm({ onSubmit, isRunning }) {
                   <option value="cloud">Bật Cloud Lip-Sync (SadTalker)</option>
                 </select>
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
 

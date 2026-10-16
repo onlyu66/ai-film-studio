@@ -20756,67 +20756,59 @@ function ProductionForm({ onSubmit, isRunning }) {
             ]
           }
         ),
-        showAdvanced && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          motion2.div,
-          {
-            initial: { opacity: 0, height: 0 },
-            animate: { opacity: 1, height: "auto" },
-            className: "mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Động cơ LLM" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "select",
-                  {
-                    value: llm,
-                    onChange: (e) => setLlm(e.target.value),
-                    disabled: isRunning,
-                    className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "gemini", children: "Google Gemini (Khuyên dùng)" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "groq", children: "Groq Cloud (Llama 3.3)" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "ollama", children: "Ollama (Offline local)" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "openai", children: "OpenAI ChatGPT" })
-                    ]
-                  }
-                )
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Chuyển động máy quay" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "select",
-                  {
-                    value: motion2,
-                    onChange: (e) => setMotion(e.target.value),
-                    disabled: isRunning,
-                    className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "vfx", children: "Cinematic VFX (Free - Khuyên dùng)" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "kenburns", children: "Ken Burns Zoom/Pan (Free)" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "replicate", children: "Replicate AI Video (I2V Cloud)" })
-                    ]
-                  }
-                )
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Cử động môi (Lip-Sync)" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "select",
-                  {
-                    value: lipSync,
-                    onChange: (e) => setLipSync(e.target.value),
-                    disabled: isRunning,
-                    className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
-                    children: [
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "none", children: "Tắt nhép môi" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "cloud", children: "Bật Cloud Lip-Sync (SadTalker)" })
-                    ]
-                  }
-                )
-              ] })
-            ]
-          }
-        )
+        showAdvanced && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3 transition-all animate-fadeIn", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Động cơ LLM" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "select",
+              {
+                value: llm,
+                onChange: (e) => setLlm(e.target.value),
+                disabled: isRunning,
+                className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "gemini", children: "Google Gemini (Khuyên dùng)" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "groq", children: "Groq Cloud (Llama 3.3)" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "ollama", children: "Ollama (Offline local)" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "openai", children: "OpenAI ChatGPT" })
+                ]
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Chuyển động máy quay" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "select",
+              {
+                value: motion2,
+                onChange: (e) => setMotion(e.target.value),
+                disabled: isRunning,
+                className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "vfx", children: "Cinematic VFX (Free - Khuyên dùng)" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "kenburns", children: "Ken Burns Zoom/Pan (Free)" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "replicate", children: "Replicate AI Video (I2V Cloud)" })
+                ]
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1", children: "Cử động môi (Lip-Sync)" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "select",
+              {
+                value: lipSync,
+                onChange: (e) => setLipSync(e.target.value),
+                disabled: isRunning,
+                className: "w-full px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-white",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "none", children: "Tắt nhép môi" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "cloud", children: "Bật Cloud Lip-Sync (SadTalker)" })
+                ]
+              }
+            )
+          ] })
+        ] })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
         Button,
