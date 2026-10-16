@@ -25,7 +25,8 @@ def run_pipeline(config: StudioConfig) -> Path:
         f"[bold cyan]AI FILM STUDIO[/bold cyan]\n"
         f"[green]Topic:[/green] {config.topic}\n"
         f"[green]Language:[/green] {config.lang} | [green]Target Duration:[/green] {config.duration}m | [green]Style:[/green] {config.style}\n"
-        f"[green]LLM Provider:[/green] {config.llm_provider}",
+        f"[green]LLM Provider:[/green] {config.llm_provider}\n"
+        f"[green]Motion Engine:[/green] {config.motion_engine} | [green]Lip-Sync:[/green] {config.lip_sync}",
         title="🎬 Starting Production"
     ))
 

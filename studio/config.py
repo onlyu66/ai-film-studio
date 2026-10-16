@@ -10,6 +10,8 @@ class StudioConfig:
     duration: int = 30
     style: str = "cinematic"
     llm_provider: str = "gemini"
+    motion_engine: str = "kenburns"
+    lip_sync: str = "none"
     bgm_path: Optional[Path] = None
     output_dir: Path = field(default_factory=lambda: Path("outputs"))
     project_dir: Path = field(default_factory=lambda: Path("."))
@@ -30,6 +32,10 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
         if v is not None:
             if k == "llm":
                 merged["llm_provider"] = v
+            elif k in ("motion", "motion_engine"):
+                merged["motion_engine"] = v
+            elif k in ("lip_sync", "lipsync"):
+                merged["lip_sync"] = v
             elif k == "bgm":
                 merged["bgm_path"] = Path(v) if v else None
             elif k == "output_dir":
@@ -43,6 +49,8 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
     duration = int(merged.get("duration", 30))
     style = merged.get("style", "cinematic")
     llm_provider = merged.get("llm_provider", "gemini")
+    motion_engine = merged.get("motion_engine", "kenburns")
+    lip_sync = merged.get("lip_sync", "none")
     bgm_path = Path(merged["bgm_path"]) if merged.get("bgm_path") else None
     output_dir = Path(merged.get("output_dir", "outputs"))
     project_dir = Path(merged.get("project_dir", "."))
@@ -53,6 +61,8 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
         duration=duration,
         style=style,
         llm_provider=llm_provider,
+        motion_engine=motion_engine,
+        lip_sync=lip_sync,
         bgm_path=bgm_path,
         output_dir=output_dir,
         project_dir=project_dir,

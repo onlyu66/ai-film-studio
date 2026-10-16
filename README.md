@@ -57,6 +57,8 @@ Toàn bộ file thành phẩm sẽ xuất hiện tại thư mục `outputs/final
 | `--duration` | `30` | Thời lượng phim mục tiêu tính bằng phút |
 | `--style` | `cinematic` | Phong cách thị giác: `cinematic`, `anime`, `noir`, `documentary` |
 | `--llm` | `gemini` | Nhà cung cấp LLM: `gemini`, `groq`, `openai`, `ollama` |
+| `--motion` | `kenburns` | Bộ sinh chuyển động: `kenburns` (free), `vfx` (hiệu ứng cinema), `replicate` (AI Video I2V) |
+| `--lip-sync` | `none` | Khẩu hình môi nhân vật: `none` (default), `cloud` (Replicate SadTalker) |
 | `--bgm` | `None` | Đường dẫn file nhạc nền tùy chọn (`.mp3`) |
 | `--output-dir`| `outputs` | Thư mục lưu trữ assets và sản phẩm |
 

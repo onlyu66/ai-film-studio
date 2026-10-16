@@ -13,6 +13,8 @@ def main():
 @click.option("--duration", default=None, type=int, help="Target duration in minutes")
 @click.option("--style", default=None, help="Visual style preset (e.g. cinematic, anime, noir)")
 @click.option("--llm", default=None, help="LLM provider: gemini, groq, openai, ollama")
+@click.option("--motion", "motion_engine", default="kenburns", type=click.Choice(["kenburns", "vfx", "replicate"]), help="Motion engine: kenburns (free), vfx (cinematic atmosphere), replicate (AI video)")
+@click.option("--lip-sync", "lip_sync", default="none", type=click.Choice(["none", "cloud"]), help="Lip-sync engine: none (default), cloud (Replicate SadTalker)")
 @click.option("--bgm", default=None, help="Path to custom background music file")
 @click.option("--output-dir", default=None, help="Directory to store outputs")
 def run(**kwargs):

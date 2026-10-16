@@ -25,3 +25,20 @@ def test_empty_dialogue_default_duration():
     cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 5.0, "zoom_in")
     idx = cmd.index("-t")
     assert float(cmd[idx + 1]) == 5.0
+
+def test_build_ffmpeg_vfx_filter():
+    cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 5.0, "zoom_in", vfx=True)
+    joined = " ".join(cmd)
+    assert "vignette" in joined
+    assert "contrast" in joined
+
+def test_lipsync_fallback_when_no_token(tmp_path):
+    from studio.lipsync import apply_lipsync_for_shot
+    img = tmp_path / "img.png"
+    img.write_text("dummy")
+    aud = tmp_path / "aud.mp3"
+    aud.write_text("dummy")
+    out = tmp_path / "out.mp4"
+    res = apply_lipsync_for_shot(img, aud, out, engine="none")
+    assert res is None
+
