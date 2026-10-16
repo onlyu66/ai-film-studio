@@ -102,20 +102,18 @@ export default function ProductionForm({ onSubmit, isRunning }) {
           </div>
           <div className="grid grid-cols-2 gap-2">
             {PRESET_IDEAS.map((p, idx) => (
-              <motion.button
+              <button
                 key={idx}
                 type="button"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={() => handleApplyPreset(p)}
                 disabled={isRunning}
-                className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-amber-500/40 text-left transition-all disabled:opacity-40"
+                className="p-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-amber-500/40 text-left transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <span className="text-base">{p.emoji}</span>
                   <span className="text-xs font-bold text-slate-200 line-clamp-1">{p.title}</span>
                 </div>
-              </motion.button>
+              </button>
             ))}
           </div>
         </div>
@@ -147,14 +145,12 @@ export default function ProductionForm({ onSubmit, isRunning }) {
             {STYLES.map((st) => {
               const isSelected = style === st.id
               return (
-                <motion.button
+                <button
                   key={st.id}
                   type="button"
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
                   onClick={() => setStyle(st.id)}
                   disabled={isRunning}
-                  className={`p-3 rounded-xl border text-left transition-all relative overflow-hidden ${
+                  className={`p-3 rounded-xl border text-left transition-all relative overflow-hidden hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${
                     isSelected
                       ? 'bg-gradient-to-r from-amber-500/15 to-rose-500/15 border-amber-500/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/50'
                       : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
@@ -167,7 +163,7 @@ export default function ProductionForm({ onSubmit, isRunning }) {
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400 line-clamp-1">{st.desc}</p>
-                </motion.button>
+                </button>
               )
             })}
           </div>
