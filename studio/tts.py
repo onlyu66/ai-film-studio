@@ -73,24 +73,54 @@ def generate_audio_for_shot(
     output_dir: Path,
     lang: str = "en"
 ) -> Optional[Path]:
-    """Generate audio file for a single shot dialogue. Returns None if dialogue is empty."""
+    """Generate audio file for a single shot dialogue with robust retry and fallback."""
     if not shot.dialogue or not shot.dialogue.strip():
         return None
 
+    import time
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     out_file = output_dir / f"{shot.id}.mp3"
 
-    voice = resolve_voice(shot, characters, default_lang=lang)
-    try:
-        asyncio.run(_synthesize_edge_tts(shot.dialogue.strip(), voice, out_file))
-    except Exception as exc:
-        fallback_voice = DEFAULT_VOICES.get(lang.lower().split("-")[0], "en-US-GuyNeural")
-        if voice != fallback_voice:
-            print(f"  [TTS] Warning: voice '{voice}' failed ({exc}), falling back to '{fallback_voice}'")
-            asyncio.run(_synthesize_edge_tts(shot.dialogue.strip(), fallback_voice, out_file))
-        else:
-            raise
+    # Reuse if already generated and non-empty
+    if out_file.exists() and out_file.stat().st_size > 0:
+        return out_file
+
+    primary_voice = resolve_voice(shot, characters, default_lang=lang)
+    lang_key = (lang or "en").lower().split("-")[0]
+
+    # Ordered candidate voices to try
+    candidate_voices = [primary_voice]
+    for v in SUPPORTED_VOICES.get(lang_key, []):
+        if v not in candidate_voices:
+            candidate_voices.append(v)
+    if "en-US-GuyNeural" not in candidate_voices:
+        candidate_voices.append("en-US-GuyNeural")
+
+    success = False
+    for v in candidate_voices:
+        for attempt in range(1, 4):
+            try:
+                # Remove stale 0-byte file before attempt
+                if out_file.exists():
+                    out_file.unlink()
+                asyncio.run(_synthesize_edge_tts(shot.dialogue.strip(), v, out_file))
+                if out_file.exists() and out_file.stat().st_size > 0:
+                    success = True
+                    break
+            except Exception as exc:
+                print(f"  [TTS] Attempt {attempt} for {shot.id} with '{v}' failed ({exc}), retrying...")
+                time.sleep(1.0 * attempt)
+        if success:
+            break
+
+    if not success:
+        print(f"  [TTS] All online synthesis attempts failed for {shot.id}. Generating silent audio fallback...")
+        word_count = len(shot.dialogue.strip().split())
+        est_sec = max(3.0, min(15.0, word_count * 0.4))
+        silence = AudioSegment.silent(duration=int(est_sec * 1000))
+        silence.export(str(out_file), format="mp3")
+
     return out_file
 
 def get_audio_duration(audio_path: Path) -> float:
