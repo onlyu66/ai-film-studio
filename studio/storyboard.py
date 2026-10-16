@@ -87,23 +87,35 @@ def parse_storyboard_json(raw: str) -> Storyboard:
     characters: Dict[str, Character] = {}
     for char_id, char_data in data.get("characters", {}).items():
         if isinstance(char_data, dict):
+            anchor_val = char_data.get("visual_anchor", "")
+            if isinstance(anchor_val, dict):
+                anchor_str = ", ".join(f"{k}: {v}" for k, v in anchor_val.items() if v)
+            else:
+                anchor_str = str(anchor_val or "")
+
             characters[char_id] = Character(
-                name=char_data.get("name", char_id),
-                visual_anchor=char_data.get("visual_anchor", ""),
-                voice=char_data.get("voice", "en-US-GuyNeural"),
+                name=str(char_data.get("name", char_id)),
+                visual_anchor=anchor_str,
+                voice=str(char_data.get("voice", "en-US-GuyNeural")),
                 seed=int(char_data.get("seed", 42)),
             )
 
     shots: List[Shot] = []
     for s in data.get("shots", []):
         if isinstance(s, dict):
+            img_val = s.get("image_prompt", "")
+            if isinstance(img_val, dict):
+                img_str = ", ".join(f"{k}: {v}" if isinstance(v, str) else str(v) for k, v in img_val.items() if v)
+            else:
+                img_str = str(img_val or "")
+
             shots.append(
                 Shot(
                     id=str(s.get("id", f"shot_{len(shots)+1:03d}")),
                     chapter=int(s.get("chapter", 1)),
                     character_id=s.get("character_id"),
-                    dialogue=s.get("dialogue", "") or "",
-                    image_prompt=s.get("image_prompt", ""),
+                    dialogue=str(s.get("dialogue", "") or ""),
+                    image_prompt=img_str,
                     motion=s.get("motion", "zoom_in") or "zoom_in",
                     duration=float(s["duration"]) if s.get("duration") is not None else None,
                 )

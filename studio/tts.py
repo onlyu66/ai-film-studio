@@ -8,18 +8,60 @@ from studio.storyboard import Storyboard, Shot, Character
 from studio.config import StudioConfig
 from studio.state import StateManager
 
+import re
+
+SUPPORTED_VOICES = {
+    "vi": ["vi-VN-NamMinhNeural", "vi-VN-HoaiMyNeural"],
+    "en": ["en-US-GuyNeural", "en-US-JennyNeural", "en-US-AriaNeural", "en-US-ChristopherNeural"],
+    "ja": ["ja-JP-NanamiNeural", "ja-JP-KeitaNeural"],
+    "zh": ["zh-CN-XiaoxiaoNeural", "zh-CN-YunjianNeural"],
+    "fr": ["fr-FR-DeniseNeural", "fr-FR-HenriNeural"],
+    "es": ["es-ES-ElviraNeural", "es-ES-AlvaroNeural"],
+    "de": ["de-DE-KatjaNeural", "de-DE-ConradNeural"],
+    "ko": ["ko-KR-SunHiNeural", "ko-KR-InJoonNeural"],
+}
+
 DEFAULT_VOICES = {
     "vi": "vi-VN-NamMinhNeural",
     "en": "en-US-GuyNeural",
+    "ja": "ja-JP-NanamiNeural",
+    "zh": "zh-CN-XiaoxiaoNeural",
+    "fr": "fr-FR-DeniseNeural",
+    "es": "es-ES-ElviraNeural",
+    "de": "de-DE-KatjaNeural",
+    "ko": "ko-KR-SunHiNeural",
 }
 
+def is_valid_voice_id(voice: str) -> bool:
+    """Check if voice string matches standard Edge TTS voice naming pattern."""
+    if not isinstance(voice, str):
+        return False
+    return bool(re.match(r"^[a-z]{2,3}-[A-Z]{2,3}-\w+Neural$", voice.strip()))
+
 def resolve_voice(shot: Shot, characters: Dict[str, Character], default_lang: str = "en") -> str:
-    """Resolve the appropriate TTS voice for a given shot."""
+    """Resolve the appropriate TTS voice for a given shot with intelligent fallback."""
+    lang = (default_lang or "en").lower().split("-")[0]
+    voice_pool = SUPPORTED_VOICES.get(lang, SUPPORTED_VOICES["en"])
+    default_voice = DEFAULT_VOICES.get(lang, "en-US-GuyNeural")
+
     if shot.character_id and shot.character_id in characters:
         char = characters[shot.character_id]
-        if char.voice:
-            return char.voice
-    return DEFAULT_VOICES.get(default_lang, "en-US-GuyNeural")
+        if char.voice and is_valid_voice_id(char.voice):
+            return char.voice.strip()
+
+        # Voice string is invalid or LLM hallucinated a person name (e.g. 'Đỗ Thanh Hưng')
+        # Infer gender or distribute voices across characters
+        target_str = f"{char.name} {char.visual_anchor} {char.voice}".lower()
+        female_cues = ["nữ", "female", "woman", "girl", "bà", "cô", "chị", "trixie", "tiên", "ánh", "my", "nhi", "hương", "trang", "lan", "linh", "hoa", "mai"]
+        if any(cue in target_str for cue in female_cues) and len(voice_pool) > 1:
+            # Pick first female voice (usually second in list e.g. HoaiMy, Jenny)
+            return voice_pool[1]
+        elif len(voice_pool) > 0:
+            # Hash character id for stable voice variety
+            idx = abs(hash(shot.character_id)) % len(voice_pool)
+            return voice_pool[idx]
+
+    return default_voice
 
 async def _synthesize_edge_tts(text: str, voice: str, output_path: Path) -> None:
     communicate = edge_tts.Communicate(text, voice)
@@ -40,7 +82,15 @@ def generate_audio_for_shot(
     out_file = output_dir / f"{shot.id}.mp3"
 
     voice = resolve_voice(shot, characters, default_lang=lang)
-    asyncio.run(_synthesize_edge_tts(shot.dialogue.strip(), voice, out_file))
+    try:
+        asyncio.run(_synthesize_edge_tts(shot.dialogue.strip(), voice, out_file))
+    except Exception as exc:
+        fallback_voice = DEFAULT_VOICES.get(lang.lower().split("-")[0], "en-US-GuyNeural")
+        if voice != fallback_voice:
+            print(f"  [TTS] Warning: voice '{voice}' failed ({exc}), falling back to '{fallback_voice}'")
+            asyncio.run(_synthesize_edge_tts(shot.dialogue.strip(), fallback_voice, out_file))
+        else:
+            raise
     return out_file
 
 def get_audio_duration(audio_path: Path) -> float:

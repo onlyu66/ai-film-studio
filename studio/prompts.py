@@ -3,13 +3,13 @@ Your task is to take a premise/topic and produce a complete, production-ready ci
 
 REQUIREMENTS:
 1. Break the story into logical chapters and detailed sequential shots.
-2. Maintain character consistency: Define a visual_anchor for each character (age, ethnic features, signature scars/hair/eyes, distinctive clothing).
+2. Maintain character consistency: Define a visual_anchor for each character (detailed physical description string: age, ethnic features, scars/hair/eyes, distinctive clothing). Do NOT use nested objects.
 3. For each shot provide:
    - id: sequential string e.g. "shot_001_001"
    - chapter: integer chapter number
    - character_id: key matching one of the defined characters, or null for establishing/landscape shots
    - dialogue: character speech or voiceover narration in the requested language
-   - image_prompt: highly detailed visual description for image generation (lighting, camera angle, setting, photorealistic film look)
+   - image_prompt: single detailed string prompt for image generation (lighting, camera angle, setting, cinematic film look). Do NOT use nested objects.
    - motion: camera movement type, one of: "zoom_in", "zoom_out", "pan_left", "pan_right"
    - duration: null (will be calculated from audio duration)
 
@@ -21,8 +21,8 @@ Return ONLY valid JSON matching this schema, without conversational text:
   "characters": {
     "character_id": {
       "name": "Character Name",
-      "visual_anchor": "detailed immutable physical description",
-      "voice": "voice_name",
+      "visual_anchor": "detailed immutable physical description string",
+      "voice": "valid Edge-TTS voice identifier (e.g. vi-VN-NamMinhNeural or vi-VN-HoaiMyNeural for Vietnamese; en-US-GuyNeural or en-US-JennyNeural for English)",
       "seed": 42
     }
   },
@@ -32,7 +32,7 @@ Return ONLY valid JSON matching this schema, without conversational text:
       "chapter": 1,
       "character_id": "character_id",
       "dialogue": "Line of speech or narration",
-      "image_prompt": "Cinematic visual prompt...",
+      "image_prompt": "Cinematic visual prompt string...",
       "motion": "zoom_in",
       "duration": null
     }
