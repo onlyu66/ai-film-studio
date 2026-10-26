@@ -18,15 +18,33 @@ def create_concat_file(video_paths: List[Path], output_path: Path) -> Path:
     output_path.write_text("\n".join(lines), encoding="utf-8")
     return output_path
 
+def resolve_bgm_path(custom_bgm: Optional[Path], style: str = "cinematic") -> Optional[Path]:
+    """Resolve background music path: custom path first, then style preset, then default."""
+    if custom_bgm and Path(custom_bgm).exists():
+        return Path(custom_bgm)
+
+    style_clean = (style or "cinematic").lower().strip()
+    candidates = [
+        Path(f"assets/bgm/{style_clean}.mp3"),
+        Path(f"assets/bgm/{style_clean}.wav"),
+        Path("assets/bgm/default.mp3"),
+        Path("assets/bgm/default.wav"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
+
 def build_master_audio(
     storyboard: Storyboard,
     audio_dir: Path,
     durations: Dict[str, float],
     output_audio_path: Path,
     bgm_path: Optional[Path] = None,
-    ducking_db: float = -14.0
+    ducking_db: float = -14.0,
+    style: str = "cinematic"
 ) -> Path:
-    """Concatenate narration clips and overlay looped background music with ducking."""
+    """Concatenate narration clips, overlay looped background music with ducking, and apply smooth fades."""
     output_audio_path = Path(output_audio_path)
     output_audio_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -49,15 +67,18 @@ def build_master_audio(
         else:
             master += AudioSegment.silent(duration=shot_dur_ms)
 
-    # Mix BGM if provided and exists
-    if bgm_path and Path(bgm_path).exists() and len(master) > 0:
-        bgm = AudioSegment.from_file(str(bgm_path))
-        # Lower BGM volume by ducking_db
+    # Mix BGM if provided or found via style
+    effective_bgm = resolve_bgm_path(bgm_path, style)
+    if effective_bgm and effective_bgm.exists() and len(master) > 0:
+        bgm = AudioSegment.from_file(str(effective_bgm))
         ducked_bgm = bgm + ducking_db
-        # Loop BGM to match or exceed master narration length
         loops = (len(master) // len(ducked_bgm)) + 1
         full_bgm = (ducked_bgm * loops)[:len(master)]
         master = master.overlay(full_bgm)
+
+    # Smooth audio fade in (800ms) and fade out (1000ms)
+    if len(master) > 2000:
+        master = master.fade_in(800).fade_out(1000)
 
     master.export(str(output_audio_path), format="mp3")
     return output_audio_path
@@ -112,6 +133,7 @@ def run_assembly_stage(
         durations=durations,
         output_audio_path=master_audio,
         bgm_path=config.bgm_path,
+        style=config.style,
     )
 
     # 3. Generate SRT subtitle file

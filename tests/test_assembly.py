@@ -28,3 +28,10 @@ def test_generate_srt_skips_empty_dialogue(tmp_path):
     # Empty dialogue shot should not appear as a subtitle entry
     lines = [l.strip() for l in content.strip().split('\n') if l.strip()]
     assert lines[0] == "1"
+
+def test_resolve_bgm_path(tmp_path):
+    from studio.assembly import resolve_bgm_path
+    custom = tmp_path / "custom.mp3"
+    custom.write_text("x")
+    assert resolve_bgm_path(custom) == custom
+    assert resolve_bgm_path(None, "unknown_style") is None
