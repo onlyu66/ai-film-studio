@@ -52,4 +52,36 @@ export async function updateShot(params: UpdateShotParams): Promise<{ success: b
   return response.data
 }
 
+export async function previewVoice(
+  voice: string,
+  text?: string
+): Promise<{ success: boolean; voice: string; audio_url: string }> {
+  const response = await apiClient.post<{ success: boolean; voice: string; audio_url: string }>(
+    '/api/tts/preview-voice',
+    { voice, text }
+  )
+  return response.data
+}
+
+export async function rerollShot(
+  shotId: string
+): Promise<{ success: boolean; shot_id: string; image_url: string }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; image_url: string }>(
+    '/api/storyboard/reroll-shot',
+    { shot_id: shotId }
+  )
+  return response.data
+}
+
+export async function uploadShotImage(
+  shotId: string,
+  imageBase64: string
+): Promise<{ success: boolean; shot_id: string; image_url: string }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; image_url: string }>(
+    '/api/storyboard/upload-shot-image',
+    { shot_id: shotId, image_base64: imageBase64 }
+  )
+  return response.data
+}
+
 

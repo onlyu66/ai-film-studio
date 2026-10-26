@@ -31,6 +31,11 @@ const LIPSYNC_OPTIONS: SelectOption[] = [
   { value: 'cloud', label: 'Cloud Lip-Sync', subtext: 'SadTalker khớp khẩu hình', icon: '👄' },
 ]
 
+const ASPECT_RATIO_OPTIONS: SelectOption[] = [
+  { value: '16:9', label: '16:9 Ngang', subtext: 'YouTube, TV, Máy tính', icon: '🖥️' },
+  { value: '9:16', label: '9:16 Dọc', subtext: 'TikTok, Shorts, Reels', icon: '📱' },
+]
+
 const PRESET_IDEAS: PresetIdea[] = [
   {
     title: "Bí ẩn Atlantis",
@@ -78,6 +83,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
   const [llm, setLlm] = useState('gemini')
   const [motion, setMotion] = useState('vfx')
   const [lipSync, setLipSync] = useState('none')
+  const [aspectRatio, setAspectRatio] = useState('16:9')
   const [pauseAfterScript, setPauseAfterScript] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -97,6 +103,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
       llm,
       motion,
       lip_sync: lipSync,
+      aspect_ratio: aspectRatio,
       pause_after_script: pauseAfterScript,
     })
   }
@@ -203,8 +210,8 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
           </div>
         </div>
 
-        {/* Language & Duration */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Language, Aspect Ratio & Duration */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Languages className="w-3.5 h-3.5 text-indigo-400" />
@@ -220,8 +227,21 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
 
           <div>
             <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Film className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Tỉ lệ khung hình</span>
+            </label>
+            <CustomSelect
+              value={aspectRatio}
+              onChange={setAspectRatio}
+              options={ASPECT_RATIO_OPTIONS}
+              disabled={isRunning}
+            />
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5 text-amber-400" />
-              <span>Thời lượng phim (Phút)</span>
+              <span>Thời lượng phim</span>
             </label>
             <div className="grid grid-cols-4 gap-1.5">
               {[1, 3, 5, 30].map((d) => (

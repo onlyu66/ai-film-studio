@@ -20406,7 +20406,7 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$v = [
+const __iconNode$w = [
   ["path", { d: "M12 8V4H8", key: "hb8ula" }],
   ["rect", { width: "16", height: "12", x: "4", y: "8", rx: "2", key: "enze0r" }],
   ["path", { d: "M2 14h2", key: "vft8re" }],
@@ -20414,23 +20414,35 @@ const __iconNode$v = [
   ["path", { d: "M15 13v2", key: "1xurst" }],
   ["path", { d: "M9 13v2", key: "rq6x2g" }]
 ];
-const Bot = createLucideIcon("Bot", __iconNode$v);
+const Bot = createLucideIcon("Bot", __iconNode$w);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$u = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("Check", __iconNode$u);
+const __iconNode$v = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("Check", __iconNode$v);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$t = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
-const ChevronDown = createLucideIcon("ChevronDown", __iconNode$t);
+const __iconNode$u = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
+const ChevronDown = createLucideIcon("ChevronDown", __iconNode$u);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$t = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
+  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+];
+const CircleAlert = createLucideIcon("CircleAlert", __iconNode$t);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20439,10 +20451,10 @@ const ChevronDown = createLucideIcon("ChevronDown", __iconNode$t);
  */
 const __iconNode$s = [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
-  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+  ["path", { d: "M12 8v8", key: "napkw2" }],
+  ["path", { d: "m8 12 4 4 4-4", key: "k98ssh" }]
 ];
-const CircleAlert = createLucideIcon("CircleAlert", __iconNode$s);
+const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$s);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20451,10 +20463,9 @@ const CircleAlert = createLucideIcon("CircleAlert", __iconNode$s);
  */
 const __iconNode$r = [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "M12 8v8", key: "napkw2" }],
-  ["path", { d: "m8 12 4 4 4-4", key: "k98ssh" }]
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
 ];
-const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$r);
+const CircleCheck = createLucideIcon("CircleCheck", __iconNode$r);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20462,17 +20473,6 @@ const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$r);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$q = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
-];
-const CircleCheck = createLucideIcon("CircleCheck", __iconNode$q);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$p = [
   [
     "path",
     { d: "M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z", key: "1tn4o7" }
@@ -20481,7 +20481,18 @@ const __iconNode$p = [
   ["path", { d: "m12.4 3.4 3.1 4", key: "6hsd6n" }],
   ["path", { d: "M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z", key: "ltgou9" }]
 ];
-const Clapperboard = createLucideIcon("Clapperboard", __iconNode$p);
+const Clapperboard = createLucideIcon("Clapperboard", __iconNode$q);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$p = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["polyline", { points: "12 6 12 12 16 14", key: "68esgv" }]
+];
+const Clock = createLucideIcon("Clock", __iconNode$p);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20489,10 +20500,10 @@ const Clapperboard = createLucideIcon("Clapperboard", __iconNode$p);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$o = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["polyline", { points: "12 6 12 12 16 14", key: "68esgv" }]
+  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
 ];
-const Clock = createLucideIcon("Clock", __iconNode$o);
+const Copy = createLucideIcon("Copy", __iconNode$o);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20500,10 +20511,11 @@ const Clock = createLucideIcon("Clock", __iconNode$o);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$n = [
-  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
-  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
+  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
 ];
-const Copy = createLucideIcon("Copy", __iconNode$n);
+const Download = createLucideIcon("Download", __iconNode$n);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20511,18 +20523,6 @@ const Copy = createLucideIcon("Copy", __iconNode$n);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$m = [
-  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
-  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
-  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
-];
-const Download = createLucideIcon("Download", __iconNode$m);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$l = [
   ["path", { d: "M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5", key: "1couwa" }],
   ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
   [
@@ -20533,7 +20533,21 @@ const __iconNode$l = [
     }
   ]
 ];
-const FilePen = createLucideIcon("FilePen", __iconNode$l);
+const FilePen = createLucideIcon("FilePen", __iconNode$m);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$l = [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M10 9H8", key: "b1mrlr" }],
+  ["path", { d: "M16 13H8", key: "t4e002" }],
+  ["path", { d: "M16 17H8", key: "z1uh3a" }]
+];
+const FileText = createLucideIcon("FileText", __iconNode$l);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20541,20 +20555,6 @@ const FilePen = createLucideIcon("FilePen", __iconNode$l);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$k = [
-  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["path", { d: "M10 9H8", key: "b1mrlr" }],
-  ["path", { d: "M16 13H8", key: "t4e002" }],
-  ["path", { d: "M16 17H8", key: "z1uh3a" }]
-];
-const FileText = createLucideIcon("FileText", __iconNode$k);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$j = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }],
   ["path", { d: "M7 3v18", key: "bbkbws" }],
   ["path", { d: "M3 7.5h4", key: "zfgn84" }],
@@ -20564,7 +20564,19 @@ const __iconNode$j = [
   ["path", { d: "M17 7.5h4", key: "myr1c1" }],
   ["path", { d: "M17 16.5h4", key: "go4c1d" }]
 ];
-const Film = createLucideIcon("Film", __iconNode$j);
+const Film = createLucideIcon("Film", __iconNode$k);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$j = [
+  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
+  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
+  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
+];
+const Image = createLucideIcon("Image", __iconNode$j);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20572,18 +20584,6 @@ const Film = createLucideIcon("Film", __iconNode$j);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$i = [
-  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
-  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
-  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
-];
-const Image = createLucideIcon("Image", __iconNode$i);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$h = [
   ["path", { d: "m5 8 6 6", key: "1wu5hv" }],
   ["path", { d: "m4 14 6-6 2-3", key: "1k1g8d" }],
   ["path", { d: "M2 5h12", key: "or177f" }],
@@ -20591,15 +20591,28 @@ const __iconNode$h = [
   ["path", { d: "m22 22-5-10-5 10", key: "don7ne" }],
   ["path", { d: "M14 18h6", key: "1m8k6r" }]
 ];
-const Languages = createLucideIcon("Languages", __iconNode$h);
+const Languages = createLucideIcon("Languages", __iconNode$i);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$g = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
-const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$g);
+const __iconNode$h = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
+const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$h);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$g = [
+  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
+  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
+  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
+  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
+];
+const Maximize2 = createLucideIcon("Maximize2", __iconNode$g);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20607,12 +20620,11 @@ const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$g);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$f = [
-  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
-  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
-  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
-  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
+  ["path", { d: "M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z", key: "131961" }],
+  ["path", { d: "M19 10v2a7 7 0 0 1-14 0v-2", key: "1vc78b" }],
+  ["line", { x1: "12", x2: "12", y1: "19", y2: "22", key: "x3vr5v" }]
 ];
-const Maximize2 = createLucideIcon("Maximize2", __iconNode$f);
+const Mic = createLucideIcon("Mic", __iconNode$f);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20620,18 +20632,6 @@ const Maximize2 = createLucideIcon("Maximize2", __iconNode$f);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$e = [
-  ["path", { d: "M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z", key: "131961" }],
-  ["path", { d: "M19 10v2a7 7 0 0 1-14 0v-2", key: "1vc78b" }],
-  ["line", { x1: "12", x2: "12", y1: "19", y2: "22", key: "x3vr5v" }]
-];
-const Mic = createLucideIcon("Mic", __iconNode$e);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$d = [
   [
     "path",
     {
@@ -20643,14 +20643,14 @@ const __iconNode$d = [
   ["path", { d: "M8 21h8", key: "1ev6f3" }],
   ["rect", { x: "2", y: "3", width: "20", height: "14", rx: "2", key: "x3v2xh" }]
 ];
-const MonitorPlay = createLucideIcon("MonitorPlay", __iconNode$d);
+const MonitorPlay = createLucideIcon("MonitorPlay", __iconNode$e);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$c = [
+const __iconNode$d = [
   ["circle", { cx: "13.5", cy: "6.5", r: ".5", fill: "currentColor", key: "1okk4w" }],
   ["circle", { cx: "17.5", cy: "10.5", r: ".5", fill: "currentColor", key: "f64h9f" }],
   ["circle", { cx: "8.5", cy: "7.5", r: ".5", fill: "currentColor", key: "fotxhn" }],
@@ -20663,14 +20663,14 @@ const __iconNode$c = [
     }
   ]
 ];
-const Palette = createLucideIcon("Palette", __iconNode$c);
+const Palette = createLucideIcon("Palette", __iconNode$d);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$b = [
+const __iconNode$c = [
   ["path", { d: "M12 20h9", key: "t2du7b" }],
   [
     "path",
@@ -20680,22 +20680,22 @@ const __iconNode$b = [
     }
   ]
 ];
-const PenLine = createLucideIcon("PenLine", __iconNode$b);
+const PenLine = createLucideIcon("PenLine", __iconNode$c);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$a = [["polygon", { points: "6 3 20 12 6 21 6 3", key: "1oa8hb" }]];
-const Play = createLucideIcon("Play", __iconNode$a);
+const __iconNode$b = [["polygon", { points: "6 3 20 12 6 21 6 3", key: "1oa8hb" }]];
+const Play = createLucideIcon("Play", __iconNode$b);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$9 = [
+const __iconNode$a = [
   [
     "path",
     {
@@ -20706,7 +20706,18 @@ const __iconNode$9 = [
   ["path", { d: "M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7", key: "1ydtos" }],
   ["path", { d: "M7 3v4a1 1 0 0 0 1 1h7", key: "t51u73" }]
 ];
-const Save = createLucideIcon("Save", __iconNode$9);
+const Save = createLucideIcon("Save", __iconNode$a);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$9 = [
+  ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }],
+  ["path", { d: "m21 21-4.3-4.3", key: "1qie3q" }]
+];
+const Search = createLucideIcon("Search", __iconNode$9);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20714,10 +20725,12 @@ const Save = createLucideIcon("Save", __iconNode$9);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$8 = [
-  ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }],
-  ["path", { d: "m21 21-4.3-4.3", key: "1qie3q" }]
+  ["path", { d: "M20 7h-9", key: "3s1dr2" }],
+  ["path", { d: "M14 17H5", key: "gfn3mx" }],
+  ["circle", { cx: "17", cy: "17", r: "3", key: "18b49y" }],
+  ["circle", { cx: "7", cy: "7", r: "3", key: "dfmy0x" }]
 ];
-const Search = createLucideIcon("Search", __iconNode$8);
+const Settings2 = createLucideIcon("Settings2", __iconNode$8);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20725,19 +20738,6 @@ const Search = createLucideIcon("Search", __iconNode$8);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$7 = [
-  ["path", { d: "M20 7h-9", key: "3s1dr2" }],
-  ["path", { d: "M14 17H5", key: "gfn3mx" }],
-  ["circle", { cx: "17", cy: "17", r: "3", key: "18b49y" }],
-  ["circle", { cx: "7", cy: "7", r: "3", key: "dfmy0x" }]
-];
-const Settings2 = createLucideIcon("Settings2", __iconNode$7);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$6 = [
   [
     "path",
     {
@@ -20750,7 +20750,18 @@ const __iconNode$6 = [
   ["path", { d: "M4 17v2", key: "vumght" }],
   ["path", { d: "M5 18H3", key: "zchphs" }]
 ];
-const Sparkles = createLucideIcon("Sparkles", __iconNode$6);
+const Sparkles = createLucideIcon("Sparkles", __iconNode$7);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$6 = [
+  ["polyline", { points: "4 17 10 11 4 5", key: "akl6gq" }],
+  ["line", { x1: "12", x2: "20", y1: "19", y2: "19", key: "q2wloq" }]
+];
+const Terminal = createLucideIcon("Terminal", __iconNode$6);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20758,10 +20769,13 @@ const Sparkles = createLucideIcon("Sparkles", __iconNode$6);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$5 = [
-  ["polyline", { points: "4 17 10 11 4 5", key: "akl6gq" }],
-  ["line", { x1: "12", x2: "20", y1: "19", y2: "19", key: "q2wloq" }]
+  ["path", { d: "M3 6h18", key: "d0wm0j" }],
+  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
+  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
+  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
+  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
 ];
-const Terminal = createLucideIcon("Terminal", __iconNode$5);
+const Trash2 = createLucideIcon("Trash2", __iconNode$5);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20769,13 +20783,11 @@ const Terminal = createLucideIcon("Terminal", __iconNode$5);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$4 = [
-  ["path", { d: "M3 6h18", key: "d0wm0j" }],
-  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
-  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
-  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
-  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["polyline", { points: "17 8 12 3 7 8", key: "t8dd8p" }],
+  ["line", { x1: "12", x2: "12", y1: "3", y2: "15", key: "widbto" }]
 ];
-const Trash2 = createLucideIcon("Trash2", __iconNode$4);
+const Upload = createLucideIcon("Upload", __iconNode$4);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -24462,6 +24474,10 @@ const LIPSYNC_OPTIONS = [
   { value: "none", label: "Tắt nhép môi", subtext: "Render nhanh, máy nhẹ", icon: "🚫" },
   { value: "cloud", label: "Cloud Lip-Sync", subtext: "SadTalker khớp khẩu hình", icon: "👄" }
 ];
+const ASPECT_RATIO_OPTIONS = [
+  { value: "16:9", label: "16:9 Ngang", subtext: "YouTube, TV, Máy tính", icon: "🖥️" },
+  { value: "9:16", label: "9:16 Dọc", subtext: "TikTok, Shorts, Reels", icon: "📱" }
+];
 const PRESET_IDEAS = [
   {
     title: "Bí ẩn Atlantis",
@@ -24502,6 +24518,7 @@ function ProductionForm({ onSubmit, isRunning }) {
   const [llm, setLlm] = reactExports.useState("gemini");
   const [motion2, setMotion] = reactExports.useState("vfx");
   const [lipSync, setLipSync] = reactExports.useState("none");
+  const [aspectRatio2, setAspectRatio] = reactExports.useState("16:9");
   const [pauseAfterScript, setPauseAfterScript] = reactExports.useState(false);
   const [showAdvanced, setShowAdvanced] = reactExports.useState(false);
   const handleApplyPreset = (p) => {
@@ -24519,6 +24536,7 @@ function ProductionForm({ onSubmit, isRunning }) {
       llm,
       motion: motion2,
       lip_sync: lipSync,
+      aspect_ratio: aspectRatio2,
       pause_after_script: pauseAfterScript
     });
   };
@@ -24597,7 +24615,7 @@ function ProductionForm({ onSubmit, isRunning }) {
           );
         }) })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-4", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Languages, { className: "w-3.5 h-3.5 text-indigo-400" }),
@@ -24615,8 +24633,23 @@ function ProductionForm({ onSubmit, isRunning }) {
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-cyan-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Tỉ lệ khung hình" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            CustomSelect,
+            {
+              value: aspectRatio2,
+              onChange: setAspectRatio,
+              options: ASPECT_RATIO_OPTIONS,
+              disabled: isRunning
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(Clock, { className: "w-3.5 h-3.5 text-amber-400" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Thời lượng phim (Phút)" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Thời lượng phim" })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-4 gap-1.5", children: [1, 3, 5, 30].map((d) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "button",
@@ -28604,6 +28637,27 @@ async function updateShot(params) {
   );
   return response.data;
 }
+async function previewVoice(voice, text) {
+  const response = await apiClient.post(
+    "/api/tts/preview-voice",
+    { voice, text }
+  );
+  return response.data;
+}
+async function rerollShot(shotId) {
+  const response = await apiClient.post(
+    "/api/storyboard/reroll-shot",
+    { shot_id: shotId }
+  );
+  return response.data;
+}
+async function uploadShotImage(shotId, imageBase64) {
+  const response = await apiClient.post(
+    "/api/storyboard/upload-shot-image",
+    { shot_id: shotId, image_base64: imageBase64 }
+  );
+  return response.data;
+}
 const QUERY_KEYS = {
   status: ["studio", "status"],
   storyboard: ["studio", "storyboard"]
@@ -28675,6 +28729,29 @@ function useUpdateShot() {
     }
   });
 }
+function usePreviewVoice() {
+  return useMutation({
+    mutationFn: ({ voice, text }) => previewVoice(voice, text)
+  });
+}
+function useRerollShot() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: (shotId) => rerollShot(shotId),
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: QUERY_KEYS.storyboard });
+    }
+  });
+}
+function useUploadShotImage() {
+  const queryClient2 = useQueryClient();
+  return useMutation({
+    mutationFn: ({ shotId, imageBase64 }) => uploadShotImage(shotId, imageBase64),
+    onSuccess: () => {
+      queryClient2.invalidateQueries({ queryKey: QUERY_KEYS.storyboard });
+    }
+  });
+}
 const MOTION_OPTIONS = [
   { value: "zoom_in", label: "Zoom In (Tiến tới)", subtext: "Camera phóng to dần vào cận cảnh", icon: "🔍" },
   { value: "zoom_out", label: "Zoom Out (Lùi xa)", subtext: "Camera lùi dần tạo cảm giác bao quát", icon: "🔭" },
@@ -28712,8 +28789,65 @@ function StoryboardView({ storyboard }) {
   const [editDialogue, setEditDialogue] = reactExports.useState("");
   const [editPrompt, setEditPrompt] = reactExports.useState("");
   const [editMotion, setEditMotion] = reactExports.useState("zoom_in");
+  const [playingVoice, setPlayingVoice] = reactExports.useState(null);
+  const [rerollingShotId, setRerollingShotId] = reactExports.useState(null);
+  const [uploadingShotId, setUploadingShotId] = reactExports.useState(null);
+  const [cacheBuster, setCacheBuster] = reactExports.useState({});
   const updateVoiceMutation = useUpdateCharacterVoice();
   const updateShotMutation = useUpdateShot();
+  const previewVoiceMutation = usePreviewVoice();
+  const rerollShotMutation = useRerollShot();
+  const uploadShotImageMutation = useUploadShotImage();
+  const handlePlayVoice = (voice) => {
+    setPlayingVoice(voice);
+    previewVoiceMutation.mutate(
+      { voice },
+      {
+        onSuccess: (data) => {
+          const audio = new Audio(data.audio_url);
+          audio.onended = () => setPlayingVoice(null);
+          audio.onerror = () => setPlayingVoice(null);
+          audio.play().catch(() => setPlayingVoice(null));
+        },
+        onError: () => setPlayingVoice(null)
+      }
+    );
+  };
+  const handleRerollShot = (shotId) => {
+    setRerollingShotId(shotId);
+    rerollShotMutation.mutate(shotId, {
+      onSettled: () => {
+        setRerollingShotId(null);
+        setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }));
+      },
+      onError: (err) => {
+        alert(err.message || "Lỗi khi tạo lại ảnh cho phân cảnh");
+      }
+    });
+  };
+  const handleUploadImage = (shotId, e) => {
+    var _a3;
+    const file = (_a3 = e.target.files) == null ? void 0 : _a3[0];
+    if (!file) return;
+    const reader = new FileReader();
+    setUploadingShotId(shotId);
+    reader.onload = () => {
+      const base64 = reader.result;
+      uploadShotImageMutation.mutate(
+        { shotId, imageBase64: base64 },
+        {
+          onSettled: () => {
+            setUploadingShotId(null);
+            setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }));
+          },
+          onError: (err) => {
+            alert(err.message || "Lỗi khi tải ảnh lên");
+          }
+        }
+      );
+    };
+    reader.readAsDataURL(file);
+  };
   const rawCharacters = (storyboard == null ? void 0 : storyboard.characters) || {};
   const rawShots = (storyboard == null ? void 0 : storyboard.shots) || [];
   const currentLang = ((storyboard == null ? void 0 : storyboard.language) || "vi").toLowerCase().split("-")[0];
@@ -28881,15 +29015,28 @@ function StoryboardView({ storyboard }) {
                     " Đã lưu"
                   ] }) : null
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  CustomSelect,
-                  {
-                    value: currentVoice,
-                    onChange: (newVoice) => handleVoiceChange(id2, newVoice),
-                    options: currentVoiceOptions,
-                    disabled: savingCharId === id2
-                  }
-                )
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex-1", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    CustomSelect,
+                    {
+                      value: currentVoice,
+                      onChange: (newVoice) => handleVoiceChange(id2, newVoice),
+                      options: currentVoiceOptions,
+                      disabled: savingCharId === id2
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => handlePlayVoice(currentVoice),
+                      disabled: playingVoice === currentVoice || previewVoiceMutation.isPending,
+                      className: "p-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all flex items-center justify-center cursor-pointer shrink-0",
+                      title: "Nghe thử giọng này",
+                      children: playingVoice === currentVoice ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 animate-spin text-indigo-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-4 h-4 text-indigo-400" })
+                    }
+                  )
+                ] })
               ] })
             ]
           },
@@ -28898,7 +29045,7 @@ function StoryboardView({ storyboard }) {
       }) }),
       activeTab === "shots" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4", children: filteredShots.map((shot) => {
         var _a3;
-        const imgSrc = `/api/outputs/images/${shot.id}.png`;
+        const imgSrc = `/api/outputs/images/${shot.id}.png?t=${cacheBuster[shot.id] || ""}`;
         return /* @__PURE__ */ jsxRuntimeExports.jsxs(
           motion.div,
           {
@@ -28940,19 +29087,56 @@ function StoryboardView({ storyboard }) {
                       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "👤" }),
                       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate", children: ((_a3 = characters[shot.character_id]) == null ? void 0 : _a3.name) || shot.character_id })
                     ] }) : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono text-slate-500 uppercase tracking-wider", children: "Cảnh quay chung" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      "button",
-                      {
-                        type: "button",
-                        onClick: () => handleOpenEditShot(shot),
-                        className: "px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0",
-                        title: "Sửa lời thoại, visual prompt hoặc góc máy",
-                        children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(PenLine, { className: "w-3 h-3" }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Sửa" })
-                        ]
-                      }
-                    )
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: () => handleRerollShot(shot.id),
+                          disabled: rerollingShotId === shot.id,
+                          className: "px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-rose-500 hover:text-white text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0",
+                          title: "Tạo lại ảnh ngẫu nhiên mới cho shot này",
+                          children: [
+                            rerollingShotId === shot.id ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3 h-3 animate-spin text-rose-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3 h-3 text-rose-400" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Reroll" })
+                          ]
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "label",
+                        {
+                          className: "px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-cyan-500 hover:text-slate-950 text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0",
+                          title: "Tải ảnh riêng thay thế",
+                          children: [
+                            uploadingShotId === shot.id ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3 h-3 animate-spin text-cyan-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "w-3 h-3 text-cyan-400" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Upload" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(
+                              "input",
+                              {
+                                type: "file",
+                                accept: "image/*",
+                                className: "hidden",
+                                onChange: (e) => handleUploadImage(shot.id, e),
+                                disabled: uploadingShotId === shot.id
+                              }
+                            )
+                          ]
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: () => handleOpenEditShot(shot),
+                          className: "px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0",
+                          title: "Sửa lời thoại, visual prompt hoặc góc máy",
+                          children: [
+                            /* @__PURE__ */ jsxRuntimeExports.jsx(PenLine, { className: "w-3 h-3" }),
+                            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Sửa" })
+                          ]
+                        }
+                      )
+                    ] })
                   ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-200 leading-relaxed font-medium", children: shot.dialogue ? `"${shot.dialogue}"` : /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-slate-500 italic", children: "(Cảnh quay tĩnh tư liệu & âm nhạc)" }) })
                 ] }),

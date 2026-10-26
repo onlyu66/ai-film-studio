@@ -1,10 +1,16 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save } from 'lucide-react'
+import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save, Sparkles, Upload, Play } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
-import { useUpdateCharacterVoice, useUpdateShot } from '../api/queries'
+import {
+  useUpdateCharacterVoice,
+  useUpdateShot,
+  usePreviewVoice,
+  useRerollShot,
+  useUploadShotImage,
+} from '../api/queries'
 import type { StoryboardData, SelectOption } from '../types'
 
 interface CharacterData {
@@ -70,8 +76,68 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
   const [editPrompt, setEditPrompt] = useState('')
   const [editMotion, setEditMotion] = useState('zoom_in')
 
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null)
+  const [rerollingShotId, setRerollingShotId] = useState<string | null>(null)
+  const [uploadingShotId, setUploadingShotId] = useState<string | null>(null)
+  const [cacheBuster, setCacheBuster] = useState<Record<string, number>>({})
+
   const updateVoiceMutation = useUpdateCharacterVoice()
   const updateShotMutation = useUpdateShot()
+  const previewVoiceMutation = usePreviewVoice()
+  const rerollShotMutation = useRerollShot()
+  const uploadShotImageMutation = useUploadShotImage()
+
+  const handlePlayVoice = (voice: string) => {
+    setPlayingVoice(voice)
+    previewVoiceMutation.mutate(
+      { voice },
+      {
+        onSuccess: (data) => {
+          const audio = new Audio(data.audio_url)
+          audio.onended = () => setPlayingVoice(null)
+          audio.onerror = () => setPlayingVoice(null)
+          audio.play().catch(() => setPlayingVoice(null))
+        },
+        onError: () => setPlayingVoice(null),
+      }
+    )
+  }
+
+  const handleRerollShot = (shotId: string) => {
+    setRerollingShotId(shotId)
+    rerollShotMutation.mutate(shotId, {
+      onSettled: () => {
+        setRerollingShotId(null)
+        setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
+      },
+      onError: (err: any) => {
+        alert(err.message || 'Lỗi khi tạo lại ảnh cho phân cảnh')
+      },
+    })
+  }
+
+  const handleUploadImage = (shotId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    setUploadingShotId(shotId)
+    reader.onload = () => {
+      const base64 = reader.result as string
+      uploadShotImageMutation.mutate(
+        { shotId, imageBase64: base64 },
+        {
+          onSettled: () => {
+            setUploadingShotId(null)
+            setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
+          },
+          onError: (err: any) => {
+            alert(err.message || 'Lỗi khi tải ảnh lên')
+          },
+        }
+      )
+    }
+    reader.readAsDataURL(file)
+  }
 
   const rawCharacters = (storyboard?.characters || {}) as Record<string, CharacterData>
   const rawShots = (storyboard?.shots || []) as ShotData[]
@@ -275,12 +341,29 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                       ) : null}
                     </div>
 
-                    <CustomSelect
-                      value={currentVoice}
-                      onChange={(newVoice) => handleVoiceChange(id, newVoice)}
-                      options={currentVoiceOptions}
-                      disabled={savingCharId === id}
-                    />
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
+                        <CustomSelect
+                          value={currentVoice}
+                          onChange={(newVoice) => handleVoiceChange(id, newVoice)}
+                          options={currentVoiceOptions}
+                          disabled={savingCharId === id}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handlePlayVoice(currentVoice)}
+                        disabled={playingVoice === currentVoice || previewVoiceMutation.isPending}
+                        className="p-2.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all flex items-center justify-center cursor-pointer shrink-0"
+                        title="Nghe thử giọng này"
+                      >
+                        {playingVoice === currentVoice ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
+                        ) : (
+                          <Play className="w-4 h-4 text-indigo-400" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               )
@@ -292,7 +375,7 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
         {activeTab === 'shots' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredShots.map((shot) => {
-              const imgSrc = `/api/outputs/images/${shot.id}.png`
+              const imgSrc = `/api/outputs/images/${shot.id}.png?t=${cacheBuster[shot.id] || ''}`
 
               return (
                 <motion.div
@@ -347,15 +430,51 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                           <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">Cảnh quay chung</span>
                         )}
 
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditShot(shot)}
-                          className="px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0"
-                          title="Sửa lời thoại, visual prompt hoặc góc máy"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                          <span>Sửa</span>
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleRerollShot(shot.id)}
+                            disabled={rerollingShotId === shot.id}
+                            className="px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-rose-500 hover:text-white text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0"
+                            title="Tạo lại ảnh ngẫu nhiên mới cho shot này"
+                          >
+                            {rerollingShotId === shot.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-rose-400" />
+                            ) : (
+                              <Sparkles className="w-3 h-3 text-rose-400" />
+                            )}
+                            <span className="hidden sm:inline">Reroll</span>
+                          </button>
+
+                          <label
+                            className="px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-cyan-500 hover:text-slate-950 text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0"
+                            title="Tải ảnh riêng thay thế"
+                          >
+                            {uploadingShotId === shot.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
+                            ) : (
+                              <Upload className="w-3 h-3 text-cyan-400" />
+                            )}
+                            <span className="hidden sm:inline">Upload</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => handleUploadImage(shot.id, e)}
+                              disabled={uploadingShotId === shot.id}
+                            />
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditShot(shot)}
+                            className="px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0"
+                            title="Sửa lời thoại, visual prompt hoặc góc máy"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>Sửa</span>
+                          </button>
+                        </div>
                       </div>
 
                       <p className="text-xs text-slate-200 leading-relaxed font-medium">

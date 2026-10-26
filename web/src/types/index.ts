@@ -30,6 +30,7 @@ export interface ProductionFormData {
   llm: string
   motion: string
   lip_sync: string
+  aspect_ratio?: string
   pause_after_script?: boolean
 }
 

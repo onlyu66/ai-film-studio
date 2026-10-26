@@ -7,6 +7,9 @@ import {
   updateCharacterVoice,
   continueProduction,
   updateShot,
+  previewVoice,
+  rerollShot,
+  uploadShotImage,
   type UpdateShotParams,
 } from './studio'
 import type { StudioStatus, StoryboardData, ProductionFormData } from '../types'
@@ -90,6 +93,35 @@ export function useUpdateShot() {
 
   return useMutation({
     mutationFn: (params: UpdateShotParams) => updateShot(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function usePreviewVoice() {
+  return useMutation({
+    mutationFn: ({ voice, text }: { voice: string; text?: string }) => previewVoice(voice, text),
+  })
+}
+
+export function useRerollShot() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (shotId: string) => rerollShot(shotId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useUploadShotImage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ shotId, imageBase64 }: { shotId: string; imageBase64: string }) =>
+      uploadShotImage(shotId, imageBase64),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
     },
