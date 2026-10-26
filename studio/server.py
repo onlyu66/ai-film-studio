@@ -33,6 +33,7 @@ class ProduceRequest(BaseModel):
     motion: str = "kenburns"
     lip_sync: str = "none"
     aspect_ratio: str = "16:9"
+    hardsub: bool = False
     pause_after_script: bool = False
 
 # Global pipeline execution state
@@ -74,6 +75,7 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             motion_engine=req.motion,
             lip_sync=req.lip_sync,
             aspect_ratio=req.aspect_ratio,
+            hardsub=req.hardsub,
             output_dir=Path("outputs"),
         )
 

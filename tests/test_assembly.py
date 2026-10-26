@@ -35,3 +35,14 @@ def test_resolve_bgm_path(tmp_path):
     custom.write_text("x")
     assert resolve_bgm_path(custom) == custom
     assert resolve_bgm_path(None, "unknown_style") is None
+
+def test_build_hardsub_filter(tmp_path):
+    from studio.assembly import build_hardsub_filter
+    srt = tmp_path / "sub.srt"
+    f1 = build_hardsub_filter(srt, aspect_ratio="16:9")
+    assert "subtitles=" in f1
+    assert "PrimaryColour" in f1
+    assert "FontSize=22" in f1
+
+    f2 = build_hardsub_filter(srt, aspect_ratio="9:16")
+    assert "MarginV=90" in f2

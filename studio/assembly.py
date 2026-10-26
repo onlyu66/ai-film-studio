@@ -83,6 +83,15 @@ def build_master_audio(
     master.export(str(output_audio_path), format="mp3")
     return output_audio_path
 
+def build_hardsub_filter(srt_path: Path, aspect_ratio: str = "16:9") -> str:
+    """Generate FFmpeg subtitles filter with stylish yellow-and-black bordered font."""
+    escaped_path = str(srt_path.resolve()).replace("\\", "/").replace(":", "\\:")
+    if aspect_ratio == "9:16":
+        style = "FontSize=18,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Bold=1,Outline=2.5,Shadow=1,Alignment=2,MarginV=90"
+    else:
+        style = "FontSize=22,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Bold=1,Outline=2.5,Shadow=1,Alignment=2,MarginV=40"
+    return f"subtitles='{escaped_path}':force_style='{style}'"
+
 def run_assembly_stage(
     storyboard: Storyboard,
     config: StudioConfig,
@@ -140,17 +149,31 @@ def run_assembly_stage(
     master_srt = final_dir / f"movie_{timestamp}.srt"
     generate_srt(storyboard, durations, master_srt)
 
-    # 4. Mux final video with audio
+    # 4. Mux final video with audio (with optional Burn-in Hardsub)
     final_movie = final_dir / f"movie_{timestamp}.mp4"
-    cmd_mux = [
-        "ffmpeg", "-y",
-        "-i", str(raw_video),
-        "-i", str(master_audio),
-        "-c:v", "copy",
-        "-c:a", "aac",
-        "-shortest",
-        str(final_movie)
-    ]
+    if getattr(config, "hardsub", False):
+        sub_filter = build_hardsub_filter(master_srt, getattr(config, "aspect_ratio", "16:9"))
+        cmd_mux = [
+            "ffmpeg", "-y",
+            "-i", str(raw_video),
+            "-i", str(master_audio),
+            "-vf", sub_filter,
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-shortest",
+            str(final_movie)
+        ]
+    else:
+        cmd_mux = [
+            "ffmpeg", "-y",
+            "-i", str(raw_video),
+            "-i", str(master_audio),
+            "-c:v", "copy",
+            "-c:a", "aac",
+            "-shortest",
+            str(final_movie)
+        ]
     subprocess.run(cmd_mux, check=True)
 
     # Clean up intermediate files
