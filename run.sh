@@ -10,7 +10,8 @@ if [ "$1" = "clean" ]; then
 fi
 
 if [ "$1" = "ui" ] || [ "$1" = "web" ]; then
-    echo "🎬 Đang khởi động AI Film Studio Web UI tại http://localhost:8080..."
+    PORT="${UI_PORT:-8080}"
+    echo "🎬 Đang khởi động AI Film Studio Web UI tại http://localhost:${PORT}..."
     docker compose up -d ollama
     docker compose up ui
     exit 0
