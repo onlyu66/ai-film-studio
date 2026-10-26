@@ -252,6 +252,198 @@ def update_shot(req: UpdateShotRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class VoicePreviewRequest(BaseModel):
+    voice: str
+    text: Optional[str] = None
+
+@app.post("/api/tts/preview-voice")
+def preview_voice(req: VoicePreviewRequest):
+    import edge_tts
+    import asyncio
+    preview_dir = Path("outputs/previews")
+    preview_dir.mkdir(parents=True, exist_ok=True)
+    out_file = preview_dir / f"{req.voice}.mp3"
+
+    sample_text = req.text
+    if not sample_text:
+        if req.voice.startswith("vi"):
+            sample_text = "Xin chào, đây là giọng đọc thử nghiệm của nhân vật trong bộ phim."
+        elif req.voice.startswith("ja"):
+            sample_text = "こんにちは、これはキャラクターのテスト音声です。"
+        elif req.voice.startswith("fr"):
+            sample_text = "Bonjour, ceci est un test de voix pour le personnage."
+        else:
+            sample_text = "Hello, this is a voice preview for the character in the film."
+
+    try:
+        asyncio.run(edge_tts.Communicate(sample_text, req.voice).save(str(out_file)))
+        return {
+            "success": True,
+            "voice": req.voice,
+            "audio_url": f"/api/outputs/previews/{req.voice}.mp3?t={int(time.time())}"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RerollShotRequest(BaseModel):
+    shot_id: str
+
+@app.post("/api/storyboard/reroll-shot")
+def reroll_shot(req: RerollShotRequest):
+    import random
+    from studio.images import generate_image_for_shot
+    from studio.motion import render_motion_for_shot
+
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    with open(sb_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    shot_data = None
+    for s in data.get("shots", []):
+        if s.get("id") == req.shot_id:
+            shot_data = s
+            break
+    if not shot_data:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
+
+    from studio.storyboard import Shot, Character
+    shot = Shot(
+        id=shot_data["id"],
+        chapter=shot_data.get("chapter", 1),
+        character_id=shot_data.get("character_id"),
+        dialogue=shot_data.get("dialogue", ""),
+        image_prompt=shot_data.get("image_prompt", ""),
+        motion=shot_data.get("motion", "zoom_in"),
+        duration=shot_data.get("duration"),
+    )
+    characters = {
+        k: Character(
+            name=v.get("name", k),
+            visual_anchor=v.get("visual_anchor", ""),
+            voice=v.get("voice", ""),
+            seed=v.get("seed", 42)
+        )
+        for k, v in data.get("characters", {}).items()
+    }
+
+    new_seed = random.randint(1000, 9999999)
+    style = getattr(last_produce_request, "style", "cinematic") if last_produce_request else "cinematic"
+    aspect_ratio = getattr(last_produce_request, "aspect_ratio", "16:9") if last_produce_request else "16:9"
+    motion_engine = getattr(last_produce_request, "motion", "kenburns") if last_produce_request else "kenburns"
+
+    img_dir = Path("outputs/images")
+    img_path = generate_image_for_shot(
+        shot=shot,
+        characters=characters,
+        style=style,
+        output_dir=img_dir,
+        aspect_ratio=aspect_ratio,
+        seed_override=new_seed
+    )
+    if not img_path or not img_path.exists():
+        raise HTTPException(status_code=500, detail="Không thể tạo ảnh mới cho phân cảnh này.")
+
+    vid_dir = Path("outputs/videos")
+    out_vid = vid_dir / f"{req.shot_id}.mp4"
+    duration = float(shot.duration or 5.0)
+    audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
+    if audio_file.exists():
+        try:
+            from studio.tts import get_audio_duration
+            duration = get_audio_duration(audio_file)
+        except Exception:
+            pass
+
+    render_motion_for_shot(
+        image_path=img_path,
+        output_path=out_vid,
+        duration=duration,
+        motion_type=shot.motion or "zoom_in",
+        engine=motion_engine,
+        prompt=shot.image_prompt,
+        aspect_ratio=aspect_ratio
+    )
+
+    log_message(f"Đã tạo lại ảnh và video mới cho phân cảnh '{req.shot_id}' (Seed: {new_seed}).")
+    return {
+        "success": True,
+        "shot_id": req.shot_id,
+        "image_url": f"/api/outputs/images/{req.shot_id}.png?t={int(time.time())}"
+    }
+
+class UploadShotImageRequest(BaseModel):
+    shot_id: str
+    image_base64: str
+
+@app.post("/api/storyboard/upload-shot-image")
+def upload_shot_image(req: UploadShotImageRequest):
+    import base64
+    from studio.motion import render_motion_for_shot
+
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    with open(sb_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    shot_data = None
+    for s in data.get("shots", []):
+        if s.get("id") == req.shot_id:
+            shot_data = s
+            break
+    if not shot_data:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
+
+    img_dir = Path("outputs/images")
+    img_dir.mkdir(parents=True, exist_ok=True)
+    out_img = img_dir / f"{req.shot_id}.png"
+
+    b64_data = req.image_base64
+    if "," in b64_data:
+        b64_data = b64_data.split(",", 1)[1]
+
+    try:
+        img_bytes = base64.b64decode(b64_data)
+        with open(out_img, "wb") as f:
+            f.write(img_bytes)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Lỗi giải mã ảnh: {e}")
+
+    vid_dir = Path("outputs/videos")
+    out_vid = vid_dir / f"{req.shot_id}.mp4"
+    duration = float(shot_data.get("duration") or 5.0)
+    audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
+    if audio_file.exists():
+        try:
+            from studio.tts import get_audio_duration
+            duration = get_audio_duration(audio_file)
+        except Exception:
+            pass
+
+    aspect_ratio = getattr(last_produce_request, "aspect_ratio", "16:9") if last_produce_request else "16:9"
+    motion_engine = getattr(last_produce_request, "motion", "kenburns") if last_produce_request else "kenburns"
+
+    render_motion_for_shot(
+        image_path=out_img,
+        output_path=out_vid,
+        duration=duration,
+        motion_type=shot_data.get("motion") or "zoom_in",
+        engine=motion_engine,
+        prompt=shot_data.get("image_prompt", ""),
+        aspect_ratio=aspect_ratio
+    )
+
+    log_message(f"Đã cập nhật ảnh tùy chỉnh cho phân cảnh '{req.shot_id}'.")
+    return {
+        "success": True,
+        "shot_id": req.shot_id,
+        "image_url": f"/api/outputs/images/{req.shot_id}.png?t={int(time.time())}"
+    }
+
 @app.post("/api/continue")
 def continue_film():
     if pipeline_state["status"] == "running":
