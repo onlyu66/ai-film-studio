@@ -70,39 +70,49 @@ def generate_image_for_shot(
 
     return None
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 def run_image_stage(
     storyboard: Storyboard,
     config: StudioConfig,
     state: StateManager
 ) -> Dict[str, Path]:
-    """Run image generation for all shots in storyboard. Returns mapping of shot_id -> image_path."""
+    """Run image generation for all shots in storyboard in parallel. Returns mapping of shot_id -> image_path."""
     img_dir = config.output_dir / "images"
     img_dir.mkdir(parents=True, exist_ok=True)
     images: Dict[str, Path] = {}
 
+    pending_shots = []
     for shot in storyboard.shots:
         out_file = img_dir / f"{shot.id}.png"
-
         if state.is_stage_complete(shot.id, "image") and out_file.exists():
             images[shot.id] = out_file
-            continue
-
-        result = generate_image_for_shot(
-            shot=shot,
-            characters=storyboard.characters,
-            style=config.style,
-            output_dir=img_dir,
-        )
-
-        if result and result.exists():
-            images[shot.id] = result
         else:
-            # Fallback placeholder 1280x720 black image if network unavailable
-            _create_fallback_image(out_file)
-            images[shot.id] = out_file
+            pending_shots.append(shot)
 
-        state.mark_complete(shot.id, "image")
-        state.save()
+    if pending_shots:
+        def process_shot_image(shot: Shot):
+            out_file = img_dir / f"{shot.id}.png"
+            result = generate_image_for_shot(
+                shot=shot,
+                characters=storyboard.characters,
+                style=config.style,
+                output_dir=img_dir,
+            )
+            if result and result.exists():
+                return shot.id, result
+            else:
+                _create_fallback_image(out_file)
+                return shot.id, out_file
+
+        max_workers = min(5, len(pending_shots))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(process_shot_image, s) for s in pending_shots]
+            for future in as_completed(futures):
+                shot_id, img_path = future.result()
+                images[shot_id] = img_path
+                state.mark_complete(shot_id, "image")
+                state.save()
 
     return images
 

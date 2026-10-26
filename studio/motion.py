@@ -123,13 +123,15 @@ def render_motion_for_shot(
 
     return output_path
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 def run_motion_stage(
     storyboard: Storyboard,
     config: StudioConfig,
     state: StateManager,
     durations: Optional[Dict[str, float]] = None
 ) -> Dict[str, Path]:
-    """Run motion video clip generation for all shots with optional Lip-Sync and VFX."""
+    """Run motion video clip generation for all shots in parallel with optional Lip-Sync and VFX."""
     img_dir = config.output_dir / "images"
     audio_dir = config.output_dir / "audio"
     vid_dir = config.output_dir / "videos"
@@ -138,44 +140,53 @@ def run_motion_stage(
     durations = durations or {}
     video_clips: Dict[str, Path] = {}
 
+    pending_shots = []
     for shot in storyboard.shots:
         out_file = vid_dir / f"{shot.id}.mp4"
-
         if state.is_stage_complete(shot.id, "video") and out_file.exists():
             video_clips[shot.id] = out_file
-            continue
+        else:
+            img_file = img_dir / f"{shot.id}.png"
+            if img_file.exists():
+                pending_shots.append(shot)
 
-        img_file = img_dir / f"{shot.id}.png"
-        if not img_file.exists():
-            continue
+    if pending_shots:
+        def process_shot_motion(shot: Shot):
+            out_file = vid_dir / f"{shot.id}.mp4"
+            img_file = img_dir / f"{shot.id}.png"
+            shot_duration = durations.get(shot.id, shot.duration or 5.0)
 
-        shot_duration = durations.get(shot.id, shot.duration or 5.0)
+            lipsync_success = False
+            if config.lip_sync == "cloud" and shot.character_id and shot.dialogue.strip():
+                audio_file = audio_dir / f"{shot.id}.mp3"
+                res = apply_lipsync_for_shot(
+                    image_path=img_file,
+                    audio_path=audio_file,
+                    output_path=out_file,
+                    engine=config.lip_sync,
+                )
+                if res:
+                    lipsync_success = True
 
-        # Check if shot qualifies for Lip-Sync
-        lipsync_success = False
-        if config.lip_sync == "cloud" and shot.character_id and shot.dialogue.strip():
-            audio_file = audio_dir / f"{shot.id}.mp3"
-            res = apply_lipsync_for_shot(
-                image_path=img_file,
-                audio_path=audio_file,
-                output_path=out_file,
-                engine=config.lip_sync,
-            )
-            if res:
-                lipsync_success = True
+            if not lipsync_success:
+                render_motion_for_shot(
+                    image_path=img_file,
+                    output_path=out_file,
+                    duration=shot_duration,
+                    motion_type=shot.motion or "zoom_in",
+                    engine=config.motion_engine,
+                    prompt=shot.image_prompt,
+                )
 
-        if not lipsync_success:
-            render_motion_for_shot(
-                image_path=img_file,
-                output_path=out_file,
-                duration=shot_duration,
-                motion_type=shot.motion or "zoom_in",
-                engine=config.motion_engine,
-                prompt=shot.image_prompt,
-            )
+            return shot.id, out_file
 
-        video_clips[shot.id] = out_file
-        state.mark_complete(shot.id, "video")
-        state.save()
+        max_workers = max(1, min(4, os.cpu_count() or 2, len(pending_shots)))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(process_shot_motion, s) for s in pending_shots]
+            for future in as_completed(futures):
+                shot_id, out_path = future.result()
+                video_clips[shot_id] = out_path
+                state.mark_complete(shot_id, "video")
+                state.save()
 
     return video_clips

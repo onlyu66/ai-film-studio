@@ -128,45 +128,60 @@ def get_audio_duration(audio_path: Path) -> float:
     seg = AudioSegment.from_file(str(audio_path))
     return float(seg.duration_seconds)
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 def run_tts_stage(
     storyboard: Storyboard,
     config: StudioConfig,
     state: StateManager
 ) -> Dict[str, float]:
     """
-    Run TTS generation for all shots in storyboard.
+    Run TTS generation for all shots in storyboard in parallel.
     Returns a mapping of shot_id -> duration in seconds.
     """
     audio_dir = config.output_dir / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
     durations: Dict[str, float] = {}
 
+    pending_shots = []
     for shot in storyboard.shots:
         if state.is_stage_complete(shot.id, "audio"):
             audio_file = audio_dir / f"{shot.id}.mp3"
             if audio_file.exists():
-                durations[shot.id] = get_audio_duration(audio_file)
+                dur = get_audio_duration(audio_file)
+                durations[shot.id] = dur
+                shot.duration = dur
             else:
                 durations[shot.id] = 5.0
-            continue
-
-        audio_path = generate_audio_for_shot(
-            shot=shot,
-            characters=storyboard.characters,
-            output_dir=audio_dir,
-            lang=storyboard.language or config.lang,
-        )
-
-        if audio_path and audio_path.exists():
-            dur = get_audio_duration(audio_path)
-            durations[shot.id] = dur
-            shot.duration = dur
+                shot.duration = 5.0
         else:
-            # Fallback duration for atmospheric/silent shots
-            durations[shot.id] = 5.0
-            shot.duration = 5.0
+            pending_shots.append(shot)
 
-        state.mark_complete(shot.id, "audio")
-        state.save()
+    if pending_shots:
+        def process_shot(shot: Shot):
+            audio_path = generate_audio_for_shot(
+                shot=shot,
+                characters=storyboard.characters,
+                output_dir=audio_dir,
+                lang=storyboard.language or config.lang,
+            )
+            if audio_path and audio_path.exists():
+                dur = get_audio_duration(audio_path)
+            else:
+                dur = 5.0
+            return shot.id, dur
+
+        max_workers = min(5, len(pending_shots))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(process_shot, s) for s in pending_shots]
+            for future in as_completed(futures):
+                shot_id, dur = future.result()
+                durations[shot_id] = dur
+                for s in storyboard.shots:
+                    if s.id == shot_id:
+                        s.duration = dur
+                        break
+                state.mark_complete(shot_id, "audio")
+                state.save()
 
     return durations
