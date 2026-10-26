@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
+import { useQueryClient } from '@tanstack/react-query'
 import Navbar from './components/Navbar'
 import ProductionForm from './components/ProductionForm'
 import ProgressStage from './components/ProgressStage'
@@ -8,30 +9,92 @@ import TerminalLogs from './components/TerminalLogs'
 import StoryboardView from './components/StoryboardView'
 import VideoPlayerModal from './components/VideoPlayerModal'
 import ProjectLibraryModal from './components/ProjectLibraryModal'
+import SeoPublishModal from './components/SeoPublishModal'
 import { Button } from './components/ui/button'
-import { CheckCircle2, MonitorPlay, FileEdit, Play, Loader2 } from 'lucide-react'
+import { CheckCircle2, MonitorPlay, FileEdit, Play, Loader2, Share2 } from 'lucide-react'
 import {
   useStudioStatus,
   useStoryboard,
   useProduceMovie,
   useCleanOutputs,
   useContinueProduction,
+  useProjects,
 } from './api/queries'
-import type { StudioStatus, ProductionFormData } from './types'
+import type { StudioStatus, ProductionFormData, ProjectItem } from './types'
 
 export default function App() {
+  const queryClient = useQueryClient()
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false)
   const [showLibraryModal, setShowLibraryModal] = useState<boolean>(false)
+  const [showSeoModal, setShowSeoModal] = useState<boolean>(false)
+  const [activeSeoProjectId, setActiveSeoProjectId] = useState<string | null>(null)
+  const [seriesInitialData, setSeriesInitialData] = useState<Partial<ProductionFormData> | null>(null)
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null)
   const [activeSrtUrl, setActiveSrtUrl] = useState<string | null>(null)
+  const [liveLogs, setLiveLogs] = useState<string[]>([])
 
   // TanStack Query hooks for real-time status & storyboard
   const { data: statusData } = useStudioStatus()
+  const { data: projects = [] } = useProjects()
   const isRunning = statusData?.status === 'running'
   const { data: storyboardData } = useStoryboard(isRunning)
   const produceMutation = useProduceMovie()
   const cleanMutation = useCleanOutputs()
   const continueMutation = useContinueProduction()
+
+  // WebSocket Live Log & Status Streaming
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const wsUrl = `${protocol}//${window.location.host}/ws/pipeline`
+    let socket: WebSocket | null = null
+    let pingInterval: ReturnType<typeof setInterval> | null = null
+
+    const connectWs = () => {
+      try {
+        socket = new WebSocket(wsUrl)
+        socket.onopen = () => {
+          pingInterval = setInterval(() => {
+            if (socket?.readyState === WebSocket.OPEN) {
+              socket.send('ping')
+            }
+          }, 25000)
+        }
+        socket.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data)
+            if (payload.type === 'status') {
+              queryClient.setQueryData(['studio', 'status'], payload.data)
+              if (payload.data?.logs) {
+                setLiveLogs(payload.data.logs)
+              }
+            } else if (payload.type === 'log') {
+              setLiveLogs((prev) => {
+                const next = [...prev, payload.data]
+                return next.length > 200 ? next.slice(-200) : next
+              })
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+        socket.onclose = () => {
+          if (pingInterval) clearInterval(pingInterval)
+          setTimeout(connectWs, 5000)
+        }
+        socket.onerror = () => {
+          socket?.close()
+        }
+      } catch {
+        // Fallback polling is already active
+      }
+    }
+    connectWs()
+
+    return () => {
+      if (pingInterval) clearInterval(pingInterval)
+      socket?.close()
+    }
+  }, [queryClient])
 
   const status: StudioStatus = statusData ?? {
     status: 'idle',
@@ -43,6 +106,7 @@ export default function App() {
     final_srt: null,
   }
   const storyboard = storyboardData ?? null
+  const displayLogs = liveLogs.length > 0 ? liveLogs : status.logs
 
   // Trigger celebration confetti when project transitions from running to completed
   const prevStatusRef = useRef(status.status)
@@ -97,6 +161,32 @@ export default function App() {
     setShowVideoModal(true)
   }
 
+  const handleProduceNextEpisode = (project: ProjectItem) => {
+    setShowLibraryModal(false)
+    const nextEp = (project.episode || 1) + 1
+    setSeriesInitialData({
+      topic: `[Tập ${nextEp}] Tiếp nối cốt truyện: ${project.title}`,
+      series_title: project.series_title || project.title,
+      episode: nextEp,
+      parent_project_id: project.id,
+      lang: project.lang,
+      style: project.style,
+      aspect_ratio: project.aspect_ratio || '16:9',
+      duration: project.duration || 5,
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleOpenCurrentMovieSeo = () => {
+    const targetId = projects.length > 0 ? projects[0].id : null
+    if (targetId) {
+      setActiveSeoProjectId(targetId)
+      setShowSeoModal(true)
+    } else {
+      setShowLibraryModal(true)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#06080F] text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-300">
       <Navbar
@@ -131,15 +221,27 @@ export default function App() {
                 </div>
               </div>
 
-              <Button
-                variant="default"
-                size="lg"
-                onClick={handlePlayCurrentMovie}
-                className="gap-2.5 font-black text-sm bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 shadow-lg shadow-emerald-500/30"
-              >
-                <MonitorPlay className="w-5 h-5 fill-current" />
-                <span>Xem Phim Ngay</span>
-              </Button>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={handleOpenCurrentMovieSeo}
+                  className="gap-2 font-bold text-xs border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 cursor-pointer"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Xuất Bản & SEO</span>
+                </Button>
+
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={handlePlayCurrentMovie}
+                  className="gap-2.5 font-black text-sm bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 shadow-lg shadow-emerald-500/30 cursor-pointer"
+                >
+                  <MonitorPlay className="w-5 h-5 fill-current" />
+                  <span>Xem Phim Ngay</span>
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -205,11 +307,13 @@ export default function App() {
             <ProductionForm
               onSubmit={handleStartProduction}
               isRunning={status.status === 'running' || produceMutation.isPending}
+              initialData={seriesInitialData}
+              onResetSeries={() => setSeriesInitialData(null)}
             />
           </div>
 
           <div className="lg:col-span-5 flex flex-col">
-            <TerminalLogs logs={status.logs} className="h-full" />
+            <TerminalLogs logs={displayLogs} className="h-full" />
           </div>
         </div>
 
@@ -235,6 +339,21 @@ export default function App() {
         isOpen={showLibraryModal}
         onClose={() => setShowLibraryModal(false)}
         onPlayMovie={handlePlayFromLibrary}
+        onOpenSeo={(projId) => {
+          setActiveSeoProjectId(projId)
+          setShowSeoModal(true)
+        }}
+        onProduceNextEpisode={handleProduceNextEpisode}
+      />
+
+      {/* SEO Publishing & Thumbnail Hub Modal */}
+      <SeoPublishModal
+        projectId={activeSeoProjectId}
+        isOpen={showSeoModal}
+        onClose={() => {
+          setShowSeoModal(false)
+          setActiveSeoProjectId(null)
+        }}
       />
 
       {/* Footer */}

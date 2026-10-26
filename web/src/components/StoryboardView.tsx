@@ -32,6 +32,8 @@ interface ShotData {
   motion?: string
   chapter?: number | string
   sfx?: string
+  act?: number | string
+  mood?: string
   [key: string]: unknown
 }
 
@@ -574,12 +576,24 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                         {shot.dialogue ? `"${shot.dialogue}"` : <span className="text-slate-500 italic">(Cảnh quay tĩnh tư liệu & âm nhạc)</span>}
                       </p>
 
-                      {shot.sfx && (
-                        <div className="mt-1.5 flex items-center gap-1 text-[10px] text-cyan-400 font-mono">
-                          <Music className="w-2.5 h-2.5" />
-                          <span>SFX: {shot.sfx}</span>
-                        </div>
-                      )}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
+                        {shot.act && (
+                          <span className="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/30">
+                            Hồi {shot.act}
+                          </span>
+                        )}
+                        {shot.mood && (
+                          <span className="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                            🎵 {shot.mood}
+                          </span>
+                        )}
+                        {shot.sfx && (
+                          <span className="flex items-center gap-1 text-cyan-400">
+                            <Music className="w-2.5 h-2.5" />
+                            <span>SFX: {shot.sfx}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2 text-[10px] text-slate-500">

@@ -18,9 +18,25 @@ def test_parse_with_characters_and_shots():
         "language": "vi",
         "characters": {"hero": {"name": "Hero", "visual_anchor": "tall man", "voice": "vi-VN-NamMinhNeural"}},
         "shots": [{"id": "shot_001_001", "chapter": 1, "character_id": "hero",
-                   "dialogue": "Hello", "image_prompt": "a scene", "motion": "zoom_in", "duration": None, "sfx": "thunder"}]
+                   "dialogue": "Hello", "image_prompt": "a scene", "motion": "zoom_in", "duration": None, "sfx": "thunder",
+                   "act": 2, "mood": "epic"}]
     })
     sb = parse_storyboard_json(raw)
     assert len(sb.shots) == 1
     assert sb.characters["hero"].name == "Hero"
     assert sb.shots[0].sfx == "thunder"
+    assert sb.shots[0].act == 2
+    assert sb.shots[0].mood == "epic"
+
+def test_series_storyboard_user_prompt():
+    from studio.prompts import get_storyboard_user_prompt
+    prompt = get_storyboard_user_prompt(
+        topic="Episode 2",
+        series_title="Epic Chronicles",
+        episode=2,
+        parent_context="Hero found the ancient map"
+    )
+    assert "[SERIES CONTINUITY MODE]" in prompt
+    assert "Epic Chronicles" in prompt
+    assert "Episode: 2" in prompt
+    assert "Hero found the ancient map" in prompt

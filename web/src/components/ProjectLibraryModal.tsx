@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Film, X, Trash2, Download, Play, Calendar, Clock, MonitorPlay, Loader2 } from 'lucide-react'
+import { Film, X, Trash2, Download, Play, Calendar, Clock, MonitorPlay, Loader2, Share2, Clapperboard } from 'lucide-react'
 import { useProjects, useDeleteProject } from '../api/queries'
 import type { ProjectItem } from '../types'
 
@@ -7,9 +7,17 @@ export interface ProjectLibraryModalProps {
   isOpen: boolean
   onClose: () => void
   onPlayMovie: (videoUrl: string, srtUrl?: string | null) => void
+  onOpenSeo?: (projectId: string) => void
+  onProduceNextEpisode?: (project: ProjectItem) => void
 }
 
-export default function ProjectLibraryModal({ isOpen, onClose, onPlayMovie }: ProjectLibraryModalProps) {
+export default function ProjectLibraryModal({
+  isOpen,
+  onClose,
+  onPlayMovie,
+  onOpenSeo,
+  onProduceNextEpisode,
+}: ProjectLibraryModalProps) {
   const { data: projects = [], isLoading } = useProjects()
   const deleteProjectMutation = useDeleteProject()
 
@@ -128,6 +136,12 @@ export default function ProjectLibraryModal({ isOpen, onClose, onPlayMovie }: Pr
                           {p.aspect_ratio || '16:9'}
                         </div>
 
+                        {p.episode && p.episode > 1 && (
+                          <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded-md bg-amber-400 text-slate-950 text-[10px] font-mono font-black uppercase shadow">
+                            TẬP {p.episode}
+                          </div>
+                        )}
+
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[2px]">
                           <div className="w-12 h-12 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center shadow-lg shadow-amber-500/40">
                             <Play className="w-5 h-5 fill-current ml-0.5" />
@@ -138,9 +152,16 @@ export default function ProjectLibraryModal({ isOpen, onClose, onPlayMovie }: Pr
                       {/* Details */}
                       <div className="p-4 flex-1 flex flex-col justify-between">
                         <div>
-                          <h4 className="text-sm font-black text-white line-clamp-1 mb-1">
-                            {p.title || p.topic}
-                          </h4>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            {p.series_title && (
+                              <span className="text-[10px] font-mono font-bold text-amber-400 uppercase tracking-wider">
+                                [{p.series_title}]
+                              </span>
+                            )}
+                            <h4 className="text-sm font-black text-white line-clamp-1">
+                              {p.title || p.topic}
+                            </h4>
+                          </div>
                           <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                             {p.topic}
                           </p>
@@ -167,6 +188,28 @@ export default function ProjectLibraryModal({ isOpen, onClose, onPlayMovie }: Pr
                               >
                                 <Play className="w-3.5 h-3.5 fill-current" />
                                 <span>Xem</span>
+                              </button>
+                            )}
+
+                            {onOpenSeo && (
+                              <button
+                                type="button"
+                                onClick={() => onOpenSeo(p.id)}
+                                className="p-2 rounded-xl bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 border border-indigo-500/30 transition-colors cursor-pointer"
+                                title="Mở trung tâm xuất bản & tối ưu SEO"
+                              >
+                                <Share2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+
+                            {onProduceNextEpisode && (
+                              <button
+                                type="button"
+                                onClick={() => onProduceNextEpisode(p)}
+                                className="p-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-colors cursor-pointer"
+                                title="Sản xuất Tập tiếp theo của bộ phim này"
+                              >
+                                <Clapperboard className="w-3.5 h-3.5" />
                               </button>
                             )}
 

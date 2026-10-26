@@ -1,20 +1,35 @@
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+import asyncio
 import threading
 import json
 import shutil
+import subprocess
 import time
 
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import FastAPI, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
+from contextlib import asynccontextmanager
 from studio.config import StudioConfig
 from studio.orchestrator import run_pipeline
 
-app = FastAPI(title="AI Film Studio API", version="1.0.0")
+active_websockets: List[WebSocket] = []
+server_event_loop: Optional[asyncio.AbstractEventLoop] = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global server_event_loop
+    try:
+        server_event_loop = asyncio.get_running_loop()
+    except Exception:
+        server_event_loop = None
+    yield
+
+app = FastAPI(title="AI Film Studio API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,6 +50,9 @@ class ProduceRequest(BaseModel):
     aspect_ratio: str = "16:9"
     hardsub: bool = False
     pause_after_script: bool = False
+    series_title: Optional[str] = None
+    episode: int = 1
+    parent_project_id: Optional[str] = None
 
 # Global pipeline execution state
 pipeline_state: Dict[str, Any] = {
@@ -51,12 +69,92 @@ pipeline_state: Dict[str, Any] = {
 
 last_produce_request: Optional[ProduceRequest] = None
 
+def broadcast_ws(event_type: str, data: Any):
+    """Broadcast JSON message to all active WebSocket clients."""
+    if not active_websockets:
+        return
+    msg = json.dumps({"type": event_type, "data": data}, ensure_ascii=False)
+    for ws in list(active_websockets):
+        try:
+            if server_event_loop and server_event_loop.is_running():
+                asyncio.run_coroutine_threadsafe(ws.send_text(msg), server_event_loop)
+        except Exception:
+            pass
+
 def log_message(msg: str):
     timestamp = time.strftime("%H:%M:%S")
     formatted = f"[{timestamp}] {msg}"
     pipeline_state["logs"].append(formatted)
     if len(pipeline_state["logs"]) > 200:
         pipeline_state["logs"] = pipeline_state["logs"][-200:]
+    broadcast_ws("log", formatted)
+
+def generate_thumbnail_image(
+    project_dir: Path,
+    title: str,
+    aspect_ratio: str = "16:9",
+    source_img_name: Optional[str] = None
+) -> Optional[str]:
+    """Generate high-contrast cinematic thumbnail with bold title overlay using FFmpeg."""
+    source_path = None
+    if source_img_name:
+        cand = project_dir / source_img_name
+        if cand.exists():
+            source_path = cand
+    if not source_path:
+        thumb_png = project_dir / "thumb.png"
+        if thumb_png.exists():
+            source_path = thumb_png
+        else:
+            candidates = sorted(list(project_dir.glob("*.png")) + list(Path("outputs/images").glob("*.png")))
+            if candidates:
+                source_path = candidates[0]
+
+    if not source_path or not source_path.exists():
+        return None
+
+    out_thumb = project_dir / "thumbnail.jpg"
+    w, h = (1080, 1920) if aspect_ratio == "9:16" else (1280, 720)
+    fontsize = 62 if aspect_ratio == "9:16" else 46
+    box_y = "ih*0.7" if aspect_ratio == "9:16" else "ih*0.65"
+    text_y = "h*0.78" if aspect_ratio == "9:16" else "h*0.78"
+
+    title_text = title.strip().upper()
+    if len(title_text) > 48:
+        title_text = title_text[:45] + "..."
+    title_file = project_dir / "_thumb_title.txt"
+    title_file.write_text(title_text, encoding="utf-8")
+
+    font_candidates = [
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    ]
+    font_arg = ""
+    for f in font_candidates:
+        if Path(f).exists():
+            font_arg = f":fontfile='{f}'"
+            break
+
+    drawbox_filter = f"drawbox=y={box_y}:color=black@0.75:width=iw:height=ih*0.35:t=fill"
+    drawtext_filter = f"drawtext=textfile='{title_file.resolve()}'{font_arg}:fontcolor=yellow:fontsize={fontsize}:x=(w-text_w)/2:y={text_y}:box=1:boxcolor=black@0.4:boxborderw=6"
+    vf_filter = f"scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h},{drawbox_filter},{drawtext_filter}"
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(source_path.resolve()),
+        "-vf", vf_filter,
+        "-vframes", "1",
+        str(out_thumb.resolve())
+    ]
+    try:
+        subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+        if title_file.exists():
+            title_file.unlink()
+        return "thumbnail.jpg"
+    except Exception:
+        if title_file.exists():
+            title_file.unlink()
+        return None
 
 def save_project_to_library(final_video_path: Path, req: ProduceRequest):
     timestamp = int(time.time())
@@ -100,6 +198,12 @@ def save_project_to_library(final_video_path: Path, req: ProduceRequest):
         except Exception:
             pass
 
+    # 5. Generate high-impact thumbnail with FFmpeg
+    aspect_ratio = getattr(req, "aspect_ratio", "16:9")
+    rendered_thumb = generate_thumbnail_image(project_dir, title, aspect_ratio)
+    if rendered_thumb:
+        thumb_name = rendered_thumb
+
     metadata = {
         "id": project_id,
         "title": title,
@@ -107,8 +211,11 @@ def save_project_to_library(final_video_path: Path, req: ProduceRequest):
         "lang": req.lang,
         "style": req.style,
         "duration": req.duration,
-        "aspect_ratio": getattr(req, "aspect_ratio", "16:9"),
+        "aspect_ratio": aspect_ratio,
         "hardsub": getattr(req, "hardsub", False),
+        "series_title": getattr(req, "series_title", None),
+        "episode": getattr(req, "episode", 1),
+        "parent_project_id": getattr(req, "parent_project_id", None),
         "created_at": timestamp,
         "video_file": final_video_path.name,
         "srt_file": srt_name,
@@ -124,6 +231,7 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
     pipeline_state["status"] = "running"
     pipeline_state["topic"] = req.topic
     pipeline_state["error"] = None
+    broadcast_ws("status", get_status())
 
     try:
         cfg = StudioConfig(
@@ -137,12 +245,16 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             aspect_ratio=req.aspect_ratio,
             hardsub=req.hardsub,
             output_dir=Path("outputs"),
+            series_title=req.series_title,
+            episode=req.episode,
+            parent_project_id=req.parent_project_id,
         )
 
         if not resume_only and req.pause_after_script:
             pipeline_state["stage"] = 1
             pipeline_state["stage_name"] = "Đang soạn kịch bản & phân cảnh..."
             pipeline_state["progress"] = 20
+            broadcast_ws("status", get_status())
             log_message(f"Soạn kịch bản: {req.topic} ({req.lang}, {req.duration}m, {req.style})")
 
             run_pipeline(cfg, stop_after_stage=1)
@@ -151,12 +263,14 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             pipeline_state["stage"] = 1
             pipeline_state["stage_name"] = "Kịch bản đã sẵn sàng - Chờ duyệt"
             pipeline_state["progress"] = 20
+            broadcast_ws("status", get_status())
             log_message("Kịch bản và phân cảnh đã được tạo xong! Bạn có thể chỉnh sửa lời thoại, nhân vật và giọng đọc trước khi bấm 'Tiếp tục sản xuất phim'.")
             return
 
         pipeline_state["stage"] = 2
         pipeline_state["stage_name"] = "Đang sản xuất phim (Stages 2 - 5)..."
         pipeline_state["progress"] = 40
+        broadcast_ws("status", get_status())
         log_message("Đang thực hiện quy trình sản xuất (Audio, Visuals, Motion & Assembly)...")
 
         final_video_path = run_pipeline(cfg)
@@ -169,6 +283,7 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
         srt_path = final_video_path.with_suffix(".srt")
         if srt_path.exists():
             pipeline_state["final_srt"] = f"/api/outputs/final/{srt_path.name}"
+        broadcast_ws("status", get_status())
         log_message(f"Thành công! Video đã hoàn thành: {final_video_path.name}")
 
         try:
@@ -179,6 +294,7 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
     except Exception as e:
         pipeline_state["status"] = "error"
         pipeline_state["error"] = str(e)
+        broadcast_ws("status", get_status())
         log_message(f"Lỗi quy trình: {e}")
 
 @app.get("/api/status")
@@ -688,6 +804,11 @@ def list_projects():
                     video_file = meta.get("video_file")
                     srt_file = meta.get("srt_file")
                     thumb_file = meta.get("thumb_file")
+                    if not thumb_file or not (p_dir / thumb_file).exists():
+                        if (p_dir / "thumbnail.jpg").exists():
+                            thumb_file = "thumbnail.jpg"
+                        elif (p_dir / "thumb.png").exists():
+                            thumb_file = "thumb.png"
 
                     meta["video_url"] = f"/api/outputs/projects/{p_id}/{video_file}" if video_file else None
                     meta["srt_url"] = f"/api/outputs/projects/{p_id}/{srt_file}" if srt_file else None
@@ -696,6 +817,181 @@ def list_projects():
                 except Exception:
                     pass
     return projects
+
+@app.websocket("/ws/pipeline")
+async def websocket_pipeline_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    active_websockets.append(websocket)
+    try:
+        # Send current status immediately upon connection
+        await websocket.send_json({"type": "status", "data": get_status()})
+        while True:
+            text = await websocket.receive_text()
+            if text == "ping":
+                await websocket.send_json({"type": "pong"})
+    except (WebSocketDisconnect, Exception):
+        if websocket in active_websockets:
+            active_websockets.remove(websocket)
+
+class GenerateThumbnailRequest(BaseModel):
+    headline: Optional[str] = None
+    shot_id: Optional[str] = None
+
+@app.post("/api/projects/{project_id}/thumbnail")
+def api_generate_thumbnail(project_id: str, req: GenerateThumbnailRequest):
+    project_dir = Path("outputs/projects") / project_id
+    if not project_dir.exists() or not project_dir.is_dir():
+        raise HTTPException(status_code=404, detail="Không tìm thấy dự án trong thư viện.")
+
+    meta_file = project_dir / "metadata.json"
+    title = "AI CINEMA"
+    aspect_ratio = "16:9"
+    meta = {}
+    if meta_file.exists():
+        try:
+            with open(meta_file, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+            title = meta.get("title") or meta.get("topic") or title
+            aspect_ratio = meta.get("aspect_ratio", "16:9")
+        except Exception:
+            pass
+
+    headline = req.headline.strip() if req.headline else title
+    src_img = f"{req.shot_id}.png" if req.shot_id else None
+
+    thumb_file = generate_thumbnail_image(project_dir, headline, aspect_ratio, src_img)
+    if not thumb_file:
+        raise HTTPException(status_code=500, detail="Không thể tạo thumbnail bằng FFmpeg.")
+
+    # Update metadata
+    meta["thumb_file"] = thumb_file
+    try:
+        with open(meta_file, "w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+    return {
+        "success": True,
+        "thumbnail_url": f"/api/outputs/projects/{project_id}/{thumb_file}?t={int(time.time())}"
+    }
+
+@app.get("/api/projects/{project_id}/seo")
+def get_project_seo(project_id: str):
+    project_dir = Path("outputs/projects") / project_id
+    if not project_dir.exists() or not project_dir.is_dir():
+        raise HTTPException(status_code=404, detail="Không tìm thấy dự án trong thư viện.")
+
+    meta_file = project_dir / "metadata.json"
+    sb_file = project_dir / "storyboard.json"
+    if not sb_file.exists():
+        sb_file = Path("outputs/storyboard.json")
+
+    meta = {}
+    if meta_file.exists():
+        try:
+            with open(meta_file, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+        except Exception:
+            pass
+
+    title = meta.get("title") or meta.get("topic") or "Phim Ngắn AI"
+    topic = meta.get("topic") or title
+    style = meta.get("style", "cinematic")
+    episode = meta.get("episode", 1)
+    series_title = meta.get("series_title")
+
+    shots = []
+    if sb_file.exists():
+        try:
+            with open(sb_file, "r", encoding="utf-8") as f:
+                sb_data = json.load(f)
+                shots = sb_data.get("shots", [])
+        except Exception:
+            pass
+
+    # Build chapters & timestamps
+    current_time_sec = 0.0
+    chapters = []
+    seen_chapters = set()
+    for s in shots:
+        chap_num = s.get("chapter", 1)
+        dur = float(s.get("duration") or 5.0)
+        if chap_num not in seen_chapters:
+            seen_chapters.add(chap_num)
+            m = int(current_time_sec // 60)
+            sec = int(current_time_sec % 60)
+            ts = f"{m:02d}:{sec:02d}"
+            chap_title = s.get("dialogue") or f"Chương {chap_num}"
+            if len(chap_title) > 35:
+                chap_title = chap_title[:32] + "..."
+            chapters.append({
+                "timestamp": ts,
+                "title": f"Phần {chap_num}: {chap_title}"
+            })
+        current_time_sec += dur
+
+    if not chapters:
+        chapters.append({"timestamp": "00:00", "title": "Phần 1: Mở đầu câu chuyện"})
+
+    # High-CTR Title Hooks
+    ep_prefix = f"[Tập {episode}] " if series_title or episode > 1 else ""
+    ctr_titles = [
+        f"{ep_prefix}SỰ THẬT VỀ {title.upper()} | Phim Ngắn AI 4K",
+        f"{ep_prefix}{title} - Cuộc Chiến Vô Tiền Khoáng Hậu | AI Cinema Studio",
+        f"{ep_prefix}Điều Gì Đã Xảy Ra Với {topic[:40]}? | Phim Ngắn Hay Nhất",
+        f"{ep_prefix}{title} (Full HD) - Siêu Phẩm AI Điện Ảnh {style.capitalize()}",
+    ]
+
+    # YouTube Description with Chapter Timestamps
+    desc_lines = [
+        f"🎬 {title}",
+        f"Thể loại: {style.capitalize()} | Sản xuất bởi: AI Film Studio 2026",
+        "",
+        f"📖 TÓM TẮT NỘI DUNG:",
+        f"{topic}",
+        "",
+        "⏱️ DẤU MỐC THỜI GIAN (CHAPTERS):",
+    ]
+    for ch in chapters:
+        desc_lines.append(f"{ch['timestamp']} - {ch['title']}")
+    desc_lines.extend([
+        "",
+        "🌟 CÔNG NGHỆ SẢN XUẤT:",
+        "- Kịch bản & Đạo diễn: AI Director Screenwriter",
+        "- Visuals & Thiết kế nhân vật: Flux Diffusion Engine",
+        "- Giọng lồng tiếng: Edge-TTS Neural Cinema Voice",
+        "- VFX Camera: 2.5D Ken Burns & Cinematic Motion",
+        "",
+        "👍 Đừng quên LIKE, BÌNH LUẬN và ĐĂNG KÝ KÊNH để đón xem các tập phim AI tiếp theo!",
+        "#aifilm #phimngan #aicinema #flux #shorts #film #viral"
+    ])
+    description = "\n".join(desc_lines)
+
+    tags = [
+        "phim ngan ai", "ai film studio", title.lower(), style, "phim dien anh ai",
+        "flux diffusion", "ai filmmaking", "phim ngan hay nhat", "shorts"
+    ]
+    hashtags = "#phimngan #aicinema #shortfilm #aiart #viral #xuhuong #filmmaking #fyp"
+
+    thumb_url = None
+    if (project_dir / "thumbnail.jpg").exists():
+        thumb_url = f"/api/outputs/projects/{project_id}/thumbnail.jpg"
+    elif (project_dir / "thumb.png").exists():
+        thumb_url = f"/api/outputs/projects/{project_id}/thumb.png"
+
+    return {
+        "project_id": project_id,
+        "title": title,
+        "series_title": series_title,
+        "episode": episode,
+        "titles": ctr_titles,
+        "description": description,
+        "chapters": chapters,
+        "tags": tags,
+        "hashtags": hashtags,
+        "thumbnail_url": thumb_url,
+    }
 
 @app.delete("/api/projects/{project_id}")
 def delete_project(project_id: str):

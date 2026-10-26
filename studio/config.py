@@ -17,6 +17,9 @@ class StudioConfig:
     bgm_path: Optional[Path] = None
     output_dir: Path = field(default_factory=lambda: Path("outputs"))
     project_dir: Path = field(default_factory=lambda: Path("."))
+    series_title: Optional[str] = None
+    episode: int = 1
+    parent_project_id: Optional[str] = None
 
 def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) -> StudioConfig:
     """Load configuration from config.yaml merged with CLI kwargs."""
@@ -42,6 +45,12 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
                 merged["aspect_ratio"] = v
             elif k in ("hardsub", "burn_subtitles", "burn_subs"):
                 merged["hardsub"] = bool(v)
+            elif k in ("series_title", "series"):
+                merged["series_title"] = str(v)
+            elif k in ("episode", "ep"):
+                merged["episode"] = int(v)
+            elif k in ("parent_project_id", "parent_id"):
+                merged["parent_project_id"] = str(v)
             elif k == "bgm":
                 merged["bgm_path"] = Path(v) if v else None
             elif k == "output_dir":
@@ -59,6 +68,9 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
     lip_sync = merged.get("lip_sync", "none")
     aspect_ratio = merged.get("aspect_ratio", "16:9")
     hardsub = bool(merged.get("hardsub", False))
+    series_title = merged.get("series_title")
+    episode = int(merged.get("episode", 1))
+    parent_project_id = merged.get("parent_project_id")
     bgm_path = Path(merged["bgm_path"]) if merged.get("bgm_path") else None
     output_dir = Path(merged.get("output_dir", "outputs"))
     project_dir = Path(merged.get("project_dir", "."))
@@ -76,4 +88,7 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
         bgm_path=bgm_path,
         output_dir=output_dir,
         project_dir=project_dir,
+        series_title=series_title,
+        episode=episode,
+        parent_project_id=parent_project_id,
     )

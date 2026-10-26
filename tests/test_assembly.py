@@ -46,3 +46,8 @@ def test_build_hardsub_filter(tmp_path):
 
     f2 = build_hardsub_filter(srt, aspect_ratio="9:16")
     assert "MarginV=90" in f2
+
+def test_resolve_mood_bgm(tmp_path, monkeypatch):
+    from studio.assembly import resolve_mood_bgm
+    assert resolve_mood_bgm(None) is None
+    assert resolve_mood_bgm("nonexistent_mood_123") is None

@@ -98,3 +98,63 @@ def test_api_projects_list_and_delete(tmp_path, monkeypatch):
     del_resp = client.delete("/api/projects/proj_test")
     assert del_resp.status_code == 200
     assert not proj_dir.exists()
+
+def test_api_project_seo(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    proj_dir = tmp_path / "projects" / "proj_seo"
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "id": "proj_seo",
+        "title": "Atlantis Rising",
+        "topic": "The mystery of deep ocean empire",
+        "style": "cinematic",
+        "episode": 2,
+        "series_title": "Ancient Mysteries",
+        "video_file": "movie.mp4"
+    }
+    (proj_dir / "metadata.json").write_text(json.dumps(meta), encoding="utf-8")
+
+    sb_data = {
+        "title": "Atlantis Rising",
+        "shots": [
+            {"id": "s1", "chapter": 1, "dialogue": "We reached the ruins", "duration": 4.5},
+            {"id": "s2", "chapter": 2, "dialogue": "The guardian awoke", "duration": 6.0},
+        ]
+    }
+    (proj_dir / "storyboard.json").write_text(json.dumps(sb_data), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        if str(arg) == "outputs/projects":
+            return tmp_path / "projects"
+        if str(arg) == "outputs/projects/proj_seo":
+            return proj_dir
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    resp = client.get("/api/projects/proj_seo/seo")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["project_id"] == "proj_seo"
+    assert len(data["titles"]) >= 4
+    assert len(data["chapters"]) == 2
+    assert "00:00" in data["chapters"][0]["timestamp"]
+    assert "00:04" in data["chapters"][1]["timestamp"]
+    assert "Ancient Mysteries" in data["series_title"]
+    assert data["episode"] == 2
+    assert "#aifilm" in data["description"]
+    assert len(data["tags"]) > 0
+
+def test_websocket_pipeline():
+    with client.websocket_connect("/ws/pipeline") as ws:
+        # First message sent upon connect is current status
+        data = ws.receive_json()
+        assert data["type"] == "status"
+        assert "stage" in data["data"]
+        # Test ping-pong
+        ws.send_text("ping")
+        pong = ws.receive_json()
+        assert pong["type"] == "pong"

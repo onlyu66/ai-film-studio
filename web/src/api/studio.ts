@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { StudioStatus, StoryboardData, ProductionFormData, ProjectItem } from '../types'
+import type { StudioStatus, StoryboardData, ProductionFormData, ProjectItem, ProjectSeoData } from '../types'
 
 export async function fetchStatus(): Promise<StudioStatus> {
   const response = await apiClient.get<StudioStatus>('/api/status')
@@ -124,6 +124,23 @@ export async function fetchProjects(): Promise<ProjectItem[]> {
 
 export async function deleteProject(projectId: string): Promise<{ success: boolean; message: string }> {
   const response = await apiClient.delete<{ success: boolean; message: string }>(`/api/projects/${projectId}`)
+  return response.data
+}
+
+export async function fetchProjectSeo(projectId: string): Promise<ProjectSeoData> {
+  const response = await apiClient.get<ProjectSeoData>(`/api/projects/${projectId}/seo`)
+  return response.data
+}
+
+export async function generateProjectThumbnail(
+  projectId: string,
+  headline?: string,
+  shotId?: string
+): Promise<{ success: boolean; thumbnail_url: string }> {
+  const response = await apiClient.post<{ success: boolean; thumbnail_url: string }>(
+    `/api/projects/${projectId}/thumbnail`,
+    { headline, shot_id: shotId }
+  )
   return response.data
 }
 

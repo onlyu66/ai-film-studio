@@ -15,10 +15,12 @@ import {
   reorderShots,
   fetchProjects,
   deleteProject,
+  fetchProjectSeo,
+  generateProjectThumbnail,
   type UpdateShotParams,
   type AddShotParams,
 } from './studio'
-import type { StudioStatus, StoryboardData, ProductionFormData, ProjectItem } from '../types'
+import type { StudioStatus, StoryboardData, ProductionFormData, ProjectItem, ProjectSeoData } from '../types'
 
 export const QUERY_KEYS = {
   status: ['studio', 'status'] as const,
@@ -182,6 +184,27 @@ export function useDeleteProject() {
     mutationFn: (projectId: string) => deleteProject(projectId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects })
+    },
+  })
+}
+
+export function useProjectSeo(projectId: string | null) {
+  return useQuery<ProjectSeoData>({
+    queryKey: ['project-seo', projectId],
+    queryFn: () => fetchProjectSeo(projectId!),
+    enabled: Boolean(projectId),
+  })
+}
+
+export function useGenerateThumbnail() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ projectId, headline, shotId }: { projectId: string; headline?: string; shotId?: string }) =>
+      generateProjectThumbnail(projectId, headline, shotId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects })
+      queryClient.invalidateQueries({ queryKey: ['project-seo', variables.projectId] })
     },
   })
 }

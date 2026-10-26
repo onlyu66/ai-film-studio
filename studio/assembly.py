@@ -35,6 +35,20 @@ def resolve_bgm_path(custom_bgm: Optional[Path], style: str = "cinematic") -> Op
             return p
     return None
 
+def resolve_mood_bgm(mood: Optional[str]) -> Optional[Path]:
+    """Resolve dynamic mood-specific BGM file if available."""
+    if not mood:
+        return None
+    mood_clean = str(mood).lower().strip().replace(" ", "_")
+    candidates = [
+        Path(f"assets/bgm/{mood_clean}.mp3"),
+        Path(f"assets/bgm/{mood_clean}.wav"),
+    ]
+    for p in candidates:
+        if p.exists():
+            return p
+    return None
+
 def build_master_audio(
     storyboard: Storyboard,
     audio_dir: Path,
@@ -44,7 +58,7 @@ def build_master_audio(
     ducking_db: float = -14.0,
     style: str = "cinematic"
 ) -> Path:
-    """Concatenate narration clips, overlay looped background music with ducking, and apply smooth fades."""
+    """Concatenate narration clips, overlay dynamic mood/looped background music with ducking, and apply smooth fades."""
     output_audio_path = Path(output_audio_path)
     output_audio_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -89,14 +103,58 @@ def build_master_audio(
 
         master += segment
 
-    # Mix BGM if provided or found via style
-    effective_bgm = resolve_bgm_path(bgm_path, style)
-    if effective_bgm and effective_bgm.exists() and len(master) > 0:
-        bgm = AudioSegment.from_file(str(effective_bgm))
-        ducked_bgm = bgm + ducking_db
-        loops = (len(master) // len(ducked_bgm)) + 1
-        full_bgm = (ducked_bgm * loops)[:len(master)]
-        master = master.overlay(full_bgm)
+    # Mix BGM (dynamic mood-based crossfade or style-based fallback)
+    effective_default_bgm = resolve_bgm_path(bgm_path, style)
+    has_custom_mood_bgm = any(
+        resolve_mood_bgm(getattr(s, "mood", None)) is not None
+        for s in storyboard.shots
+    )
+
+    if (effective_default_bgm and effective_default_bgm.exists()) or has_custom_mood_bgm:
+        bgm_timeline = AudioSegment.silent(duration=0)
+        sections = []
+        current_bgm_path = None
+        current_section_dur = 0
+
+        for shot in storyboard.shots:
+            shot_dur = durations.get(shot.id, shot.duration or 5.0)
+            shot_dur_ms = int(round(shot_dur * 1000))
+            shot_bgm = resolve_mood_bgm(getattr(shot, "mood", None)) or effective_default_bgm
+
+            if shot_bgm == current_bgm_path:
+                current_section_dur += shot_dur_ms
+            else:
+                if current_bgm_path is not None and current_section_dur > 0:
+                    sections.append((current_bgm_path, current_section_dur))
+                current_bgm_path = shot_bgm
+                current_section_dur = shot_dur_ms
+
+        if current_bgm_path is not None and current_section_dur > 0:
+            sections.append((current_bgm_path, current_section_dur))
+
+        for bgm_file, dur_ms in sections:
+            if bgm_file and Path(bgm_file).exists():
+                bgm_seg = AudioSegment.from_file(str(bgm_file)) + ducking_db
+                loops = (dur_ms // len(bgm_seg)) + 1
+                sec_audio = (bgm_seg * loops)[:dur_ms]
+            else:
+                sec_audio = AudioSegment.silent(duration=dur_ms)
+
+            if len(bgm_timeline) == 0:
+                bgm_timeline = sec_audio
+            else:
+                fade_len = min(600, len(bgm_timeline), len(sec_audio))
+                if fade_len > 100:
+                    bgm_timeline = bgm_timeline.append(sec_audio, crossfade=fade_len)
+                else:
+                    bgm_timeline = bgm_timeline + sec_audio
+
+        if len(bgm_timeline) > 0 and len(master) > 0:
+            if len(bgm_timeline) < len(master):
+                bgm_timeline = bgm_timeline + AudioSegment.silent(duration=len(master) - len(bgm_timeline))
+            else:
+                bgm_timeline = bgm_timeline[:len(master)]
+            master = master.overlay(bgm_timeline)
 
     # Smooth audio fade in (800ms) and fade out (1000ms)
     if len(master) > 2000:

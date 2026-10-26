@@ -33,6 +33,9 @@ export interface ProductionFormData {
   aspect_ratio?: string
   hardsub?: boolean
   pause_after_script?: boolean
+  series_title?: string
+  episode?: number
+  parent_project_id?: string
 }
 
 export interface StudioStatus {
@@ -65,6 +68,8 @@ export interface Shot {
   audio_url?: string
   video_url?: string
   sfx?: string
+  act?: number
+  mood?: string
   [key: string]: unknown
 }
 
@@ -86,6 +91,9 @@ export interface ProjectItem {
   duration: number
   aspect_ratio?: string
   hardsub?: boolean
+  series_title?: string
+  episode?: number
+  parent_project_id?: string
   created_at: number
   video_file: string
   srt_file?: string
@@ -94,4 +102,22 @@ export interface ProjectItem {
   srt_url?: string
   thumb_url?: string
   shots_count: number
+}
+
+export interface ChapterInfo {
+  timestamp: string
+  title: string
+}
+
+export interface ProjectSeoData {
+  project_id: string
+  title: string
+  series_title?: string | null
+  episode?: number
+  titles: string[]
+  description: string
+  chapters: ChapterInfo[]
+  tags: string[]
+  hashtags: string
+  thumbnail_url?: string | null
 }

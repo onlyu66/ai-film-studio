@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, List, Optional, Any
 import json
 import re
@@ -23,6 +24,8 @@ class Shot:
     motion: str = "zoom_in"
     duration: Optional[float] = None
     sfx: Optional[str] = None
+    act: Optional[int] = 1
+    mood: Optional[str] = None
 
 @dataclass
 class Storyboard:
@@ -54,6 +57,8 @@ class Storyboard:
                     "motion": s.motion,
                     "duration": s.duration,
                     "sfx": s.sfx,
+                    "act": s.act,
+                    "mood": s.mood,
                 }
                 for s in self.shots
             ],
@@ -111,6 +116,17 @@ def parse_storyboard_json(raw: str) -> Storyboard:
             else:
                 img_str = str(img_val or "")
 
+            # Derive act from 'act' field or fallback to chapter (or 1)
+            raw_act = s.get("act")
+            if raw_act is not None:
+                try:
+                    act_num = int(raw_act)
+                except (ValueError, TypeError):
+                    act_num = 1
+            else:
+                chap = int(s.get("chapter", 1))
+                act_num = min(3, max(1, chap))
+
             shots.append(
                 Shot(
                     id=str(s.get("id", f"shot_{len(shots)+1:03d}")),
@@ -121,6 +137,8 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                     motion=s.get("motion", "zoom_in") or "zoom_in",
                     duration=float(s["duration"]) if s.get("duration") is not None else None,
                     sfx=str(s["sfx"]).strip() if s.get("sfx") else None,
+                    act=act_num,
+                    mood=str(s["mood"]).strip().lower() if s.get("mood") else None,
                 )
             )
 
@@ -140,12 +158,40 @@ def generate_storyboard(config: StudioConfig, llm: LLMProvider) -> Storyboard:
     if max_shots:
         print(f"  [Ollama/CPU] Capping storyboard to {max_shots} shots for performance. "
               f"Use --llm gemini or --llm groq for full {config.duration}-minute films.")
+
+    parent_context = None
+    if config.parent_project_id:
+        parent_dir = Path("outputs/projects") / config.parent_project_id
+        sb_path = parent_dir / "storyboard.json"
+        if sb_path.exists():
+            try:
+                with open(sb_path, "r", encoding="utf-8") as f:
+                    p_sb = json.load(f)
+                chars_desc = []
+                for cid, cdata in p_sb.get("characters", {}).items():
+                    chars_desc.append(
+                        f"- ID '{cid}': {cdata.get('name')} (Visual Anchor: {cdata.get('visual_anchor')}, "
+                        f"Voice: {cdata.get('voice')}, Seed: {cdata.get('seed')})"
+                    )
+                prev_shots = p_sb.get("shots", [])
+                ending_dialogue = prev_shots[-1].get("dialogue", "") if prev_shots else ""
+                parent_context = (
+                    f"Tên tập trước: {p_sb.get('title')}\n"
+                    f"Danh sách nhân vật cố định bắt buộc kế thừa:\n" + "\n".join(chars_desc) + "\n"
+                    f"Tình tiết kết thúc tập trước: '{ending_dialogue}'"
+                )
+            except Exception:
+                pass
+
     user_prompt = get_storyboard_user_prompt(
         topic=config.topic,
         lang=config.lang,
         duration_minutes=config.duration,
         style=config.style,
         max_shots=max_shots,
+        series_title=config.series_title,
+        episode=config.episode,
+        parent_context=parent_context,
     )
     raw_response = llm.generate(STORYBOARD_SYSTEM_PROMPT, user_prompt)
     return parse_storyboard_json(raw_response)

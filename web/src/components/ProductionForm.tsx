@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic, FileEdit } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic, FileEdit, Clapperboard, X } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
@@ -73,9 +73,11 @@ const STYLES: StyleOption[] = [
 export interface ProductionFormProps {
   onSubmit: (data: ProductionFormData) => void
   isRunning: boolean
+  initialData?: Partial<ProductionFormData> | null
+  onResetSeries?: () => void
 }
 
-export default function ProductionForm({ onSubmit, isRunning }: ProductionFormProps) {
+export default function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }: ProductionFormProps) {
   const [topic, setTopic] = useState('Bí ẩn thành phố Atlantis chìm sâu dưới đáy đại dương và đoàn thám hiểm cổ vật')
   const [lang, setLang] = useState('vi')
   const [duration, setDuration] = useState(5)
@@ -87,6 +89,22 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
   const [hardsub, setHardsub] = useState(false)
   const [pauseAfterScript, setPauseAfterScript] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [seriesTitle, setSeriesTitle] = useState('')
+  const [episode, setEpisode] = useState(1)
+  const [parentProjectId, setParentProjectId] = useState<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.topic) setTopic(initialData.topic)
+      if (initialData.lang) setLang(initialData.lang)
+      if (initialData.style) setStyle(initialData.style)
+      if (initialData.duration) setDuration(initialData.duration)
+      if (initialData.aspect_ratio) setAspectRatio(initialData.aspect_ratio)
+      if (initialData.series_title) setSeriesTitle(initialData.series_title)
+      if (initialData.episode) setEpisode(initialData.episode)
+      if (initialData.parent_project_id) setParentProjectId(initialData.parent_project_id)
+    }
+  }, [initialData])
 
   const handleApplyPreset = (p: PresetIdea) => {
     setTopic(p.topic)
@@ -107,6 +125,9 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
       aspect_ratio: aspectRatio,
       hardsub,
       pause_after_script: pauseAfterScript,
+      series_title: seriesTitle.trim() || undefined,
+      episode: Number(episode) || 1,
+      parent_project_id: parentProjectId,
     })
   }
 
@@ -134,6 +155,44 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
       </CardHeader>
 
       <CardContent className="pt-5 space-y-6">
+        {/* Series Continuation Alert Banner if active */}
+        {parentProjectId && (
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-indigo-950/40 to-amber-500/10 border border-amber-500/50 flex items-center justify-between gap-3 shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/30 shrink-0">
+                <Clapperboard className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase text-amber-300">
+                    Chế độ Phim Bộ (Series Mode)
+                  </span>
+                  <Badge variant="default" className="text-[10px] bg-amber-400 text-slate-950 font-black">
+                    TẬP {episode}
+                  </Badge>
+                </div>
+                <p className="text-xs text-slate-200 mt-0.5">
+                  Đang sản xuất tiếp nối từ: <strong className="text-white">{seriesTitle || 'Tập trước'}</strong>. Studio sẽ tự động kế thừa nhân vật, giọng đọc và hạt giống AI từ tập trước.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setParentProjectId(undefined)
+                setSeriesTitle('')
+                setEpisode(1)
+                onResetSeries?.()
+              }}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+              title="Hủy liên kết tập phim để tạo phim độc lập"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         {/* Preset chips */}
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -314,6 +373,35 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
                   onChange={setLipSync}
                   options={LIPSYNC_OPTIONS}
                   disabled={isRunning}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Clapperboard className="w-3 h-3 text-amber-400" />
+                  <span>Tên Series Phim (Tùy chọn)</span>
+                </label>
+                <input
+                  type="text"
+                  value={seriesTitle}
+                  onChange={(e) => setSeriesTitle(e.target.value)}
+                  placeholder="Để trống nếu là phim độc lập"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Clock className="w-3 h-3 text-amber-400" />
+                  <span>Tập số (Episode)</span>
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={999}
+                  value={episode}
+                  onChange={(e) => setEpisode(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
                 />
               </div>
             </div>
