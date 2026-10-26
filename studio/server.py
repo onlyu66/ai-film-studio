@@ -32,6 +32,7 @@ class ProduceRequest(BaseModel):
     llm: str = "gemini"
     motion: str = "kenburns"
     lip_sync: str = "none"
+    aspect_ratio: str = "16:9"
     pause_after_script: bool = False
 
 # Global pipeline execution state
@@ -72,6 +73,7 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             llm_provider=req.llm,
             motion_engine=req.motion,
             lip_sync=req.lip_sync,
+            aspect_ratio=req.aspect_ratio,
             output_dir=Path("outputs"),
         )
 

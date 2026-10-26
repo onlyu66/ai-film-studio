@@ -12,6 +12,7 @@ class StudioConfig:
     llm_provider: str = "gemini"
     motion_engine: str = "kenburns"
     lip_sync: str = "none"
+    aspect_ratio: str = "16:9"
     bgm_path: Optional[Path] = None
     output_dir: Path = field(default_factory=lambda: Path("outputs"))
     project_dir: Path = field(default_factory=lambda: Path("."))
@@ -36,6 +37,8 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
                 merged["motion_engine"] = v
             elif k in ("lip_sync", "lipsync"):
                 merged["lip_sync"] = v
+            elif k in ("aspect_ratio", "aspect", "ratio"):
+                merged["aspect_ratio"] = v
             elif k == "bgm":
                 merged["bgm_path"] = Path(v) if v else None
             elif k == "output_dir":
@@ -51,6 +54,7 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
     llm_provider = merged.get("llm_provider", "gemini")
     motion_engine = merged.get("motion_engine", "kenburns")
     lip_sync = merged.get("lip_sync", "none")
+    aspect_ratio = merged.get("aspect_ratio", "16:9")
     bgm_path = Path(merged["bgm_path"]) if merged.get("bgm_path") else None
     output_dir = Path(merged.get("output_dir", "outputs"))
     project_dir = Path(merged.get("project_dir", "."))
@@ -63,6 +67,7 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
         llm_provider=llm_provider,
         motion_engine=motion_engine,
         lip_sync=lip_sync,
+        aspect_ratio=aspect_ratio,
         bgm_path=bgm_path,
         output_dir=output_dir,
         project_dir=project_dir,

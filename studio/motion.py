@@ -21,9 +21,16 @@ def build_ffmpeg_command(
     width: int = 1920,
     height: int = 1080,
     vfx: bool = False,
+    aspect_ratio: str = "16:9",
 ) -> List[str]:
     """Construct the FFmpeg command line to generate Ken Burns camera motion from a still image."""
     d = max(1, int(duration * fps))
+
+    if aspect_ratio == "9:16":
+        width, height = 1080, 1920
+        scale_filter = "scale=-1:4000"
+    else:
+        scale_filter = "scale=4000:-1"
 
     # Formulas for different 2.5D camera motions
     if motion_type == "zoom_out":
@@ -35,7 +42,7 @@ def build_ffmpeg_command(
     else:  # default zoom_in
         zoompan_expr = f"z='min(zoom+0.0015,1.2)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
 
-    vf_filters = [f"scale=4000:-1,zoompan={zoompan_expr}:d={d}:s={width}x{height}:fps={fps}"]
+    vf_filters = [f"{scale_filter},zoompan={zoompan_expr}:d={d}:s={width}x{height}:fps={fps}"]
 
     if vfx:
         # Cinematic look: Vignette (dark corners) + subtle contrast & saturation boost + film grain
@@ -101,7 +108,8 @@ def render_motion_for_shot(
     motion_type: str = "zoom_in",
     fps: int = 25,
     engine: str = "kenburns",
-    prompt: str = ""
+    prompt: str = "",
+    aspect_ratio: str = "16:9",
 ) -> Path:
     """Execute motion rendering for a single shot according to selected engine."""
     if not shutil.which("ffmpeg"):
@@ -116,7 +124,15 @@ def render_motion_for_shot(
             return res
 
     vfx = (engine == "vfx")
-    cmd = build_ffmpeg_command(image_path, output_path, duration, motion_type, fps, vfx=vfx)
+    cmd = build_ffmpeg_command(
+        image_path,
+        output_path,
+        duration,
+        motion_type,
+        fps,
+        vfx=vfx,
+        aspect_ratio=aspect_ratio,
+    )
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode != 0:
         raise RuntimeError(f"FFmpeg motion rendering failed: {result.stderr.decode('utf-8', errors='ignore')}")
@@ -176,6 +192,7 @@ def run_motion_stage(
                     motion_type=shot.motion or "zoom_in",
                     engine=config.motion_engine,
                     prompt=shot.image_prompt,
+                    aspect_ratio=getattr(config, "aspect_ratio", "16:9"),
                 )
 
             return shot.id, out_file

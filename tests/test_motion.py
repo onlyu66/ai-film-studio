@@ -15,6 +15,12 @@ def test_build_ffmpeg_pan_left():
     cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 4.0, "pan_left")
     assert "zoompan" in " ".join(cmd)
 
+def test_build_ffmpeg_vertical_aspect_ratio():
+    cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 4.0, "zoom_in", aspect_ratio="9:16")
+    joined = " ".join(cmd)
+    assert "1080x1920" in joined
+    assert "scale=-1:4000" in joined
+
 def test_ffmpeg_missing_error(monkeypatch):
     monkeypatch.setattr(shutil, "which", lambda cmd: None)
     from studio.motion import render_motion_for_shot

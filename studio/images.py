@@ -41,7 +41,9 @@ def generate_image_for_shot(
     style: str,
     output_dir: Path,
     retries: int = 3,
-    timeout: int = 30
+    timeout: int = 30,
+    aspect_ratio: str = "16:9",
+    seed_override: Optional[int] = None
 ) -> Optional[Path]:
     """Generate image via Pollinations API with exponential backoff retry. Returns file path or None."""
     output_dir = Path(output_dir)
@@ -51,11 +53,16 @@ def generate_image_for_shot(
     prompt = build_full_prompt(shot, characters, style)
     encoded_prompt = urllib.parse.quote(prompt)
 
-    seed = 42
-    if shot.character_id and shot.character_id in characters:
+    seed = seed_override or 42
+    if seed_override is None and shot.character_id and shot.character_id in characters:
         seed = characters[shot.character_id].seed
 
-    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?model=flux&width=1280&height=720&seed={seed}&nologo=true"
+    if aspect_ratio == "9:16":
+        w, h = 720, 1280
+    else:
+        w, h = 1280, 720
+
+    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?model=flux&width={w}&height={h}&seed={seed}&nologo=true"
 
     for attempt in range(retries):
         try:
@@ -98,6 +105,7 @@ def run_image_stage(
                 characters=storyboard.characters,
                 style=config.style,
                 output_dir=img_dir,
+                aspect_ratio=getattr(config, "aspect_ratio", "16:9"),
             )
             if result and result.exists():
                 return shot.id, result

@@ -10,7 +10,8 @@ def test_load_config_defaults():
     assert cfg.llm_provider == "gemini"
 
 def test_load_config_overrides():
-    cfg = load_config({"topic": "X", "lang": "vi", "duration": 45, "llm": "ollama"})
+    cfg = load_config({"topic": "X", "lang": "vi", "duration": 45, "llm": "ollama", "aspect_ratio": "9:16"})
     assert cfg.lang == "vi"
     assert cfg.duration == 45
     assert cfg.llm_provider == "ollama"
+    assert cfg.aspect_ratio == "9:16"
