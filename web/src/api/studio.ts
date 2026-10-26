@@ -144,4 +144,55 @@ export async function generateProjectThumbnail(
   return response.data
 }
 
+export interface DubProjectParams {
+  projectId: string
+  targetLang: string
+  voice?: string
+  hardsub?: boolean
+}
+
+export async function dubProject({
+  projectId,
+  targetLang,
+  voice,
+  hardsub = false,
+}: DubProjectParams): Promise<{ success: boolean; target_lang: string; video_url: string; srt_url: string }> {
+  const response = await apiClient.post<{ success: boolean; target_lang: string; video_url: string; srt_url: string }>(
+    `/api/projects/${projectId}/dub`,
+    { target_lang: targetLang, voice, hardsub }
+  )
+  return response.data
+}
+
+export async function generateCharacterHeadshot(
+  characterId: string,
+  visualAnchor: string,
+  seed = 42
+): Promise<{ success: boolean; character_id: string; headshot_url: string }> {
+  const response = await apiClient.post<{ success: boolean; character_id: string; headshot_url: string }>(
+    '/api/characters/generate-headshot',
+    { character_id: characterId, visual_anchor: visualAnchor, seed }
+  )
+  return response.data
+}
+
+export async function uploadCharacterHeadshot(
+  characterId: string,
+  imageBase64: string
+): Promise<{ success: boolean; character_id: string; headshot_url: string }> {
+  const response = await apiClient.post<{ success: boolean; character_id: string; headshot_url: string }>(
+    '/api/characters/upload-headshot',
+    { character_id: characterId, image_base64: imageBase64 }
+  )
+  return response.data
+}
+
+export async function testWebhook(webhookUrl: string): Promise<{ success: boolean; message: string }> {
+  const response = await apiClient.post<{ success: boolean; message: string }>(
+    '/api/settings/test-webhook',
+    { webhook_url: webhookUrl }
+  )
+  return response.data
+}
+
 

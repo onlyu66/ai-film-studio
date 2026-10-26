@@ -6,6 +6,8 @@ import json
 import shutil
 import subprocess
 import time
+import urllib.request
+import urllib.error
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -53,6 +55,7 @@ class ProduceRequest(BaseModel):
     series_title: Optional[str] = None
     episode: int = 1
     parent_project_id: Optional[str] = None
+    webhook_url: Optional[str] = None
 
 # Global pipeline execution state
 pipeline_state: Dict[str, Any] = {
@@ -88,6 +91,33 @@ def log_message(msg: str):
     if len(pipeline_state["logs"]) > 200:
         pipeline_state["logs"] = pipeline_state["logs"][-200:]
     broadcast_ws("log", formatted)
+
+def send_webhook_notification(webhook_url: str, payload: dict):
+    """Deliver webhook notification asynchronously in background thread."""
+    if not webhook_url or not webhook_url.startswith("http"):
+        return
+
+    def _worker():
+        try:
+            is_discord = "discord.com" in webhook_url or "discordapp.com" in webhook_url
+            if is_discord:
+                body = {
+                    "content": f"🎬 **[AI Film Studio] Phim đã sản xuất hoàn tất!**\n> **Tiêu đề:** {payload.get('title')}\n> **Thời lượng:** {payload.get('duration')} phút | **Tỷ lệ:** {payload.get('aspect_ratio', '16:9')}\n> **Tệp video:** `{payload.get('video_file')}`",
+                }
+            else:
+                body = payload
+
+            req_obj = urllib.request.Request(
+                webhook_url,
+                data=json.dumps(body, ensure_ascii=False).encode("utf-8"),
+                headers={"Content-Type": "application/json", "User-Agent": "AIFilmStudio/1.0"}
+            )
+            with urllib.request.urlopen(req_obj, timeout=10) as resp:
+                pass
+        except Exception as e:
+            print(f"  [Webhook] Error sending notification to {webhook_url}: {e}")
+
+    threading.Thread(target=_worker, daemon=True).start()
 
 def generate_thumbnail_image(
     project_dir: Path,
@@ -216,11 +246,13 @@ def save_project_to_library(final_video_path: Path, req: ProduceRequest):
         "series_title": getattr(req, "series_title", None),
         "episode": getattr(req, "episode", 1),
         "parent_project_id": getattr(req, "parent_project_id", None),
+        "webhook_url": getattr(req, "webhook_url", None),
         "created_at": timestamp,
         "video_file": final_video_path.name,
         "srt_file": srt_name,
         "thumb_file": thumb_name,
         "shots_count": shots_count,
+        "dubbed_versions": {},
     }
     with open(project_dir / "metadata.json", "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False)
@@ -248,6 +280,7 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             series_title=req.series_title,
             episode=req.episode,
             parent_project_id=req.parent_project_id,
+            webhook_url=req.webhook_url,
         )
 
         if not resume_only and req.pause_after_script:
@@ -290,6 +323,20 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             save_project_to_library(final_video_path, req)
         except Exception as save_err:
             log_message(f"Cảnh báo: không thể lưu vào thư viện dự án: {save_err}")
+
+        if getattr(req, "webhook_url", None):
+            try:
+                webhook_data = {
+                    "event": "production_completed",
+                    "title": req.topic,
+                    "duration": req.duration,
+                    "aspect_ratio": req.aspect_ratio,
+                    "video_file": final_video_path.name,
+                    "timestamp": int(time.time()),
+                }
+                send_webhook_notification(req.webhook_url, webhook_data)
+            except Exception:
+                pass
 
     except Exception as e:
         pipeline_state["status"] = "error"
@@ -992,6 +1039,259 @@ def get_project_seo(project_id: str):
         "hashtags": hashtags,
         "thumbnail_url": thumb_url,
     }
+
+class DubProjectRequest(BaseModel):
+    target_lang: str
+    voice: Optional[str] = None
+    hardsub: bool = False
+
+@app.post("/api/projects/{project_id}/dub")
+def dub_project(project_id: str, req: DubProjectRequest):
+    project_dir = Path("outputs/projects") / project_id
+    if not project_dir.exists() or not project_dir.is_dir():
+        raise HTTPException(status_code=404, detail="Không tìm thấy dự án trong thư viện.")
+
+    meta_file = project_dir / "metadata.json"
+    sb_file = project_dir / "storyboard.json"
+    if not sb_file.exists():
+        raise HTTPException(status_code=400, detail="Dự án không có storyboard.json để lồng tiếng.")
+
+    with open(sb_file, "r", encoding="utf-8") as f:
+        sb_data = json.load(f)
+    meta = {}
+    if meta_file.exists():
+        with open(meta_file, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+
+    video_file = meta.get("video_file")
+    if not video_file or not (project_dir / video_file).exists():
+        raise HTTPException(status_code=400, detail="Không tìm thấy video gốc để lồng tiếng.")
+
+    target_lang = req.target_lang.lower().strip()
+    shots = sb_data.get("shots", [])
+    if not shots:
+        raise HTTPException(status_code=400, detail="Không có phân cảnh để lồng tiếng.")
+
+    from studio.tts import generate_audio_for_shot, get_audio_duration, DEFAULT_VOICES
+    from studio.subtitles import generate_srt
+    from studio.assembly import build_master_audio, build_hardsub_filter
+    from studio.storyboard import Storyboard, Shot, Character
+
+    dubbed_audio_dir = project_dir / "dub" / target_lang
+    dubbed_audio_dir.mkdir(parents=True, exist_ok=True)
+
+    chosen_voice = req.voice or DEFAULT_VOICES.get(target_lang, "en-US-GuyNeural")
+
+    dialogues = [s.get("dialogue", "") for s in shots]
+    translated_dialogues = []
+    llm_name = meta.get("llm") or "gemini"
+    try:
+        from studio.llm import get_provider
+        provider = get_provider(llm_name)
+        prompt = f"Translate the following movie dialogues into natural cinematic {target_lang}. Return ONLY a JSON list of strings, exactly {len(dialogues)} items:\n{json.dumps(dialogues, ensure_ascii=False)}"
+        res = provider.generate("You are a professional film localization translator.", prompt)
+        from studio.storyboard import repair_json_string
+        cleaned = repair_json_string(res)
+        translated_dialogues = json.loads(cleaned)
+        if not isinstance(translated_dialogues, list) or len(translated_dialogues) != len(dialogues):
+            translated_dialogues = dialogues
+    except Exception:
+        translated_dialogues = dialogues
+
+    dubbed_shots = []
+    durations = {}
+    for idx, s in enumerate(shots):
+        new_diag = translated_dialogues[idx] if idx < len(translated_dialogues) else s.get("dialogue", "")
+        shot_obj = Shot(
+            id=s.get("id", f"shot_{idx:03d}"),
+            chapter=int(s.get("chapter", 1)),
+            character_id=s.get("character_id"),
+            dialogue=str(new_diag),
+            image_prompt=s.get("image_prompt", ""),
+            motion=s.get("motion", "zoom_in"),
+            duration=float(s.get("duration") or 5.0),
+            sfx=s.get("sfx"),
+            act=int(s.get("act", 1)),
+            mood=s.get("mood"),
+        )
+        dubbed_shots.append(shot_obj)
+        chars = {
+            k: Character(
+                name=v.get("name", k),
+                visual_anchor=v.get("visual_anchor", ""),
+                voice=chosen_voice,
+                seed=v.get("seed", 42)
+            ) for k, v in sb_data.get("characters", {}).items()
+        }
+        audio_path = generate_audio_for_shot(shot_obj, chars, dubbed_audio_dir, lang=target_lang)
+        if audio_path and audio_path.exists():
+            durations[shot_obj.id] = get_audio_duration(audio_path)
+        else:
+            durations[shot_obj.id] = shot_obj.duration or 5.0
+
+    dubbed_sb = Storyboard(
+        title=f"{sb_data.get('title', 'Film')} ({target_lang.upper()})",
+        language=target_lang,
+        characters={},
+        shots=dubbed_shots
+    )
+
+    dubbed_master_audio = project_dir / f"audio_{target_lang}.mp3"
+    build_master_audio(
+        storyboard=dubbed_sb,
+        audio_dir=dubbed_audio_dir,
+        durations=durations,
+        output_audio_path=dubbed_master_audio,
+        style=meta.get("style", "cinematic")
+    )
+
+    dubbed_srt = project_dir / f"movie_{target_lang}.srt"
+    generate_srt(dubbed_sb, durations, dubbed_srt)
+
+    dubbed_video_name = f"movie_{target_lang}.mp4"
+    dubbed_video_path = project_dir / dubbed_video_name
+    src_video_path = project_dir / video_file
+
+    if req.hardsub:
+        hardsub_filter = build_hardsub_filter(dubbed_srt, aspect_ratio=meta.get("aspect_ratio", "16:9"))
+        cmd_mux = [
+            "ffmpeg", "-y",
+            "-i", str(src_video_path),
+            "-i", str(dubbed_master_audio),
+            "-vf", hardsub_filter,
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+            "-shortest",
+            str(dubbed_video_path)
+        ]
+    else:
+        cmd_mux = [
+            "ffmpeg", "-y",
+            "-i", str(src_video_path),
+            "-i", str(dubbed_master_audio),
+            "-c:v", "copy",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+            "-shortest",
+            str(dubbed_video_path)
+        ]
+
+    subprocess.run(cmd_mux, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+
+    if "dubbed_versions" not in meta:
+        meta["dubbed_versions"] = {}
+    meta["dubbed_versions"][target_lang] = {
+        "video_file": dubbed_video_name,
+        "srt_file": dubbed_srt.name,
+        "video_url": f"/api/outputs/projects/{project_id}/{dubbed_video_name}",
+        "srt_url": f"/api/outputs/projects/{project_id}/{dubbed_srt.name}",
+    }
+    with open(meta_file, "w", encoding="utf-8") as f:
+        json.dump(meta, f, indent=2, ensure_ascii=False)
+
+    return {
+        "success": True,
+        "project_id": project_id,
+        "target_lang": target_lang,
+        "video_url": f"/api/outputs/projects/{project_id}/{dubbed_video_name}",
+        "srt_url": f"/api/outputs/projects/{project_id}/{dubbed_srt.name}",
+    }
+
+class GenerateHeadshotRequest(BaseModel):
+    character_id: str
+    visual_anchor: str
+    seed: int = 42
+
+@app.post("/api/characters/generate-headshot")
+def api_generate_headshot(req: GenerateHeadshotRequest):
+    char_dir = Path("outputs/characters")
+    char_dir.mkdir(parents=True, exist_ok=True)
+    out_file = char_dir / f"{req.character_id}.png"
+
+    from studio.images import generate_image_for_shot
+    from studio.storyboard import Shot
+    prompt = f"Cinematic studio character portrait headshot photo of {req.visual_anchor}, dramatic lighting, 8k, detailed facial features"
+    dummy_shot = Shot(id=f"char_{req.character_id}", chapter=1, character_id=req.character_id, dialogue="", image_prompt=prompt)
+    generate_image_for_shot(dummy_shot, out_file, engine="fallback", prompt_override=prompt, aspect_ratio="1:1")
+
+    sb_file = Path("outputs/storyboard.json")
+    if sb_file.exists():
+        try:
+            with open(sb_file, "r", encoding="utf-8") as f:
+                sb_data = json.load(f)
+            if "characters" in sb_data and req.character_id in sb_data["characters"]:
+                sb_data["characters"][req.character_id]["headshot_url"] = f"/api/outputs/characters/{req.character_id}.png"
+                with open(sb_file, "w", encoding="utf-8") as f:
+                    json.dump(sb_data, f, indent=2, ensure_ascii=False)
+        except Exception:
+            pass
+
+    return {
+        "success": True,
+        "character_id": req.character_id,
+        "headshot_url": f"/api/outputs/characters/{req.character_id}.png?t={int(time.time())}"
+    }
+
+class UploadHeadshotRequest(BaseModel):
+    character_id: str
+    image_base64: str
+
+@app.post("/api/characters/upload-headshot")
+def api_upload_headshot(req: UploadHeadshotRequest):
+    import base64
+    char_dir = Path("outputs/characters")
+    char_dir.mkdir(parents=True, exist_ok=True)
+    out_file = char_dir / f"{req.character_id}.png"
+
+    b64 = req.image_base64
+    if "," in b64:
+        b64 = b64.split(",", 1)[1]
+    try:
+        data = base64.b64decode(b64)
+        out_file.write_bytes(data)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Lỗi giải mã ảnh đại diện: {e}")
+
+    sb_file = Path("outputs/storyboard.json")
+    if sb_file.exists():
+        try:
+            with open(sb_file, "r", encoding="utf-8") as f:
+                sb_data = json.load(f)
+            if "characters" in sb_data and req.character_id in sb_data["characters"]:
+                sb_data["characters"][req.character_id]["headshot_url"] = f"/api/outputs/characters/{req.character_id}.png"
+                with open(sb_file, "w", encoding="utf-8") as f:
+                    json.dump(sb_data, f, indent=2, ensure_ascii=False)
+        except Exception:
+            pass
+
+    return {
+        "success": True,
+        "character_id": req.character_id,
+        "headshot_url": f"/api/outputs/characters/{req.character_id}.png?t={int(time.time())}"
+    }
+
+class TestWebhookRequest(BaseModel):
+    webhook_url: str
+
+@app.post("/api/settings/test-webhook")
+def api_test_webhook(req: TestWebhookRequest):
+    test_payload = {
+        "event": "test_notification",
+        "title": "AI Cinema Studio",
+        "duration": 5,
+        "aspect_ratio": "16:9",
+        "video_file": "movie.mp4",
+        "message": "AI Film Studio Webhook test ping successfully delivered! 🚀",
+        "timestamp": int(time.time())
+    }
+    send_webhook_notification(req.webhook_url, test_payload)
+    return {"success": True, "message": "Đã gửi thông báo kiểm tra đến Webhook"}
 
 @app.delete("/api/projects/{project_id}")
 def delete_project(project_id: str):

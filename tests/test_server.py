@@ -158,3 +158,34 @@ def test_websocket_pipeline():
         ws.send_text("ping")
         pong = ws.receive_json()
         assert pong["type"] == "pong"
+
+def test_api_test_webhook():
+    resp = client.post("/api/settings/test-webhook", json={"webhook_url": "https://example.com/webhook"})
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+
+def test_api_character_headshot_upload(tmp_path, monkeypatch):
+    import base64
+    from pathlib import Path
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        if str(arg) == "outputs/characters":
+            p = tmp_path / "characters"
+            p.mkdir(parents=True, exist_ok=True)
+            return p
+        if str(arg) == "outputs/storyboard.json":
+            return tmp_path / "dummy_sb.json"
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    # 1x1 transparent PNG in base64
+    b64_png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="
+    resp = client.post("/api/characters/upload-headshot", json={
+        "character_id": "hero_char",
+        "image_base64": b64_png
+    })
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+    assert "hero_char" in resp.json()["headshot_url"]

@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save, Sparkles, Upload, Play, Plus, Trash2, ArrowUp, ArrowDown, Music } from 'lucide-react'
+import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save, Sparkles, Upload, Play, Plus, Trash2, ArrowUp, ArrowDown, Music, Camera } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
+import TimelineScrubber from './TimelineScrubber'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
@@ -13,6 +14,8 @@ import {
   useAddShot,
   useDeleteShot,
   useReorderShots,
+  useGenerateHeadshot,
+  useUploadHeadshot,
 } from '../api/queries'
 import type { StoryboardData, SelectOption } from '../types'
 
@@ -21,6 +24,8 @@ interface CharacterData {
   visual_anchor?: string | Record<string, unknown>
   voice?: string
   seed?: number | string
+  headshot_url?: string
+  face_dna?: string
   [key: string]: unknown
 }
 
@@ -103,6 +108,40 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
   const addShotMutation = useAddShot()
   const deleteShotMutation = useDeleteShot()
   const reorderShotsMutation = useReorderShots()
+  const generateHeadshotMutation = useGenerateHeadshot()
+  const uploadHeadshotMutation = useUploadHeadshot()
+  const [generatingCharId, setGeneratingCharId] = useState<string | null>(null)
+  const [uploadingCharId, setUploadingCharId] = useState<string | null>(null)
+
+  const handleGenerateHeadshot = (charId: string, char: CharacterData) => {
+    setGeneratingCharId(charId)
+    const anchor = typeof char.visual_anchor === 'string' ? char.visual_anchor : JSON.stringify(char.visual_anchor)
+    generateHeadshotMutation.mutate(
+      {
+        characterId: charId,
+        visualAnchor: anchor,
+        seed: Number(char.seed) || 42,
+      },
+      {
+        onSettled: () => setGeneratingCharId(null),
+      }
+    )
+  }
+
+  const handleUploadHeadshot = (charId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadingCharId(charId)
+    const reader = new FileReader()
+    reader.onload = () => {
+      const b64 = reader.result as string
+      uploadHeadshotMutation.mutate(
+        { characterId: charId, imageBase64: b64 },
+        { onSettled: () => setUploadingCharId(null) }
+      )
+    }
+    reader.readAsDataURL(file)
+  }
 
   const handlePlayVoice = (voice: string) => {
     setPlayingVoice(voice)
@@ -344,7 +383,12 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 space-y-6">
+        {/* Interactive Multi-track Timeline Scrubber */}
+        {shots.length > 0 && (
+          <TimelineScrubber shots={shots as any} />
+        )}
+
         {/* Characters Tab */}
         {activeTab === 'characters' && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -360,15 +404,25 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-rose-500/20 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner">
-                          {currentVoice.toLowerCase().includes('female') ||
-                          currentVoice.toLowerCase().includes('hoaimy') ||
-                          currentVoice.toLowerCase().includes('jenny') ||
-                          currentVoice.toLowerCase().includes('aria') ||
-                          currentVoice.toLowerCase().includes('nanami') ||
-                          currentVoice.toLowerCase().includes('denise')
-                            ? '👩'
-                            : '👨'}
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-rose-500/20 border border-amber-500/30 flex items-center justify-center text-xl shadow-inner overflow-hidden relative group shrink-0">
+                          {char.headshot_url ? (
+                            <img
+                              src={char.headshot_url}
+                              alt={char.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>
+                              {currentVoice.toLowerCase().includes('female') ||
+                              currentVoice.toLowerCase().includes('hoaimy') ||
+                              currentVoice.toLowerCase().includes('jenny') ||
+                              currentVoice.toLowerCase().includes('aria') ||
+                              currentVoice.toLowerCase().includes('nanami') ||
+                              currentVoice.toLowerCase().includes('denise')
+                                ? '👩'
+                                : '👨'}
+                            </span>
+                          )}
                         </div>
                         <div>
                           <h4 className="text-sm font-extrabold text-white">{char.name}</h4>
@@ -379,7 +433,7 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                       <span className="font-mono text-slate-500 text-[10px]">Seed: {String(char.seed ?? '')}</span>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/60 mb-4">
+                    <div className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/60 mb-3">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
                         Visual DNA Anchor:
                       </span>
@@ -388,6 +442,39 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                           ? char.visual_anchor
                           : JSON.stringify(char.visual_anchor)}
                       </p>
+                    </div>
+
+                    {/* Character Face Headshot Action Buttons */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateHeadshot(id, char)}
+                        disabled={generatingCharId === id}
+                        className="flex-1 py-1 px-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                      >
+                        {generatingCharId === id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
+                        ) : (
+                          <Sparkles className="w-3 h-3 text-amber-400" />
+                        )}
+                        <span>Tạo Headshot AI</span>
+                      </button>
+
+                      <label className="flex-1 py-1 px-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold flex items-center justify-center gap-1 transition-colors cursor-pointer">
+                        {uploadingCharId === id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
+                        ) : (
+                          <Camera className="w-3 h-3 text-cyan-400" />
+                        )}
+                        <span>Tải Ảnh Chân Dung</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleUploadHeadshot(id, e)}
+                          disabled={uploadingCharId === id}
+                        />
+                      </label>
                     </div>
                   </div>
 

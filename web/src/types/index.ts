@@ -36,6 +36,7 @@ export interface ProductionFormData {
   series_title?: string
   episode?: number
   parent_project_id?: string
+  webhook_url?: string
 }
 
 export interface StudioStatus {
@@ -52,13 +53,18 @@ export interface Character {
   name?: string
   gender?: string
   visual_dna?: string
+  visual_anchor?: string
   voice?: string
+  seed?: number | string
+  headshot_url?: string
+  face_dna?: string
   [key: string]: unknown
 }
 
 export interface Shot {
   id: string
   character?: string
+  character_id?: string
   dialogue?: string
   visual_description?: string
   image_prompt?: string
@@ -70,6 +76,9 @@ export interface Shot {
   sfx?: string
   act?: number
   mood?: string
+  emotion?: string
+  chapter?: number | string
+  duration?: number
   [key: string]: unknown
 }
 
@@ -80,6 +89,13 @@ export interface StoryboardData {
   characters?: Record<string, Character>
   shots?: Shot[]
   [key: string]: unknown
+}
+
+export interface DubbedVersion {
+  video_file: string
+  srt_file: string
+  video_url?: string
+  srt_url?: string
 }
 
 export interface ProjectItem {
@@ -94,6 +110,7 @@ export interface ProjectItem {
   series_title?: string
   episode?: number
   parent_project_id?: string
+  webhook_url?: string
   created_at: number
   video_file: string
   srt_file?: string
@@ -102,6 +119,7 @@ export interface ProjectItem {
   srt_url?: string
   thumb_url?: string
   shots_count: number
+  dubbed_versions?: Record<string, DubbedVersion>
 }
 
 export interface ChapterInfo {

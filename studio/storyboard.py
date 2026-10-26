@@ -13,6 +13,8 @@ class Character:
     visual_anchor: str
     voice: str = "en-US-GuyNeural"
     seed: int = 42
+    headshot_url: Optional[str] = None
+    face_dna: Optional[str] = None
 
 @dataclass
 class Shot:
@@ -26,6 +28,7 @@ class Shot:
     sfx: Optional[str] = None
     act: Optional[int] = 1
     mood: Optional[str] = None
+    emotion: Optional[str] = None
 
 @dataclass
 class Storyboard:
@@ -44,6 +47,8 @@ class Storyboard:
                     "visual_anchor": v.visual_anchor,
                     "voice": v.voice,
                     "seed": v.seed,
+                    "headshot_url": v.headshot_url,
+                    "face_dna": v.face_dna,
                 }
                 for k, v in self.characters.items()
             },
@@ -59,6 +64,7 @@ class Storyboard:
                     "sfx": s.sfx,
                     "act": s.act,
                     "mood": s.mood,
+                    "emotion": s.emotion,
                 }
                 for s in self.shots
             ],
@@ -105,6 +111,8 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                 visual_anchor=anchor_str,
                 voice=str(char_data.get("voice", "en-US-GuyNeural")),
                 seed=int(char_data.get("seed", 42)),
+                headshot_url=char_data.get("headshot_url"),
+                face_dna=char_data.get("face_dna"),
             )
 
     shots: List[Shot] = []
@@ -139,6 +147,7 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                     sfx=str(s["sfx"]).strip() if s.get("sfx") else None,
                     act=act_num,
                     mood=str(s["mood"]).strip().lower() if s.get("mood") else None,
+                    emotion=str(s["emotion"]).strip().lower() if s.get("emotion") else None,
                 )
             )
 

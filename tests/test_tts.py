@@ -32,3 +32,19 @@ def test_resolve_voice_handles_invalid_person_name():
     assert voice1 in ["vi-VN-NamMinhNeural", "vi-VN-HoaiMyNeural"]
     assert voice2 == "vi-VN-HoaiMyNeural"
 
+def test_resolve_emotion_params():
+    from studio.tts import resolve_emotion_params
+    s_tense = Shot(id="s1", chapter=1, character_id=None, dialogue="Run!", image_prompt="x", mood="tense")
+    s_sad = Shot(id="s2", chapter=1, character_id=None, dialogue="Goodbye", image_prompt="x", emotion="sad")
+    s_calm = Shot(id="s3", chapter=1, character_id=None, dialogue="Peace", image_prompt="x", mood="calm")
+
+    p_tense = resolve_emotion_params(s_tense)
+    p_sad = resolve_emotion_params(s_sad)
+    p_calm = resolve_emotion_params(s_calm)
+
+    assert p_tense["rate"] == "+12%"
+    assert p_tense["pitch"] == "+6Hz"
+    assert p_sad["rate"] == "-12%"
+    assert p_sad["pitch"] == "-6Hz"
+    assert p_calm["rate"] == "-5%"
+

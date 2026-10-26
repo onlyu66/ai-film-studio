@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react'
-import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic, FileEdit, Clapperboard, X } from 'lucide-react'
+import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic, FileEdit, Clapperboard, X, Send, Check, Loader2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
+import { useTestWebhook } from '../api/queries'
 import type { PresetIdea, StyleOption, SelectOption, ProductionFormData } from '../types'
 
 const LANG_OPTIONS: SelectOption[] = [
@@ -92,6 +93,10 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   const [seriesTitle, setSeriesTitle] = useState('')
   const [episode, setEpisode] = useState(1)
   const [parentProjectId, setParentProjectId] = useState<string | undefined>(undefined)
+  const [webhookUrl, setWebhookUrl] = useState('')
+  const [testWebhookSuccess, setTestWebhookSuccess] = useState(false)
+
+  const testWebhookMutation = useTestWebhook()
 
   useEffect(() => {
     if (initialData) {
@@ -103,12 +108,26 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       if (initialData.series_title) setSeriesTitle(initialData.series_title)
       if (initialData.episode) setEpisode(initialData.episode)
       if (initialData.parent_project_id) setParentProjectId(initialData.parent_project_id)
+      if (initialData.webhook_url) setWebhookUrl(initialData.webhook_url)
     }
   }, [initialData])
 
   const handleApplyPreset = (p: PresetIdea) => {
     setTopic(p.topic)
     setStyle(p.style)
+  }
+
+  const handleTestWebhook = () => {
+    if (!webhookUrl.trim()) return
+    testWebhookMutation.mutate(webhookUrl.trim(), {
+      onSuccess: () => {
+        setTestWebhookSuccess(true)
+        setTimeout(() => setTestWebhookSuccess(false), 3000)
+      },
+      onError: (err: any) => {
+        alert(`Lỗi Webhook: ${err?.message || 'Không thể gửi'}`)
+      },
+    })
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -128,6 +147,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       series_title: seriesTitle.trim() || undefined,
       episode: Number(episode) || 1,
       parent_project_id: parentProjectId,
+      webhook_url: webhookUrl.trim() || undefined,
     })
   }
 
@@ -402,6 +422,41 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   value={episode}
                   onChange={(e) => setEpisode(Math.max(1, parseInt(e.target.value) || 1))}
                   className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
+                />
+              </div>
+
+              <div className="sm:col-span-3 pt-2 border-t border-slate-800/80">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                    <Send className="w-3 h-3 text-emerald-400" />
+                    <span>Webhook Tự Động Hóa (Discord / Telegram / n8n / Zapier)</span>
+                  </label>
+                  {webhookUrl && (
+                    <button
+                      type="button"
+                      onClick={handleTestWebhook}
+                      disabled={testWebhookMutation.isPending}
+                      className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+                    >
+                      {testWebhookMutation.isPending ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : testWebhookSuccess ? (
+                        <>
+                          <Check className="w-3 h-3" />
+                          <span>Đã gửi thử nghiệm!</span>
+                        </>
+                      ) : (
+                        <span>Gửi thử Webhook</span>
+                      )}
+                    </button>
+                  )}
+                </div>
+                <input
+                  type="url"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                  placeholder="https://discord.com/api/webhooks/... hoặc URL nhận thông báo"
+                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
                 />
               </div>
             </div>

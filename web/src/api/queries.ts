@@ -17,8 +17,13 @@ import {
   deleteProject,
   fetchProjectSeo,
   generateProjectThumbnail,
+  dubProject,
+  generateCharacterHeadshot,
+  uploadCharacterHeadshot,
+  testWebhook,
   type UpdateShotParams,
   type AddShotParams,
+  type DubProjectParams,
 } from './studio'
 import type { StudioStatus, StoryboardData, ProductionFormData, ProjectItem, ProjectSeoData } from '../types'
 
@@ -206,6 +211,59 @@ export function useGenerateThumbnail() {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects })
       queryClient.invalidateQueries({ queryKey: ['project-seo', variables.projectId] })
     },
+  })
+}
+
+export function useDubProject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (params: DubProjectParams) => dubProject(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects })
+    },
+  })
+}
+
+export function useGenerateHeadshot() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      characterId,
+      visualAnchor,
+      seed,
+    }: {
+      characterId: string
+      visualAnchor: string
+      seed?: number
+    }) => generateCharacterHeadshot(characterId, visualAnchor, seed),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useUploadHeadshot() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      characterId,
+      imageBase64,
+    }: {
+      characterId: string
+      imageBase64: string
+    }) => uploadCharacterHeadshot(characterId, imageBase64),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useTestWebhook() {
+  return useMutation({
+    mutationFn: (webhookUrl: string) => testWebhook(webhookUrl),
   })
 }
 

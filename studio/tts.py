@@ -63,8 +63,35 @@ def resolve_voice(shot: Shot, characters: Dict[str, Character], default_lang: st
 
     return default_voice
 
-async def _synthesize_edge_tts(text: str, voice: str, output_path: Path) -> None:
-    communicate = edge_tts.Communicate(text, voice)
+def resolve_emotion_params(shot: Shot) -> Dict[str, str]:
+    """Map shot mood or emotion to Edge-TTS rate, pitch, and volume adjustments."""
+    mood = (getattr(shot, "mood", None) or getattr(shot, "emotion", None) or "").lower().strip()
+
+    # Emotional acoustic profiles
+    if mood in ("tense", "action", "shouting", "angry", "panic"):
+        return {"rate": "+12%", "pitch": "+6Hz", "volume": "+15%"}
+    elif mood in ("sad", "whisper", "whispering", "sorrow", "crying"):
+        return {"rate": "-12%", "pitch": "-6Hz", "volume": "-10%"}
+    elif mood in ("epic", "heroic", "triumphant"):
+        return {"rate": "-4%", "pitch": "+3Hz", "volume": "+10%"}
+    elif mood in ("mysterious", "suspense", "fear"):
+        return {"rate": "-8%", "pitch": "-3Hz", "volume": "+0%"}
+    elif mood in ("calm", "peaceful", "gentle"):
+        return {"rate": "-5%", "pitch": "-1Hz", "volume": "-5%"}
+    elif mood in ("joyful", "happy", "cheerful", "excited"):
+        return {"rate": "+8%", "pitch": "+8Hz", "volume": "+10%"}
+
+    return {"rate": "+0%", "pitch": "+0Hz", "volume": "+0%"}
+
+async def _synthesize_edge_tts(
+    text: str,
+    voice: str,
+    output_path: Path,
+    rate: str = "+0%",
+    pitch: str = "+0Hz",
+    volume: str = "+0%"
+) -> None:
+    communicate = edge_tts.Communicate(text, voice, rate=rate, pitch=pitch, volume=volume)
     await communicate.save(str(output_path))
 
 def generate_audio_for_shot(
@@ -98,13 +125,21 @@ def generate_audio_for_shot(
         candidate_voices.append("en-US-GuyNeural")
 
     success = False
+    emotion_params = resolve_emotion_params(shot)
     for v in candidate_voices:
         for attempt in range(1, 4):
             try:
                 # Remove stale 0-byte file before attempt
                 if out_file.exists():
                     out_file.unlink()
-                asyncio.run(_synthesize_edge_tts(shot.dialogue.strip(), v, out_file))
+                asyncio.run(_synthesize_edge_tts(
+                    shot.dialogue.strip(),
+                    v,
+                    out_file,
+                    rate=emotion_params["rate"],
+                    pitch=emotion_params["pitch"],
+                    volume=emotion_params["volume"],
+                ))
                 if out_file.exists() and out_file.stat().st_size > 0:
                     success = True
                     break

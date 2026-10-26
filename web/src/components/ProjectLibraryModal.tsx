@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Film, X, Trash2, Download, Play, Calendar, Clock, MonitorPlay, Loader2, Share2, Clapperboard } from 'lucide-react'
-import { useProjects, useDeleteProject } from '../api/queries'
+import { Film, X, Trash2, Download, Play, Calendar, Clock, MonitorPlay, Loader2, Share2, Clapperboard, Globe } from 'lucide-react'
+import { useProjects, useDeleteProject, useDubProject } from '../api/queries'
 import type { ProjectItem } from '../types'
 
 export interface ProjectLibraryModalProps {
@@ -11,6 +12,14 @@ export interface ProjectLibraryModalProps {
   onProduceNextEpisode?: (project: ProjectItem) => void
 }
 
+const DUB_LANG_OPTIONS = [
+  { value: 'en', label: 'English (US)', flag: '🇺🇸' },
+  { value: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+  { value: 'ja', label: 'Japanese (日本語)', flag: '🇯🇵' },
+  { value: 'fr', label: 'French (Français)', flag: '🇫🇷' },
+  { value: 'es', label: 'Spanish (Español)', flag: '🇪🇸' },
+]
+
 export default function ProjectLibraryModal({
   isOpen,
   onClose,
@@ -20,6 +29,32 @@ export default function ProjectLibraryModal({
 }: ProjectLibraryModalProps) {
   const { data: projects = [], isLoading } = useProjects()
   const deleteProjectMutation = useDeleteProject()
+  const dubMutation = useDubProject()
+
+  const [dubbingProject, setDubbingProject] = useState<ProjectItem | null>(null)
+  const [dubTargetLang, setDubTargetLang] = useState('en')
+  const [dubHardsub, setDubHardsub] = useState(false)
+
+  const handleStartDub = () => {
+    if (!dubbingProject) return
+    dubMutation.mutate(
+      {
+        projectId: dubbingProject.id,
+        targetLang: dubTargetLang,
+        hardsub: dubHardsub,
+      },
+      {
+        onSuccess: (data) => {
+          alert(`Đã lồng tiếng thành công sang ${dubTargetLang.toUpperCase()}! Bạn có thể xem ngay phiên bản mới.`)
+          setDubbingProject(null)
+          onPlayMovie(data.video_url, data.srt_url)
+        },
+        onError: (err: any) => {
+          alert(`Lỗi lồng tiếng: ${err?.message || 'Không thể lồng tiếng'}`)
+        },
+      }
+    )
+  }
 
   const handleDelete = (p: ProjectItem) => {
     if (!window.confirm(`Bạn có chắc muốn xóa vĩnh viễn bộ phim "${p.title}" khỏi thư viện?`)) return
@@ -179,6 +214,31 @@ export default function ProjectLibraryModal({
                             </span>
                           </div>
 
+                          {/* Dubbed Versions & Actions */}
+                          <div className="flex flex-wrap items-center gap-1 pt-1">
+                            <span className="text-[9px] font-mono text-slate-500 mr-1">Bản phát hành:</span>
+                            <button
+                              type="button"
+                              onClick={() => p.video_url && onPlayMovie(p.video_url, p.srt_url)}
+                              className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 cursor-pointer"
+                              title="Bản gốc"
+                            >
+                              Gốc ({p.lang.toUpperCase()})
+                            </button>
+                            {p.dubbed_versions &&
+                              Object.entries(p.dubbed_versions).map(([langKey, dub]) => (
+                                <button
+                                  key={langKey}
+                                  type="button"
+                                  onClick={() => dub.video_url && onPlayMovie(dub.video_url, dub.srt_url)}
+                                  className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/30 cursor-pointer"
+                                  title={`Xem bản lồng tiếng ${langKey.toUpperCase()}`}
+                                >
+                                  🌐 {langKey.toUpperCase()}
+                                </button>
+                              ))}
+                          </div>
+
                           <div className="flex items-center gap-1.5 pt-1">
                             {p.video_url && (
                               <button
@@ -190,6 +250,15 @@ export default function ProjectLibraryModal({
                                 <span>Xem</span>
                               </button>
                             )}
+
+                            <button
+                              type="button"
+                              onClick={() => setDubbingProject(p)}
+                              className="p-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/30 transition-colors cursor-pointer"
+                              title="Lồng tiếng đa quốc gia 1-Click (Auto-Dub)"
+                            >
+                              <Globe className="w-3.5 h-3.5" />
+                            </button>
 
                             {onOpenSeo && (
                               <button
@@ -243,6 +312,95 @@ export default function ProjectLibraryModal({
             )}
           </div>
         </motion.div>
+
+        {/* Auto-Dubbing Dialog Modal */}
+        {dubbingProject && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-full max-w-md bg-[#0D1322] border border-cyan-500/40 rounded-3xl p-6 shadow-2xl space-y-4"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <Globe className="w-5 h-5 text-cyan-400" />
+                  <h4 className="text-base font-bold text-white">Lồng Tiếng Đa Quốc Gia</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDubbingProject(null)}
+                  className="p-1 rounded text-slate-400 hover:text-white cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-300">
+                Tự động dịch kịch bản và lồng tiếng bản địa cho phim <strong className="text-white">"{dubbingProject.title}"</strong> mà không cần re-render hình ảnh.
+              </p>
+
+              <div>
+                <label className="text-xs font-bold text-slate-400 block mb-2">Chọn ngôn ngữ đích:</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {DUB_LANG_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setDubTargetLang(opt.value)}
+                      className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                        dubTargetLang === opt.value
+                          ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                          : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800'
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      <span className="text-base">{opt.flag}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                onClick={() => setDubHardsub(!dubHardsub)}
+                className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between cursor-pointer"
+              >
+                <span className="text-xs font-medium text-slate-300">In phụ đề Hardsub ngôn ngữ mới</span>
+                <input
+                  type="checkbox"
+                  checked={dubHardsub}
+                  onChange={(e) => setDubHardsub(e.target.checked)}
+                  className="w-4 h-4 rounded text-cyan-500 bg-slate-950 border-slate-700 cursor-pointer"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDubbingProject(null)}
+                  disabled={dubMutation.isPending}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStartDub}
+                  disabled={dubMutation.isPending}
+                  className="flex-1 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20"
+                >
+                  {dubMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Đang lồng tiếng...</span>
+                    </>
+                  ) : (
+                    <span>Bắt Đầu Lồng Tiếng</span>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </motion.div>
     </AnimatePresence>
   )
