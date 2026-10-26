@@ -58,6 +58,66 @@ def log_message(msg: str):
     if len(pipeline_state["logs"]) > 200:
         pipeline_state["logs"] = pipeline_state["logs"][-200:]
 
+def save_project_to_library(final_video_path: Path, req: ProduceRequest):
+    timestamp = int(time.time())
+    project_id = f"proj_{timestamp}"
+    project_dir = Path("outputs/projects") / project_id
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    # 1. Copy final video
+    dest_video = project_dir / final_video_path.name
+    shutil.copy2(str(final_video_path), str(dest_video))
+
+    # 2. Copy SRT if exists
+    srt_name = None
+    srt_path = final_video_path.with_suffix(".srt")
+    if srt_path.exists():
+        dest_srt = project_dir / srt_path.name
+        shutil.copy2(str(srt_path), str(dest_srt))
+        srt_name = srt_path.name
+
+    # 3. Copy first image as thumbnail if exists
+    thumb_name = None
+    images_dir = Path("outputs/images")
+    if images_dir.exists():
+        img_files = sorted(list(images_dir.glob("*.png")))
+        if img_files:
+            dest_thumb = project_dir / "thumb.png"
+            shutil.copy2(str(img_files[0]), str(dest_thumb))
+            thumb_name = "thumb.png"
+
+    # 4. Read title & shots count from storyboard if exists
+    title = req.topic
+    shots_count = 0
+    sb_file = Path("outputs/storyboard.json")
+    if sb_file.exists():
+        try:
+            with open(sb_file, "r", encoding="utf-8") as f:
+                sb_data = json.load(f)
+                title = sb_data.get("title") or req.topic
+                shots_count = len(sb_data.get("shots", []))
+            shutil.copy2(str(sb_file), str(project_dir / "storyboard.json"))
+        except Exception:
+            pass
+
+    metadata = {
+        "id": project_id,
+        "title": title,
+        "topic": req.topic,
+        "lang": req.lang,
+        "style": req.style,
+        "duration": req.duration,
+        "aspect_ratio": getattr(req, "aspect_ratio", "16:9"),
+        "hardsub": getattr(req, "hardsub", False),
+        "created_at": timestamp,
+        "video_file": final_video_path.name,
+        "srt_file": srt_name,
+        "thumb_file": thumb_name,
+        "shots_count": shots_count,
+    }
+    with open(project_dir / "metadata.json", "w", encoding="utf-8") as f:
+        json.dump(metadata, f, indent=2, ensure_ascii=False)
+
 def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
     global pipeline_state, last_produce_request
     last_produce_request = req
@@ -110,6 +170,11 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
         if srt_path.exists():
             pipeline_state["final_srt"] = f"/api/outputs/final/{srt_path.name}"
         log_message(f"Thành công! Video đã hoàn thành: {final_video_path.name}")
+
+        try:
+            save_project_to_library(final_video_path, req)
+        except Exception as save_err:
+            log_message(f"Cảnh báo: không thể lưu vào thư viện dự án: {save_err}")
 
     except Exception as e:
         pipeline_state["status"] = "error"
@@ -604,6 +669,42 @@ def clean_outputs():
     pipeline_state["final_srt"] = None
     pipeline_state["logs"] = ["Đã dọn dẹp sạch sẽ thư mục outputs/."]
     return {"message": "Đã dọn dẹp outputs thành công"}
+
+@app.get("/api/projects")
+def list_projects():
+    projects_dir = Path("outputs/projects")
+    if not projects_dir.exists():
+        return []
+
+    projects = []
+    for p_dir in sorted(projects_dir.iterdir(), reverse=True):
+        if p_dir.is_dir():
+            meta_file = p_dir / "metadata.json"
+            if meta_file.exists():
+                try:
+                    with open(meta_file, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
+                    p_id = meta.get("id", p_dir.name)
+                    video_file = meta.get("video_file")
+                    srt_file = meta.get("srt_file")
+                    thumb_file = meta.get("thumb_file")
+
+                    meta["video_url"] = f"/api/outputs/projects/{p_id}/{video_file}" if video_file else None
+                    meta["srt_url"] = f"/api/outputs/projects/{p_id}/{srt_file}" if srt_file else None
+                    meta["thumb_url"] = f"/api/outputs/projects/{p_id}/{thumb_file}" if thumb_file else None
+                    projects.append(meta)
+                except Exception:
+                    pass
+    return projects
+
+@app.delete("/api/projects/{project_id}")
+def delete_project(project_id: str):
+    p_dir = Path("outputs/projects") / project_id
+    if not p_dir.exists() or not p_dir.is_dir():
+        raise HTTPException(status_code=404, detail="Không tìm thấy dự án trong thư viện.")
+
+    shutil.rmtree(p_dir, ignore_errors=True)
+    return {"success": True, "message": f"Đã xóa dự án {project_id}"}
 
 @app.get("/api/outputs/{file_path:path}")
 def serve_output_file(file_path: str):

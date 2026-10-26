@@ -61,3 +61,40 @@ def test_storyboard_add_delete_reorder(tmp_path, monkeypatch):
     del_resp = client.post("/api/storyboard/delete-shot", json={"shot_id": added_shot["id"]})
     assert del_resp.status_code == 200
     assert del_resp.json()["shot_id"] == added_shot["id"]
+
+def test_api_projects_list_and_delete(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    proj_dir = tmp_path / "projects" / "proj_test"
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    meta = {
+        "id": "proj_test",
+        "title": "Saved Film",
+        "topic": "Atlantis",
+        "video_file": "movie.mp4",
+        "srt_file": "movie.srt",
+        "thumb_file": "thumb.png"
+    }
+    (proj_dir / "metadata.json").write_text(json.dumps(meta), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        if str(arg) == "outputs/projects":
+            return tmp_path / "projects"
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    # List projects
+    resp = client.get("/api/projects")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data) == 1
+    assert data[0]["title"] == "Saved Film"
+    assert "/api/outputs/projects/proj_test/movie.mp4" in data[0]["video_url"]
+
+    # Delete project
+    del_resp = client.delete("/api/projects/proj_test")
+    assert del_resp.status_code == 200
+    assert not proj_dir.exists()
