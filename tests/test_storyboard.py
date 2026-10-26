@@ -18,8 +18,9 @@ def test_parse_with_characters_and_shots():
         "language": "vi",
         "characters": {"hero": {"name": "Hero", "visual_anchor": "tall man", "voice": "vi-VN-NamMinhNeural"}},
         "shots": [{"id": "shot_001_001", "chapter": 1, "character_id": "hero",
-                   "dialogue": "Hello", "image_prompt": "a scene", "motion": "zoom_in", "duration": None}]
+                   "dialogue": "Hello", "image_prompt": "a scene", "motion": "zoom_in", "duration": None, "sfx": "thunder"}]
     })
     sb = parse_storyboard_json(raw)
     assert len(sb.shots) == 1
     assert sb.characters["hero"].name == "Hero"
+    assert sb.shots[0].sfx == "thunder"

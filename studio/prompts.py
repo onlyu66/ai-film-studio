@@ -11,6 +11,7 @@ REQUIREMENTS:
    - dialogue: character speech or voiceover narration in the requested language
    - image_prompt: single detailed string prompt for image generation (lighting, camera angle, setting, cinematic film look). Do NOT use nested objects.
    - motion: camera movement type, one of: "zoom_in", "zoom_out", "pan_left", "pan_right"
+   - sfx: optional sound effect keyword string e.g. "rain", "thunder", "wind", "waves", "footsteps", "city", or null
    - duration: null (will be calculated from audio duration)
 
 OUTPUT FORMAT:
@@ -34,6 +35,7 @@ Return ONLY valid JSON matching this schema, without conversational text:
       "dialogue": "Line of speech or narration",
       "image_prompt": "Cinematic visual prompt string...",
       "motion": "zoom_in",
+      "sfx": null,
       "duration": null
     }
   ]

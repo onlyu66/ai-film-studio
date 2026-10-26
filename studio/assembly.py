@@ -63,9 +63,31 @@ def build_master_audio(
                 segment = segment + silence_gap
             else:
                 segment = segment[:shot_dur_ms]
-            master += segment
         else:
-            master += AudioSegment.silent(duration=shot_dur_ms)
+            segment = AudioSegment.silent(duration=shot_dur_ms)
+
+        # Mix environmental SFX if specified and audio file exists in assets/sfx/
+        if getattr(shot, "sfx", None):
+            sfx_name = str(shot.sfx).lower().strip().replace(" ", "_")
+            sfx_candidates = [
+                Path(f"assets/sfx/{sfx_name}.mp3"),
+                Path(f"assets/sfx/{sfx_name}.wav"),
+            ]
+            for sfx_cand in sfx_candidates:
+                if sfx_cand.exists():
+                    try:
+                        sfx_seg = AudioSegment.from_file(str(sfx_cand)) - 16.0
+                        if len(sfx_seg) < shot_dur_ms:
+                            loops = (shot_dur_ms // len(sfx_seg)) + 1
+                            sfx_seg = (sfx_seg * loops)[:shot_dur_ms]
+                        else:
+                            sfx_seg = sfx_seg[:shot_dur_ms]
+                        segment = segment.overlay(sfx_seg)
+                        break
+                    except Exception:
+                        pass
+
+        master += segment
 
     # Mix BGM if provided or found via style
     effective_bgm = resolve_bgm_path(bgm_path, style)

@@ -22,6 +22,7 @@ class Shot:
     image_prompt: str
     motion: str = "zoom_in"
     duration: Optional[float] = None
+    sfx: Optional[str] = None
 
 @dataclass
 class Storyboard:
@@ -52,6 +53,7 @@ class Storyboard:
                     "image_prompt": s.image_prompt,
                     "motion": s.motion,
                     "duration": s.duration,
+                    "sfx": s.sfx,
                 }
                 for s in self.shots
             ],
@@ -118,6 +120,7 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                     image_prompt=img_str,
                     motion=s.get("motion", "zoom_in") or "zoom_in",
                     duration=float(s["duration"]) if s.get("duration") is not None else None,
+                    sfx=str(s["sfx"]).strip() if s.get("sfx") else None,
                 )
             )
 
