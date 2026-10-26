@@ -254,6 +254,130 @@ def update_shot(req: UpdateShotRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class AddShotRequest(BaseModel):
+    after_shot_id: Optional[str] = None
+    dialogue: str = ""
+    image_prompt: str = ""
+    character_id: Optional[str] = None
+    motion: str = "zoom_in"
+    sfx: Optional[str] = None
+
+@app.post("/api/storyboard/add-shot")
+def add_shot(req: AddShotRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        with open(sb_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        shots = data.get("shots", [])
+        new_shot_id = f"shot_{int(time.time())}_{len(shots)+1:03d}"
+        chapter = 1
+
+        insert_idx = len(shots)
+        if req.after_shot_id:
+            for i, s in enumerate(shots):
+                if s.get("id") == req.after_shot_id:
+                    insert_idx = i + 1
+                    chapter = s.get("chapter", 1)
+                    break
+
+        new_shot = {
+            "id": new_shot_id,
+            "chapter": chapter,
+            "character_id": req.character_id,
+            "dialogue": req.dialogue,
+            "image_prompt": req.image_prompt or "Cinematic establishing scene, masterpiece, 8k",
+            "motion": req.motion or "zoom_in",
+            "duration": None,
+            "sfx": req.sfx,
+        }
+
+        shots.insert(insert_idx, new_shot)
+        data["shots"] = shots
+
+        with open(sb_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        log_message(f"Đã chèn thêm phân cảnh mới '{new_shot_id}'.")
+        return {"success": True, "message": f"Đã thêm phân cảnh mới {new_shot_id}", "shot": new_shot}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class DeleteShotRequest(BaseModel):
+    shot_id: str
+
+@app.post("/api/storyboard/delete-shot")
+def delete_shot(req: DeleteShotRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        with open(sb_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        shots = data.get("shots", [])
+        original_len = len(shots)
+        data["shots"] = [s for s in shots if s.get("id") != req.shot_id]
+
+        if len(data["shots"]) == original_len:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
+
+        # Cleanup artifacts for deleted shot
+        Path(f"outputs/audio/{req.shot_id}.mp3").unlink(missing_ok=True)
+        Path(f"outputs/images/{req.shot_id}.png").unlink(missing_ok=True)
+        Path(f"outputs/videos/{req.shot_id}.mp4").unlink(missing_ok=True)
+
+        with open(sb_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        log_message(f"Đã xóa phân cảnh '{req.shot_id}'.")
+        return {"success": True, "message": f"Đã xóa phân cảnh {req.shot_id}", "shot_id": req.shot_id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ReorderShotsRequest(BaseModel):
+    shot_ids: List[str]
+
+@app.post("/api/storyboard/reorder-shots")
+def reorder_shots(req: ReorderShotsRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        with open(sb_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        shots_map = {s["id"]: s for s in data.get("shots", [])}
+        reordered = []
+        for sid in req.shot_ids:
+            if sid in shots_map:
+                reordered.append(shots_map[sid])
+
+        # Append any shots that were not in the reorder request
+        for sid, shot in shots_map.items():
+            if sid not in req.shot_ids:
+                reordered.append(shot)
+
+        data["shots"] = reordered
+        with open(sb_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        log_message("Đã cập nhật lại thứ tự các phân cảnh trên kịch bản.")
+        return {"success": True, "message": "Đã sắp xếp lại thứ tự phân cảnh", "shots_count": len(reordered)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 class VoicePreviewRequest(BaseModel):
     voice: str
     text: Optional[str] = None
