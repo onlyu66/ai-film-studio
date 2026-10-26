@@ -7,6 +7,7 @@ import ProgressStage from './components/ProgressStage'
 import TerminalLogs from './components/TerminalLogs'
 import StoryboardView from './components/StoryboardView'
 import VideoPlayerModal from './components/VideoPlayerModal'
+import ProjectLibraryModal from './components/ProjectLibraryModal'
 import { Button } from './components/ui/button'
 import { CheckCircle2, MonitorPlay, FileEdit, Play, Loader2 } from 'lucide-react'
 import {
@@ -20,6 +21,9 @@ import type { StudioStatus, ProductionFormData } from './types'
 
 export default function App() {
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false)
+  const [showLibraryModal, setShowLibraryModal] = useState<boolean>(false)
+  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null)
+  const [activeSrtUrl, setActiveSrtUrl] = useState<string | null>(null)
 
   // TanStack Query hooks for real-time status & storyboard
   const { data: statusData } = useStudioStatus()
@@ -78,13 +82,29 @@ export default function App() {
     })
   }
 
+  const handlePlayCurrentMovie = () => {
+    if (status.final_video) {
+      setActiveVideoUrl(status.final_video)
+      setActiveSrtUrl(status.final_srt)
+      setShowVideoModal(true)
+    }
+  }
+
+  const handlePlayFromLibrary = (videoUrl: string, srtUrl?: string | null) => {
+    setActiveVideoUrl(videoUrl)
+    setActiveSrtUrl(srtUrl || null)
+    setShowLibraryModal(false)
+    setShowVideoModal(true)
+  }
+
   return (
     <div className="min-h-screen bg-[#06080F] text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-300">
       <Navbar
         status={status}
         onClean={handleClean}
         isCleaning={cleanMutation.isPending}
-        onWatchMovie={() => setShowVideoModal(true)}
+        onWatchMovie={handlePlayCurrentMovie}
+        onOpenLibrary={() => setShowLibraryModal(true)}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
@@ -114,7 +134,7 @@ export default function App() {
               <Button
                 variant="default"
                 size="lg"
-                onClick={() => setShowVideoModal(true)}
+                onClick={handlePlayCurrentMovie}
                 className="gap-2.5 font-black text-sm bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 shadow-lg shadow-emerald-500/30"
               >
                 <MonitorPlay className="w-5 h-5 fill-current" />
@@ -198,13 +218,24 @@ export default function App() {
       </main>
 
       {/* Video Modal Player */}
-      {showVideoModal && status.final_video && (
+      {showVideoModal && activeVideoUrl && (
         <VideoPlayerModal
-          videoUrl={status.final_video}
-          srtUrl={status.final_srt}
-          onClose={() => setShowVideoModal(false)}
+          videoUrl={activeVideoUrl}
+          srtUrl={activeSrtUrl}
+          onClose={() => {
+            setShowVideoModal(false)
+            setActiveVideoUrl(null)
+            setActiveSrtUrl(null)
+          }}
         />
       )}
+
+      {/* Project Library Modal */}
+      <ProjectLibraryModal
+        isOpen={showLibraryModal}
+        onClose={() => setShowLibraryModal(false)}
+        onPlayMovie={handlePlayFromLibrary}
+      />
 
       {/* Footer */}
       <footer className="border-t border-slate-900/90 py-6 text-center text-xs text-slate-600 font-medium">

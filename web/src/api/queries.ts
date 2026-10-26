@@ -10,13 +10,20 @@ import {
   previewVoice,
   rerollShot,
   uploadShotImage,
+  addShot,
+  deleteShot,
+  reorderShots,
+  fetchProjects,
+  deleteProject,
   type UpdateShotParams,
+  type AddShotParams,
 } from './studio'
-import type { StudioStatus, StoryboardData, ProductionFormData } from '../types'
+import type { StudioStatus, StoryboardData, ProductionFormData, ProjectItem } from '../types'
 
 export const QUERY_KEYS = {
   status: ['studio', 'status'] as const,
   storyboard: ['studio', 'storyboard'] as const,
+  projects: ['studio', 'projects'] as const,
 }
 
 export function useStudioStatus() {
@@ -124,6 +131,57 @@ export function useUploadShotImage() {
       uploadShotImage(shotId, imageBase64),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useAddShot() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (params: AddShotParams) => addShot(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useDeleteShot() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (shotId: string) => deleteShot(shotId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useReorderShots() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (shotIds: string[]) => reorderShots(shotIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useProjects() {
+  return useQuery<ProjectItem[]>({
+    queryKey: QUERY_KEYS.projects,
+    queryFn: fetchProjects,
+  })
+}
+
+export function useDeleteProject() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (projectId: string) => deleteProject(projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects })
     },
   })
 }

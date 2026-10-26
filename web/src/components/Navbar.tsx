@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion'
-import { Clapperboard, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit } from 'lucide-react'
+import { Clapperboard, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit, Film } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import type { StudioStatus } from '../types'
@@ -10,9 +10,10 @@ export interface NavbarProps {
   onClean: () => void
   isCleaning: boolean
   onWatchMovie: () => void
+  onOpenLibrary: () => void
 }
 
-export default function Navbar({ status, onClean, isCleaning, onWatchMovie }: NavbarProps) {
+export default function Navbar({ status, onClean, isCleaning, onWatchMovie, onOpenLibrary }: NavbarProps) {
   const getStatusBadge = () => {
     switch (status?.status) {
       case 'script_ready':
@@ -108,6 +109,17 @@ export default function Navbar({ status, onClean, isCleaning, onWatchMovie }: Na
               <span>Xem Phim</span>
             </Button>
           )}
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenLibrary}
+            className="gap-1.5 text-xs hover:border-indigo-500/40 hover:text-indigo-300 hover:bg-indigo-500/10 text-slate-300 cursor-pointer"
+            title="Xem thư viện các bộ phim đã sản xuất"
+          >
+            <Film className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Thư viện</span>
+          </Button>
 
           <Button
             variant="outline"

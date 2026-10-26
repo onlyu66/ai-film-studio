@@ -1,5 +1,5 @@
 import { apiClient } from './client'
-import type { StudioStatus, StoryboardData, ProductionFormData } from '../types'
+import type { StudioStatus, StoryboardData, ProductionFormData, ProjectItem } from '../types'
 
 export async function fetchStatus(): Promise<StudioStatus> {
   const response = await apiClient.get<StudioStatus>('/api/status')
@@ -81,6 +81,49 @@ export async function uploadShotImage(
     '/api/storyboard/upload-shot-image',
     { shot_id: shotId, image_base64: imageBase64 }
   )
+  return response.data
+}
+
+export interface AddShotParams {
+  after_shot_id?: string
+  dialogue?: string
+  image_prompt?: string
+  character_id?: string
+  motion?: string
+  sfx?: string
+}
+
+export async function addShot(params: AddShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
+  const response = await apiClient.post<{ success: boolean; message: string; shot: unknown }>(
+    '/api/storyboard/add-shot',
+    params
+  )
+  return response.data
+}
+
+export async function deleteShot(shotId: string): Promise<{ success: boolean; message: string; shot_id: string }> {
+  const response = await apiClient.post<{ success: boolean; message: string; shot_id: string }>(
+    '/api/storyboard/delete-shot',
+    { shot_id: shotId }
+  )
+  return response.data
+}
+
+export async function reorderShots(shotIds: string[]): Promise<{ success: boolean; message: string; shots_count: number }> {
+  const response = await apiClient.post<{ success: boolean; message: string; shots_count: number }>(
+    '/api/storyboard/reorder-shots',
+    { shot_ids: shotIds }
+  )
+  return response.data
+}
+
+export async function fetchProjects(): Promise<ProjectItem[]> {
+  const response = await apiClient.get<ProjectItem[]>('/api/projects')
+  return response.data
+}
+
+export async function deleteProject(projectId: string): Promise<{ success: boolean; message: string }> {
+  const response = await apiClient.delete<{ success: boolean; message: string }>(`/api/projects/${projectId}`)
   return response.data
 }
 

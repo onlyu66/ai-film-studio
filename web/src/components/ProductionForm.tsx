@@ -84,6 +84,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
   const [motion, setMotion] = useState('vfx')
   const [lipSync, setLipSync] = useState('none')
   const [aspectRatio, setAspectRatio] = useState('16:9')
+  const [hardsub, setHardsub] = useState(false)
   const [pauseAfterScript, setPauseAfterScript] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -104,6 +105,7 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
       motion,
       lip_sync: lipSync,
       aspect_ratio: aspectRatio,
+      hardsub,
       pause_after_script: pauseAfterScript,
     })
   }
@@ -351,6 +353,42 @@ export default function ProductionForm({ onSubmit, isRunning }: ProductionFormPr
             checked={pauseAfterScript}
             onChange={(e) => setPauseAfterScript(e.target.checked)}
             className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-700 cursor-pointer"
+          />
+        </div>
+
+        {/* Hardsub Burn-in Switch */}
+        <div
+          onClick={() => setHardsub(!hardsub)}
+          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+            hardsub
+              ? 'bg-cyan-500/10 border-cyan-500/50 shadow-md shadow-cyan-500/10'
+              : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                hardsub
+                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/30'
+                  : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              <Film className="w-4 h-4" />
+            </div>
+            <div>
+              <span className={`text-xs font-bold block ${hardsub ? 'text-cyan-300' : 'text-slate-200'}`}>
+                In phụ đề trực tiếp vào video (Hardsub TikTok / Shorts)
+              </span>
+              <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
+                Chữ vàng viền đen dày chạy trực tiếp trên từng khung hình, tối ưu cho video ngắn
+              </span>
+            </div>
+          </div>
+          <input
+            type="checkbox"
+            checked={hardsub}
+            onChange={(e) => setHardsub(e.target.checked)}
+            className="w-4 h-4 rounded text-cyan-500 focus:ring-cyan-400 bg-slate-950 border-slate-700 cursor-pointer"
           />
         </div>
 

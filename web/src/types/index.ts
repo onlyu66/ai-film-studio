@@ -31,6 +31,7 @@ export interface ProductionFormData {
   motion: string
   lip_sync: string
   aspect_ratio?: string
+  hardsub?: boolean
   pause_after_script?: boolean
 }
 
@@ -63,6 +64,7 @@ export interface Shot {
   image_url?: string
   audio_url?: string
   video_url?: string
+  sfx?: string
   [key: string]: unknown
 }
 
@@ -73,4 +75,23 @@ export interface StoryboardData {
   characters?: Record<string, Character>
   shots?: Shot[]
   [key: string]: unknown
+}
+
+export interface ProjectItem {
+  id: string
+  title: string
+  topic: string
+  lang: string
+  style: string
+  duration: number
+  aspect_ratio?: string
+  hardsub?: boolean
+  created_at: number
+  video_file: string
+  srt_file?: string
+  thumb_file?: string
+  video_url?: string
+  srt_url?: string
+  thumb_url?: string
+  shots_count: number
 }

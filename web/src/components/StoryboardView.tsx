@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save, Sparkles, Upload, Play } from 'lucide-react'
+import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save, Sparkles, Upload, Play, Plus, Trash2, ArrowUp, ArrowDown, Music } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
@@ -10,6 +10,9 @@ import {
   usePreviewVoice,
   useRerollShot,
   useUploadShotImage,
+  useAddShot,
+  useDeleteShot,
+  useReorderShots,
 } from '../api/queries'
 import type { StoryboardData, SelectOption } from '../types'
 
@@ -28,6 +31,7 @@ interface ShotData {
   image_prompt?: string
   motion?: string
   chapter?: number | string
+  sfx?: string
   [key: string]: unknown
 }
 
@@ -81,11 +85,22 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
   const [uploadingShotId, setUploadingShotId] = useState<string | null>(null)
   const [cacheBuster, setCacheBuster] = useState<Record<string, number>>({})
 
+  // Add Shot modal state
+  const [isAddingShot, setIsAddingShot] = useState(false)
+  const [newShotDialogue, setNewShotDialogue] = useState('')
+  const [newShotPrompt, setNewShotPrompt] = useState('')
+  const [newShotMotion, setNewShotMotion] = useState('zoom_in')
+  const [newShotSfx, setNewShotSfx] = useState('')
+  const [newShotChar, setNewShotChar] = useState('')
+
   const updateVoiceMutation = useUpdateCharacterVoice()
   const updateShotMutation = useUpdateShot()
   const previewVoiceMutation = usePreviewVoice()
   const rerollShotMutation = useRerollShot()
   const uploadShotImageMutation = useUploadShotImage()
+  const addShotMutation = useAddShot()
+  const deleteShotMutation = useDeleteShot()
+  const reorderShotsMutation = useReorderShots()
 
   const handlePlayVoice = (voice: string) => {
     setPlayingVoice(voice)
@@ -137,6 +152,46 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
       )
     }
     reader.readAsDataURL(file)
+  }
+
+  const handleDeleteShot = (shotId: string) => {
+    if (!window.confirm(`Bạn có chắc muốn xóa phân cảnh ${shotId}?`)) return
+    deleteShotMutation.mutate(shotId, {
+      onError: (err: any) => alert(err.message || 'Lỗi khi xóa phân cảnh')
+    })
+  }
+
+  const handleMoveShot = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= rawShots.length) return
+    const newShots = [...rawShots]
+    const temp = newShots[index]
+    newShots[index] = newShots[targetIndex]
+    newShots[targetIndex] = temp
+    reorderShotsMutation.mutate(newShots.map(s => s.id))
+  }
+
+  const handleCreateShot = (e: React.FormEvent) => {
+    e.preventDefault()
+    addShotMutation.mutate(
+      {
+        dialogue: newShotDialogue,
+        image_prompt: newShotPrompt,
+        motion: newShotMotion,
+        sfx: newShotSfx || undefined,
+        character_id: newShotChar || undefined,
+      },
+      {
+        onSuccess: () => {
+          setIsAddingShot(false)
+          setNewShotDialogue('')
+          setNewShotPrompt('')
+          setNewShotSfx('')
+          setNewShotChar('')
+        },
+        onError: (err: any) => alert(err.message || 'Lỗi khi thêm phân cảnh'),
+      }
+    )
   }
 
   const rawCharacters = (storyboard?.characters || {}) as Record<string, CharacterData>
@@ -233,19 +288,30 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
             </CardTitle>
           </div>
 
-          {/* Controls: Search & Tabs */}
+          {/* Controls: Search, Add Shot & Tabs */}
           <div className="flex flex-wrap items-center gap-2.5">
             {activeTab === 'shots' && (
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Tìm kiếm phân cảnh..."
-                  className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50 w-44 sm:w-56"
-                />
-              </div>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setIsAddingShot(true)}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Thêm cảnh</span>
+                </button>
+
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Tìm kiếm phân cảnh..."
+                    className="pl-8 pr-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50 w-44 sm:w-56"
+                  />
+                </div>
+              </>
             )}
 
             <div className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800/80">
@@ -374,7 +440,7 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
         {/* Shots Tab */}
         {activeTab === 'shots' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredShots.map((shot) => {
+            {filteredShots.map((shot, index) => {
               const imgSrc = `/api/outputs/images/${shot.id}.png?t=${cacheBuster[shot.id] || ''}`
 
               return (
@@ -433,6 +499,24 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
+                            onClick={() => handleMoveShot(index, 'up')}
+                            disabled={index === 0}
+                            className="p-1 rounded bg-slate-800/90 hover:bg-slate-700 text-slate-400 hover:text-white text-[10px] disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+                            title="Di chuyển lên trước"
+                          >
+                            <ArrowUp className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleMoveShot(index, 'down')}
+                            disabled={index === shots.length - 1}
+                            className="p-1 rounded bg-slate-800/90 hover:bg-slate-700 text-slate-400 hover:text-white text-[10px] disabled:opacity-20 disabled:pointer-events-none cursor-pointer"
+                            title="Di chuyển xuống sau"
+                          >
+                            <ArrowDown className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => handleRerollShot(shot.id)}
                             disabled={rerollingShotId === shot.id}
                             className="px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-rose-500 hover:text-white text-slate-300 text-[10px] font-bold flex items-center gap-1 transition-all border border-slate-700/80 cursor-pointer shadow-sm shrink-0"
@@ -474,12 +558,28 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                             <Edit3 className="w-3 h-3" />
                             <span>Sửa</span>
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteShot(shot.id)}
+                            className="p-1 rounded bg-slate-800/90 hover:bg-red-500 hover:text-white text-slate-400 text-[10px] cursor-pointer"
+                            title="Xóa phân cảnh này"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
                         </div>
                       </div>
 
                       <p className="text-xs text-slate-200 leading-relaxed font-medium">
                         {shot.dialogue ? `"${shot.dialogue}"` : <span className="text-slate-500 italic">(Cảnh quay tĩnh tư liệu & âm nhạc)</span>}
                       </p>
+
+                      {shot.sfx && (
+                        <div className="mt-1.5 flex items-center gap-1 text-[10px] text-cyan-400 font-mono">
+                          <Music className="w-2.5 h-2.5" />
+                          <span>SFX: {shot.sfx}</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-2 text-[10px] text-slate-500">
@@ -638,6 +738,132 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
                       <>
                         <Save className="w-3.5 h-3.5" />
                         <span>Lưu Thay Đổi</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Shot Modal */}
+      <AnimatePresence>
+        {isAddingShot && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => !addShotMutation.isPending && setIsAddingShot(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-xl rounded-2xl bg-gradient-to-b from-[#0F1628] to-[#0A0E1A] border border-amber-500/40 p-6 shadow-2xl text-left cursor-default overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500" />
+
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-amber-500/20 text-amber-300 font-mono text-xs font-black border border-amber-500/30">
+                    <Plus className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-white">Chèn thêm phân cảnh mới</h3>
+                    <span className="text-[11px] text-slate-400">Tạo một shot quay tùy chỉnh bổ sung vào kịch bản</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={addShotMutation.isPending}
+                  onClick={() => setIsAddingShot(false)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateShot} className="mt-4 space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Lời thoại / Giọng đọc thuyết minh:
+                  </label>
+                  <textarea
+                    value={newShotDialogue}
+                    onChange={(e) => setNewShotDialogue(e.target.value)}
+                    rows={2}
+                    placeholder="Nhập lời thoại hoặc lời thuyết minh..."
+                    className="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/60 font-sans"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    Mô tả hình ảnh tạo bởi AI (Flux Prompt):
+                  </label>
+                  <textarea
+                    value={newShotPrompt}
+                    onChange={(e) => setNewShotPrompt(e.target.value)}
+                    rows={2}
+                    placeholder="Ví dụ: cinematic establishing shot of ancient underwater temple, volumetric light..."
+                    className="w-full rounded-xl bg-slate-950 border border-slate-800 p-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/60 font-mono"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                      Góc máy chuyển động:
+                    </label>
+                    <CustomSelect
+                      value={newShotMotion}
+                      onChange={setNewShotMotion}
+                      options={MOTION_OPTIONS}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                      Âm thanh môi trường (SFX):
+                    </label>
+                    <input
+                      type="text"
+                      value={newShotSfx}
+                      onChange={(e) => setNewShotSfx(e.target.value)}
+                      placeholder="e.g. rain, thunder, wind, waves..."
+                      className="w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 text-xs text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-amber-500/60"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-800/80">
+                  <button
+                    type="button"
+                    disabled={addShotMutation.isPending}
+                    onClick={() => setIsAddingShot(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+                  >
+                    Hủy bỏ
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={addShotMutation.isPending}
+                    className="px-5 py-2 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  >
+                    {addShotMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Đang thêm...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Chèn Phân Cảnh</span>
                       </>
                     )}
                   </button>
