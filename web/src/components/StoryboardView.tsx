@@ -265,16 +265,35 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
   if (!storyboard || (!rawShots.length && !Object.keys(rawCharacters).length)) {
     return (
-      <div className="glass-card rounded-2xl p-5 text-center border border-dashed border-studio-border bg-studio-deck max-w-4xl mx-auto">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-zinc-400">
-          <div className="w-9 h-9 rounded-xl bg-studio-card border border-studio-border flex items-center justify-center text-amber-400/80 shrink-0">
-            <Film className="w-4 h-4" />
+      <div id="storyboard-section" className="rounded-2xl border border-dashed border-studio-border bg-studio-deck/60 max-w-4xl mx-auto p-6 sm:p-8">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-studio-card border border-studio-border flex items-center justify-center text-amber-400 mx-auto shadow-md">
+            <Film className="w-5 h-5" />
           </div>
-          <div className="text-center sm:text-left">
-            <h4 className="text-xs font-semibold text-zinc-200">Kịch bản & Phân cảnh điện ảnh 35mm sẽ xuất hiện tại đây</h4>
-            <p className="text-[11px] text-zinc-500 mt-0.5">
-              Sau khi bấm "Tạo Kịch Bản", toàn bộ danh sách nhân vật, mô tả Visual DNA và bảng phân cảnh chi tiết sẽ sẵn sàng để bạn duyệt.
+
+          <div>
+            <h4 className="text-sm font-semibold text-zinc-200">Kịch bản & Phân cảnh điện ảnh 35mm</h4>
+            <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto leading-relaxed">
+              Sau khi bấm "Tạo Kịch Bản", toàn bộ nhân vật, visual DNA và danh sách phân cảnh sẽ hiển thị tại đây để bạn duyệt và tinh chỉnh.
             </p>
+          </div>
+
+          {/* 3-Step Flow Indicator */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-2">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-studio-input border border-studio-border text-zinc-400 text-xs">
+              <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold flex items-center justify-center">1</span>
+              <span>Nhập ý tưởng phim</span>
+            </div>
+            <span className="text-zinc-600 text-xs hidden sm:inline">›</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-studio-input border border-studio-border text-zinc-400 text-xs">
+              <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold flex items-center justify-center">2</span>
+              <span>Chọn phong cách</span>
+            </div>
+            <span className="text-zinc-600 text-xs hidden sm:inline">›</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-studio-input border border-studio-border text-zinc-400 text-xs">
+              <span className="w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold flex items-center justify-center">3</span>
+              <span>Bấm Tạo Kịch Bản</span>
+            </div>
           </div>
         </div>
       </div>

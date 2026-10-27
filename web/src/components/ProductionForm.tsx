@@ -89,11 +89,11 @@ const PRESET_IDEAS: (PresetIdea & { tag: string })[] = [
   }
 ]
 
-const STYLES: (StyleOption & { tag: string; accent: string })[] = [
-  { id: 'cinematic', label: 'Cinematic 35mm', desc: 'Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp', emoji: '', gradient: '', tag: '35mm Film', accent: 'from-amber-500/20 to-orange-500/5' },
-  { id: 'anime', label: 'Anime Studio', desc: 'Màu sắc Makoto Shinkai rực rỡ, chi tiết', emoji: '', gradient: '', tag: 'Animation', accent: 'from-cyan-500/20 to-blue-500/5' },
-  { id: 'noir', label: 'Film Noir', desc: 'Độ tương phản cao, bóng đổ bí ẩn kinh điển', emoji: '', gradient: '', tag: 'Classic Noir', accent: 'from-zinc-500/20 to-zinc-900/10' },
-  { id: 'documentary', label: 'Documentary 8K', desc: 'Ảnh tư liệu thực tế National Geographic', emoji: '', gradient: '', tag: 'Photoreal', accent: 'from-emerald-500/20 to-teal-500/5' },
+const STYLES: (StyleOption & { tag: string; accent: string; gradient: string })[] = [
+  { id: 'cinematic', label: 'Cinematic 35mm', desc: 'Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp', emoji: '', gradient: 'from-amber-400 via-amber-500 to-orange-500', tag: '35mm Film', accent: 'from-amber-500/15 to-orange-500/5' },
+  { id: 'anime', label: 'Anime Studio', desc: 'Màu sắc Makoto Shinkai rực rỡ, chi tiết', emoji: '', gradient: 'from-pink-400 via-purple-400 to-indigo-500', tag: 'Animation', accent: 'from-pink-500/15 to-indigo-500/5' },
+  { id: 'noir', label: 'Film Noir', desc: 'Độ tương phản cao, bóng đổ bí ẩn kinh điển', emoji: '', gradient: 'from-zinc-400 via-zinc-500 to-zinc-600', tag: 'Classic Noir', accent: 'from-zinc-500/15 to-zinc-800/10' },
+  { id: 'documentary', label: 'Documentary 8K', desc: 'Ảnh tư liệu thực tế National Geographic', emoji: '', gradient: 'from-emerald-400 via-teal-400 to-cyan-500', tag: 'Photoreal', accent: 'from-emerald-500/15 to-teal-500/5' },
 ]
 
 export interface ProductionFormProps {
@@ -334,12 +334,19 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                 <div
                   key={st.id}
                   onClick={() => !isRunning && setStyle(st.id)}
-                  className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between ${
+                  className={`p-3.5 pt-4 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between group card-lift ${
                     isSelected
                       ? 'bg-gradient-to-b ' + st.accent + ' border-amber-400/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/40'
                       : 'bg-studio-card/70 border-studio-border hover:border-studio-border-hover hover:bg-studio-card'
                   }`}
                 >
+                  {/* Subtle Top Accent Gradient Bar */}
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-1 transition-opacity bg-gradient-to-r ${st.gradient} ${
+                      isSelected ? 'opacity-100' : 'opacity-25 group-hover:opacity-75'
+                    }`}
+                  />
+
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
@@ -816,30 +823,24 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
         </div>
 
         {/* 6. Primary Action CTA Button */}
-        <div className="pt-2 flex justify-center">
+        <div className="pt-3 flex justify-center">
           <button
             type="submit"
             disabled={isRunning || !topic.trim()}
-            className="w-full sm:max-w-md py-3.5 px-6 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer shadow-xl relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed group glow-amber-sm hover:glow-amber-md active:scale-[0.98]"
+            className="w-full sm:w-auto min-w-[260px] px-8 py-3 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-lg shadow-amber-500/20 relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-zinc-950 disabled:opacity-40 disabled:cursor-not-allowed group active:scale-[0.98]"
           >
             {/* Shimmer line */}
-            <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/35 to-transparent -skew-x-12 animate-shimmer pointer-events-none" />
+            <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-shimmer pointer-events-none" />
 
             {isRunning ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-                <span>
-                  {pauseAfterScript ? 'Đang soạn kịch bản & phân cảnh...' : 'Đang sản xuất toàn bộ phim...'}
-                </span>
+                <span>Đang xử lý phim...</span>
               </>
             ) : (
               <>
                 <Play className="w-4 h-4 fill-current" />
-                <span>
-                  {pauseAfterScript
-                    ? 'Tạo Kịch Bản & Dừng Để Duyệt (Khuyên Dùng)'
-                    : 'Bắt Đầu Sản Xuất Phim Tự Động'}
-                </span>
+                <span>{pauseAfterScript ? 'Tạo Kịch Bản' : 'Bắt Đầu Sản Xuất'}</span>
               </>
             )}
           </button>

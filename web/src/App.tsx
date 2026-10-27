@@ -433,10 +433,9 @@ export default function App() {
         }}
       />
 
-      {/* Modern Studio Footer */}
-      <footer className="border-t border-studio-border py-8 text-center text-xs text-zinc-500 font-mono space-y-1">
-        <p className="font-semibold text-zinc-400 tracking-wider uppercase">AI Film Studio Pro • Cinema Workstation Edition</p>
-        <p className="text-[11px] text-zinc-600">Built with React, TypeScript, TanStack Query, Axios, Tailwind CSS & Vite</p>
+      {/* Minimal Studio Footer */}
+      <footer className="border-t border-studio-border/60 py-5 text-center text-xs text-zinc-500 font-mono">
+        <p className="tracking-wider uppercase text-[11px] text-zinc-500">AI FILM STUDIO PRO • CINEMA WORKSTATION</p>
       </footer>
     </div>
   )

@@ -33,29 +33,33 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
   // When Idle: Render an ultra-sleek, minimalist pipeline track (no truncated boxes!)
   if (!isActiveProduction) {
     return (
-      <div className="w-full studio-panel rounded-2xl px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all border border-studio-border">
-        <div className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-300">
-            Pipeline 5 Giai Đoạn
-          </span>
-          <span className="text-[10px] font-mono text-studio-muted hidden md:inline">
-            • Tự động hóa từ Kịch bản đến Master Video
-          </span>
+      <div className="w-full studio-panel rounded-2xl px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 transition-all border border-studio-border">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <Sparkles className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-zinc-200 block">
+              Pipeline 5 Giai Đoạn
+            </span>
+            <span className="text-[11px] text-studio-muted block">
+              Tự động hóa từ Kịch bản đến Master Video
+            </span>
+          </div>
         </div>
 
         {/* Minimalist horizontal milestone flow */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
           {STAGES.map((s, idx) => {
             const Icon = s.icon
             return (
-              <div key={s.id} className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-studio-input border border-studio-border text-zinc-400 text-xs">
-                  <Icon className="w-3 h-3 text-studio-muted" />
+              <div key={s.id} className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-studio-input border border-studio-border hover:border-studio-border-hover text-zinc-400 transition-colors">
+                  <Icon className="w-3.5 h-3.5 text-studio-muted" />
                   <span className="font-medium text-[11px] text-zinc-300">{s.shortName}</span>
                 </div>
                 {idx < STAGES.length - 1 && (
-                  <span className="text-zinc-600 text-xs font-mono">→</span>
+                  <span className="text-zinc-600 text-xs select-none">›</span>
                 )}
               </div>
             )
@@ -77,9 +81,9 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-studio-muted">Tiến độ:</span>
-          <span className="text-2xl font-bold font-mono text-amber-400">
+        <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30">
+          <span className="text-xs font-mono text-amber-300/80">Tiến độ</span>
+          <span className="text-base font-bold font-mono text-amber-400">
             {progress}%
           </span>
         </div>

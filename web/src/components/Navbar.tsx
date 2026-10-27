@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { Film, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit, Clapperboard, Terminal } from 'lucide-react'
 import { Button } from './ui/button'
 import type { StudioStatus } from '../types'
@@ -23,6 +24,16 @@ export default function Navbar({
   showConsole = false,
   logsCount = 0,
 }: NavbarProps) {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 12)
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   const isRunning = status?.status === 'running'
   const isScriptReady = status?.status === 'script_ready'
   const isCompleted = status?.status === 'completed'
@@ -79,8 +90,14 @@ export default function Navbar({
   }
 
   return (
-    <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2">
-      <div className="max-w-7xl mx-auto studio-panel rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 shadow-xl">
+    <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2 transition-all duration-300">
+      <div
+        className={`max-w-7xl mx-auto rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 transition-all duration-300 ${
+          scrolled
+            ? 'navbar-scrolled shadow-2xl'
+            : 'studio-panel shadow-xl'
+        }`}
+      >
         {/* Brand Logo */}
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 shadow-sm">

@@ -68,3 +68,32 @@
 .animate-shimmer {
   animation: shimmer 3.5s infinite ease-in-out;
 }
+
+/* Navbar Scrolled State */
+.navbar-scrolled {
+  background: rgba(20, 23, 32, 0.88);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid #232838;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* Skeleton Loading Animation */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.2; }
+}
+.skeleton {
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+  background: linear-gradient(90deg, #1A1E29 25%, #232838 50%, #1A1E29 75%);
+  background-size: 200% 100%;
+}
+
+/* Subtle Card Lift */
+.card-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.card-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}

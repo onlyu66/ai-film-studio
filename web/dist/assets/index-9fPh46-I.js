@@ -24494,6 +24494,14 @@ function Navbar({
   showConsole = false,
   logsCount = 0
 }) {
+  const [scrolled, setScrolled] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 12);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   const isRunning = (status == null ? void 0 : status.status) === "running";
   const isScriptReady = (status == null ? void 0 : status.status) === "script_ready";
   const isCompleted = (status == null ? void 0 : status.status) === "completed";
@@ -24536,100 +24544,106 @@ function Navbar({
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("header", { className: "sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto studio-panel rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 shadow-xl", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 cursor-pointer", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }), children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 shadow-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Clapperboard, { className: "w-4 h-4 text-amber-400" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-extrabold tracking-tight text-zinc-100 font-sans", children: "AI FILM STUDIO" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-mono uppercase tracking-widest text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded", children: "PRO" })
-      ] })
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "hidden lg:flex items-center p-1 rounded-xl bg-studio-input border border-studio-border text-xs font-medium text-studio-muted", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          type: "button",
-          onClick: () => scrollTo("director-inspector"),
-          className: "px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer",
-          children: "Đạo diễn"
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          type: "button",
-          onClick: () => scrollTo("storyboard-section"),
-          className: "px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer",
-          children: "Phân cảnh & Kịch bản"
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "button",
-        {
-          type: "button",
-          onClick: () => scrollTo("storyboard-section"),
-          className: "px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer",
-          children: "Timeline 35mm"
-        }
-      )
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-      getStatusBadge(),
-      onToggleConsole && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "button",
-        {
-          type: "button",
-          onClick: onToggleConsole,
-          className: `flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer border ${showConsole ? "bg-amber-500/15 text-amber-300 border-amber-500/40" : "bg-studio-deck text-studio-muted hover:text-zinc-200 hover:bg-studio-card border-studio-border"}`,
-          title: "Mở bảng nhật ký thực thi (Execution Logs)",
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Terminal, { className: "w-3.5 h-3.5" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Console" }),
-            logsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] px-1 py-0.2 rounded bg-studio-input text-zinc-300 border border-studio-border", children: logsCount })
-          ]
-        }
-      ),
-      isCompleted && (status == null ? void 0 : status.final_video) && /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        Button,
-        {
-          variant: "default",
-          size: "sm",
-          onClick: onWatchMovie,
-          className: "gap-1.5 text-xs h-8 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold shadow-md shadow-emerald-500/20 cursor-pointer",
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(MonitorPlay, { className: "w-3.5 h-3.5 fill-current" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Xem Phim" })
-          ]
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        Button,
-        {
-          variant: "outline",
-          size: "sm",
-          onClick: onOpenLibrary,
-          className: "gap-1.5 text-xs h-8 border-studio-border hover:bg-studio-elevated text-zinc-300 cursor-pointer",
-          title: "Thư viện phim đã sản xuất",
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-zinc-400" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Thư viện" })
-          ]
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        Button,
-        {
-          variant: "ghost",
-          size: "sm",
-          onClick: onClean,
-          disabled: isRunning || isCleaning,
-          className: "h-8 text-xs text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer",
-          title: "Làm mới dự án",
-          children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" })
-        }
-      )
-    ] })
-  ] }) });
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("header", { className: "sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2 transition-all duration-300", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: `max-w-7xl mx-auto rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 transition-all duration-300 ${scrolled ? "navbar-scrolled shadow-2xl" : "studio-panel shadow-xl"}`,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 cursor-pointer", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }), children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 shadow-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Clapperboard, { className: "w-4 h-4 text-amber-400" }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-extrabold tracking-tight text-zinc-100 font-sans", children: "AI FILM STUDIO" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-mono uppercase tracking-widest text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded", children: "PRO" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "hidden lg:flex items-center p-1 rounded-xl bg-studio-input border border-studio-border text-xs font-medium text-studio-muted", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => scrollTo("director-inspector"),
+              className: "px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer",
+              children: "Đạo diễn"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => scrollTo("storyboard-section"),
+              className: "px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer",
+              children: "Phân cảnh & Kịch bản"
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => scrollTo("storyboard-section"),
+              className: "px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer",
+              children: "Timeline 35mm"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+          getStatusBadge(),
+          onToggleConsole && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: onToggleConsole,
+              className: `flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer border ${showConsole ? "bg-amber-500/15 text-amber-300 border-amber-500/40" : "bg-studio-deck text-studio-muted hover:text-zinc-200 hover:bg-studio-card border-studio-border"}`,
+              title: "Mở bảng nhật ký thực thi (Execution Logs)",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Terminal, { className: "w-3.5 h-3.5" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Console" }),
+                logsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] px-1 py-0.2 rounded bg-studio-input text-zinc-300 border border-studio-border", children: logsCount })
+              ]
+            }
+          ),
+          isCompleted && (status == null ? void 0 : status.final_video) && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            Button,
+            {
+              variant: "default",
+              size: "sm",
+              onClick: onWatchMovie,
+              className: "gap-1.5 text-xs h-8 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold shadow-md shadow-emerald-500/20 cursor-pointer",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(MonitorPlay, { className: "w-3.5 h-3.5 fill-current" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Xem Phim" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            Button,
+            {
+              variant: "outline",
+              size: "sm",
+              onClick: onOpenLibrary,
+              className: "gap-1.5 text-xs h-8 border-studio-border hover:bg-studio-elevated text-zinc-300 cursor-pointer",
+              title: "Thư viện phim đã sản xuất",
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-zinc-400" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Thư viện" })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            Button,
+            {
+              variant: "ghost",
+              size: "sm",
+              onClick: onClean,
+              disabled: isRunning || isCleaning,
+              className: "h-8 text-xs text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer",
+              title: "Làm mới dự án",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" })
+            }
+          )
+        ] })
+      ]
+    }
+  ) });
 }
 function CustomSelect({
   value,
@@ -28811,10 +28825,10 @@ const PRESET_IDEAS = [
   }
 ];
 const STYLES = [
-  { id: "cinematic", label: "Cinematic 35mm", desc: "Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp", emoji: "", gradient: "", tag: "35mm Film", accent: "from-amber-500/20 to-orange-500/5" },
-  { id: "anime", label: "Anime Studio", desc: "Màu sắc Makoto Shinkai rực rỡ, chi tiết", emoji: "", gradient: "", tag: "Animation", accent: "from-cyan-500/20 to-blue-500/5" },
-  { id: "noir", label: "Film Noir", desc: "Độ tương phản cao, bóng đổ bí ẩn kinh điển", emoji: "", gradient: "", tag: "Classic Noir", accent: "from-zinc-500/20 to-zinc-900/10" },
-  { id: "documentary", label: "Documentary 8K", desc: "Ảnh tư liệu thực tế National Geographic", emoji: "", gradient: "", tag: "Photoreal", accent: "from-emerald-500/20 to-teal-500/5" }
+  { id: "cinematic", label: "Cinematic 35mm", desc: "Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp", emoji: "", gradient: "from-amber-400 via-amber-500 to-orange-500", tag: "35mm Film", accent: "from-amber-500/15 to-orange-500/5" },
+  { id: "anime", label: "Anime Studio", desc: "Màu sắc Makoto Shinkai rực rỡ, chi tiết", emoji: "", gradient: "from-pink-400 via-purple-400 to-indigo-500", tag: "Animation", accent: "from-pink-500/15 to-indigo-500/5" },
+  { id: "noir", label: "Film Noir", desc: "Độ tương phản cao, bóng đổ bí ẩn kinh điển", emoji: "", gradient: "from-zinc-400 via-zinc-500 to-zinc-600", tag: "Classic Noir", accent: "from-zinc-500/15 to-zinc-800/10" },
+  { id: "documentary", label: "Documentary 8K", desc: "Ảnh tư liệu thực tế National Geographic", emoji: "", gradient: "from-emerald-400 via-teal-400 to-cyan-500", tag: "Photoreal", accent: "from-emerald-500/15 to-teal-500/5" }
 ];
 function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
   var _a2;
@@ -29023,19 +29037,27 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 lg:grid-cols-4 gap-2.5", children: STYLES.map((st) => {
           const isSelected = style === st.id;
-          return /* @__PURE__ */ jsxRuntimeExports.jsx(
+          return /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "div",
             {
               onClick: () => !isRunning && setStyle2(st.id),
-              className: `p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between ${isSelected ? "bg-gradient-to-b " + st.accent + " border-amber-400/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/40" : "bg-studio-card/70 border-studio-border hover:border-studio-border-hover hover:bg-studio-card"}`,
-              children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold", children: st.tag }),
-                  isSelected && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-4 h-4 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-2.5 h-2.5 stroke-[3]" }) })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: `text-xs sm:text-sm font-bold ${isSelected ? "text-amber-300" : "text-zinc-100"}`, children: st.label }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-zinc-400 leading-snug mt-1", children: st.desc })
-              ] })
+              className: `p-3.5 pt-4 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between group card-lift ${isSelected ? "bg-gradient-to-b " + st.accent + " border-amber-400/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/40" : "bg-studio-card/70 border-studio-border hover:border-studio-border-hover hover:bg-studio-card"}`,
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "div",
+                  {
+                    className: `absolute top-0 left-0 right-0 h-1 transition-opacity bg-gradient-to-r ${st.gradient} ${isSelected ? "opacity-100" : "opacity-25 group-hover:opacity-75"}`
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold", children: st.tag }),
+                    isSelected && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-4 h-4 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-2.5 h-2.5 stroke-[3]" }) })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: `text-xs sm:text-sm font-bold ${isSelected ? "text-amber-300" : "text-zinc-100"}`, children: st.label }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-zinc-400 leading-snug mt-1", children: st.desc })
+                ] })
+              ]
             },
             st.id
           );
@@ -29458,20 +29480,20 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2 flex justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-3 flex justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
         {
           type: "submit",
           disabled: isRunning || !topic.trim(),
-          className: "w-full sm:max-w-md py-3.5 px-6 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer shadow-xl relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed group glow-amber-sm hover:glow-amber-md active:scale-[0.98]",
+          className: "w-full sm:w-auto min-w-[260px] px-8 py-3 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-lg shadow-amber-500/20 relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-zinc-950 disabled:opacity-40 disabled:cursor-not-allowed group active:scale-[0.98]",
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/35 to-transparent -skew-x-12 animate-shimmer pointer-events-none" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-shimmer pointer-events-none" }),
             isRunning ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 animate-spin text-zinc-950" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: pauseAfterScript ? "Đang soạn kịch bản & phân cảnh..." : "Đang sản xuất toàn bộ phim..." })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Đang xử lý phim..." })
             ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-4 h-4 fill-current" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: pauseAfterScript ? "Tạo Kịch Bản & Dừng Để Duyệt (Khuyên Dùng)" : "Bắt Đầu Sản Xuất Phim Tự Động" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: pauseAfterScript ? "Tạo Kịch Bản" : "Bắt Đầu Sản Xuất" })
             ] })
           ]
         }
@@ -29492,20 +29514,22 @@ function ProgressStage({ currentStage, status, progress: progress2 }) {
   const isScriptReady = status === "script_ready";
   const isActiveProduction = isRunning || isCompleted || isScriptReady;
   if (!isActiveProduction) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full studio-panel rounded-2xl px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all border border-studio-border", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-2 h-2 rounded-full bg-emerald-400" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-300", children: "Pipeline 5 Giai Đoạn" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono text-studio-muted hidden md:inline", children: "• Tự động hóa từ Kịch bản đến Master Video" })
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full studio-panel rounded-2xl px-5 py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 transition-all border border-studio-border", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3.5 h-3.5" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-semibold text-zinc-200 block", children: "Pipeline 5 Giai Đoạn" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-studio-muted block", children: "Tự động hóa từ Kịch bản đến Master Video" })
+        ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2 overflow-x-auto scrollbar-none", children: STAGES.map((s, idx) => {
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5", children: STAGES.map((s, idx) => {
         const Icon2 = s.icon;
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 shrink-0", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-studio-input border border-studio-border text-zinc-400 text-xs", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-3 h-3 text-studio-muted" }),
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 shrink-0", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-studio-input border border-studio-border hover:border-studio-border-hover text-zinc-400 transition-colors", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-3.5 h-3.5 text-studio-muted" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-[11px] text-zinc-300", children: s.shortName })
           ] }),
-          idx < STAGES.length - 1 && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-zinc-600 text-xs font-mono", children: "→" })
+          idx < STAGES.length - 1 && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-zinc-600 text-xs select-none", children: "›" })
         ] }, s.id);
       }) })
     ] });
@@ -29516,9 +29540,9 @@ function ProgressStage({ currentStage, status, progress: progress2 }) {
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-2 h-2 rounded-full bg-amber-400 animate-ping" }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-bold uppercase tracking-wider text-amber-300", children: isRunning ? `Đang thực thi Giai đoạn ${currentStage}/5` : isScriptReady ? "Giai đoạn 1 Hoàn tất — Chờ duyệt" : "Sản xuất hoàn tất" })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono text-studio-muted", children: "Tiến độ:" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-2xl font-bold font-mono text-amber-400", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono text-amber-300/80", children: "Tiến độ" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-base font-bold font-mono text-amber-400", children: [
           progress2,
           "%"
         ] })
@@ -30147,11 +30171,27 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
   const currentLang = ((storyboard == null ? void 0 : storyboard.language) || "vi").toLowerCase().split("-")[0];
   const currentVoiceOptions = VOICE_OPTIONS_BY_LANG[currentLang] || VOICE_OPTIONS_BY_LANG["vi"];
   if (!storyboard || !rawShots.length && !Object.keys(rawCharacters).length) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "glass-card rounded-2xl p-5 text-center border border-dashed border-studio-border bg-studio-deck max-w-4xl mx-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col sm:flex-row items-center justify-center gap-3 text-zinc-400", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-9 h-9 rounded-xl bg-studio-card border border-studio-border flex items-center justify-center text-amber-400/80 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-4 h-4" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center sm:text-left", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-xs font-semibold text-zinc-200", children: "Kịch bản & Phân cảnh điện ảnh 35mm sẽ xuất hiện tại đây" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-zinc-500 mt-0.5", children: 'Sau khi bấm "Tạo Kịch Bản", toàn bộ danh sách nhân vật, mô tả Visual DNA và bảng phân cảnh chi tiết sẽ sẵn sàng để bạn duyệt.' })
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { id: "storyboard-section", className: "rounded-2xl border border-dashed border-studio-border bg-studio-deck/60 max-w-4xl mx-auto p-6 sm:p-8", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center space-y-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 h-12 rounded-2xl bg-studio-card border border-studio-border flex items-center justify-center text-amber-400 mx-auto shadow-md", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-5 h-5" }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-sm font-semibold text-zinc-200", children: "Kịch bản & Phân cảnh điện ảnh 35mm" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-zinc-400 mt-1 max-w-md mx-auto leading-relaxed", children: 'Sau khi bấm "Tạo Kịch Bản", toàn bộ nhân vật, visual DNA và danh sách phân cảnh sẽ hiển thị tại đây để bạn duyệt và tinh chỉnh.' })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center justify-center gap-2 sm:gap-4 pt-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-3 py-1.5 rounded-xl bg-studio-input border border-studio-border text-zinc-400 text-xs", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold flex items-center justify-center", children: "1" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Nhập ý tưởng phim" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-zinc-600 text-xs hidden sm:inline", children: "›" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-3 py-1.5 rounded-xl bg-studio-input border border-studio-border text-zinc-400 text-xs", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold flex items-center justify-center", children: "2" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Chọn phong cách" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-zinc-600 text-xs hidden sm:inline", children: "›" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-3 py-1.5 rounded-xl bg-studio-input border border-studio-border text-zinc-400 text-xs", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-4 h-4 rounded-full bg-amber-400/20 text-amber-300 font-mono text-[10px] font-bold flex items-center justify-center", children: "3" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Bấm Tạo Kịch Bản" })
+        ] })
       ] })
     ] }) });
   }
@@ -31932,10 +31972,7 @@ function App() {
         }
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "border-t border-studio-border py-8 text-center text-xs text-zinc-500 font-mono space-y-1", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold text-zinc-400 tracking-wider uppercase", children: "AI Film Studio Pro • Cinema Workstation Edition" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-zinc-600", children: "Built with React, TypeScript, TanStack Query, Axios, Tailwind CSS & Vite" })
-    ] })
+    /* @__PURE__ */ jsxRuntimeExports.jsx("footer", { className: "border-t border-studio-border/60 py-5 text-center text-xs text-zinc-500 font-mono", children: /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "tracking-wider uppercase text-[11px] text-zinc-500", children: "AI FILM STUDIO PRO • CINEMA WORKSTATION" }) })
   ] });
 }
 const queryClient = new QueryClient({
