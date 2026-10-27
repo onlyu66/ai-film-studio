@@ -28545,12 +28545,12 @@ function useStudioStatus() {
     staleTime: 1e3
   });
 }
-function useStoryboard(isRunning = false) {
+function useStoryboard(active = false) {
   return useQuery({
     queryKey: QUERY_KEYS.storyboard,
     queryFn: fetchStoryboard,
-    refetchInterval: isRunning ? 3e3 : false,
-    staleTime: 5e3
+    refetchInterval: active ? 2e3 : 5e3,
+    staleTime: 1e3
   });
 }
 function useProduceMovie() {
@@ -29884,7 +29884,7 @@ const VOICE_OPTIONS_BY_LANG = {
     { value: "fr-FR-DeniseNeural", label: "Denise (Giọng Nữ)", subtext: "Poetic French narrative female", icon: "👩" }
   ]
 };
-function StoryboardView({ storyboard }) {
+function StoryboardView({ storyboard, isScriptReady, onContinue }) {
   var _a2, _b2;
   const [activeTab, setActiveTab] = reactExports.useState("shots");
   const [searchQuery, setSearchQuery] = reactExports.useState("");
@@ -30094,7 +30094,40 @@ function StoryboardView({ storyboard }) {
       }
     );
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { id: "storyboard-section", className: `border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl scroll-mt-6 ${isScriptReady ? "ring-2 ring-amber-500/70 shadow-amber-500/20" : ""}`, children: [
+    isScriptReady && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/40 p-4 flex flex-col sm:flex-row items-center justify-between gap-4", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 shrink-0 font-bold", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-5 h-5" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-bold uppercase tracking-wider text-amber-400", children: "Chế độ Duyệt Kịch Bản" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/30 text-amber-300", children: [
+              shots.length,
+              " Phân cảnh"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-slate-300 mt-0.5", children: [
+            "Bạn có thể bấm nút ",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: '"Sửa"' }),
+            " trên từng phân cảnh để thay đổi lời thoại/prompt/góc máy, hoặc chuyển sang tab ",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: '"Nhân vật"' }),
+            " để đổi giọng đọc."
+          ] })
+        ] })
+      ] }),
+      onContinue && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: onContinue,
+          className: "px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 text-xs font-extrabold flex items-center gap-2 shrink-0 shadow-lg shadow-amber-500/20 cursor-pointer",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-4 h-4 fill-current" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Duyệt & Tiếp tục sản xuất" })
+          ]
+        }
+      )
+    ] }),
     /* @__PURE__ */ jsxRuntimeExports.jsx(CardHeader, { className: "pb-4 border-b border-slate-800/80", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-4", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 mb-1", children: [
@@ -31403,6 +31436,7 @@ function SeoPublishModal({ projectId, isOpen, onClose }) {
   ) }) });
 }
 function App() {
+  var _a2;
   const queryClient2 = useQueryClient();
   const [showVideoModal, setShowVideoModal] = reactExports.useState(false);
   const [showLibraryModal, setShowLibraryModal] = reactExports.useState(false);
@@ -31415,10 +31449,17 @@ function App() {
   const { data: statusData } = useStudioStatus();
   const { data: projects = [] } = useProjects();
   const isRunning = (statusData == null ? void 0 : statusData.status) === "running";
-  const { data: storyboardData } = useStoryboard(isRunning);
+  const isScriptReady = (statusData == null ? void 0 : statusData.status) === "script_ready";
+  const { data: storyboardData, refetch: refetchStoryboard } = useStoryboard(isRunning || isScriptReady);
   const produceMutation = useProduceMovie();
   const cleanMutation = useCleanOutputs();
   const continueMutation = useContinueProduction();
+  reactExports.useEffect(() => {
+    if ((statusData == null ? void 0 : statusData.status) === "script_ready" || (statusData == null ? void 0 : statusData.status) === "completed") {
+      refetchStoryboard();
+      queryClient2.invalidateQueries({ queryKey: QUERY_KEYS.storyboard });
+    }
+  }, [statusData == null ? void 0 : statusData.status, queryClient2, refetchStoryboard]);
   reactExports.useEffect(() => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws/pipeline`;
@@ -31435,12 +31476,15 @@ function App() {
           }, 25e3);
         };
         socket.onmessage = (event) => {
-          var _a2;
+          var _a3, _b2, _c2;
           try {
             const payload = JSON.parse(event.data);
             if (payload.type === "status") {
               queryClient2.setQueryData(["studio", "status"], payload.data);
-              if ((_a2 = payload.data) == null ? void 0 : _a2.logs) {
+              if (((_a3 = payload.data) == null ? void 0 : _a3.status) === "script_ready" || ((_b2 = payload.data) == null ? void 0 : _b2.status) === "completed") {
+                queryClient2.invalidateQueries({ queryKey: QUERY_KEYS.storyboard });
+              }
+              if ((_c2 = payload.data) == null ? void 0 : _c2.logs) {
                 setLiveLogs(payload.data.logs);
               }
             } else if (payload.type === "log") {
@@ -31630,23 +31674,45 @@ function App() {
                 /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-slate-300 mt-1", children: "Hãy kiểm tra và chỉnh sửa lời thoại, visual prompt, góc máy hoặc đổi giọng nhân vật ở bảng phân cảnh bên dưới. Khi đã ưng ý, bấm nút tiếp tục để bắt đầu quay phim." })
               ] })
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              Button,
-              {
-                variant: "default",
-                size: "lg",
-                onClick: handleContinue,
-                disabled: continueMutation.isPending,
-                className: "gap-2.5 font-black text-sm bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-500/30 shrink-0 cursor-pointer",
-                children: continueMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-5 h-5 animate-spin" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Đang kích hoạt..." })
-                ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-5 h-5 fill-current" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "TIẾP TỤC SẢN XUẤT (STAGES 2 - 5)" })
-                ] })
-              }
-            )
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center gap-3 shrink-0", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                Button,
+                {
+                  variant: "secondary",
+                  size: "lg",
+                  onClick: () => {
+                    const el = document.getElementById("storyboard-section");
+                    el == null ? void 0 : el.scrollIntoView({ behavior: "smooth" });
+                  },
+                  className: "gap-2 font-bold text-xs border-amber-500/50 text-amber-300 hover:bg-amber-500/20 cursor-pointer shadow-md",
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-4 h-4" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                      "Sửa kịch bản (",
+                      ((_a2 = storyboard == null ? void 0 : storyboard.shots) == null ? void 0 : _a2.length) || status.shots_count || 0,
+                      " cảnh) ↓"
+                    ] })
+                  ]
+                }
+              ),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                Button,
+                {
+                  variant: "default",
+                  size: "lg",
+                  onClick: handleContinue,
+                  disabled: continueMutation.isPending,
+                  className: "gap-2.5 font-black text-sm bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-500/30 shrink-0 cursor-pointer",
+                  children: continueMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-5 h-5 animate-spin" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Đang kích hoạt..." })
+                  ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-5 h-5 fill-current" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "TIẾP TỤC SẢN XUẤT (STAGES 2 - 5)" })
+                  ] })
+                }
+              )
+            ] })
           ]
         }
       ) }),
@@ -31670,7 +31736,14 @@ function App() {
         ) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "lg:col-span-5 flex flex-col", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TerminalLogs, { logs: displayLogs, className: "h-full" }) })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(StoryboardView, { storyboard })
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        StoryboardView,
+        {
+          storyboard,
+          isScriptReady: status.status === "script_ready",
+          onContinue: handleContinue
+        }
+      )
     ] }),
     showVideoModal && activeVideoUrl && /* @__PURE__ */ jsxRuntimeExports.jsx(
       VideoPlayerModal,

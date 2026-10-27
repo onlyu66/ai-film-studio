@@ -63,8 +63,10 @@ export interface StudioStatus {
   stage_name: string
   progress: number
   logs: string[]
+  error?: string | null
   final_video: string | null
   final_srt: string | null
+  shots_count?: number
 }
 
 export interface Character {

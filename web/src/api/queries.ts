@@ -46,12 +46,12 @@ export function useStudioStatus() {
   })
 }
 
-export function useStoryboard(isRunning = false) {
+export function useStoryboard(active = false) {
   return useQuery<StoryboardData>({
     queryKey: QUERY_KEYS.storyboard,
     queryFn: fetchStoryboard,
-    refetchInterval: isRunning ? 3000 : false,
-    staleTime: 5000,
+    refetchInterval: active ? 2000 : 5000,
+    staleTime: 1000,
   })
 }
 

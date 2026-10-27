@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save, Sparkles, Upload, Play, Plus, Trash2, ArrowUp, ArrowDown, Music, Camera } from 'lucide-react'
+import { Film, Volume2, Search, X, Maximize2, Loader2, Check, Edit3, Save, Sparkles, Upload, Play, Plus, Trash2, ArrowUp, ArrowDown, Music, Camera, FileEdit } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
@@ -44,6 +44,8 @@ interface ShotData {
 
 export interface StoryboardViewProps {
   storyboard: StoryboardData | null
+  isScriptReady?: boolean
+  onContinue?: () => void
 }
 
 const MOTION_OPTIONS: SelectOption[] = [
@@ -74,7 +76,7 @@ const VOICE_OPTIONS_BY_LANG: Record<string, SelectOption[]> = {
   ],
 }
 
-export default function StoryboardView({ storyboard }: StoryboardViewProps) {
+export default function StoryboardView({ storyboard, isScriptReady, onContinue }: StoryboardViewProps) {
   const [activeTab, setActiveTab] = useState<'shots' | 'characters'>('shots')
   const [searchQuery, setSearchQuery] = useState('')
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
@@ -314,7 +316,37 @@ export default function StoryboardView({ storyboard }: StoryboardViewProps) {
   }
 
   return (
-    <Card className="border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl">
+    <Card id="storyboard-section" className={`border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl scroll-mt-6 ${isScriptReady ? 'ring-2 ring-amber-500/70 shadow-amber-500/20' : ''}`}>
+      {isScriptReady && (
+        <div className="bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-transparent border-b border-amber-500/40 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 shrink-0 font-bold">
+              <FileEdit className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Chế độ Duyệt Kịch Bản</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/30 text-amber-300">
+                  {shots.length} Phân cảnh
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Bạn có thể bấm nút <strong>"Sửa"</strong> trên từng phân cảnh để thay đổi lời thoại/prompt/góc máy, hoặc chuyển sang tab <strong>"Nhân vật"</strong> để đổi giọng đọc.
+              </p>
+            </div>
+          </div>
+          {onContinue && (
+            <button
+              type="button"
+              onClick={onContinue}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 text-xs font-extrabold flex items-center gap-2 shrink-0 shadow-lg shadow-amber-500/20 cursor-pointer"
+            >
+              <Play className="w-4 h-4 fill-current" />
+              <span>Duyệt & Tiếp tục sản xuất</span>
+            </button>
+          )}
+        </div>
+      )}
       <CardHeader className="pb-4 border-b border-slate-800/80">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>

@@ -19,6 +19,7 @@ import {
   useCleanOutputs,
   useContinueProduction,
   useProjects,
+  QUERY_KEYS,
 } from './api/queries'
 import type { StudioStatus, ProductionFormData, ProjectItem } from './types'
 
@@ -37,10 +38,19 @@ export default function App() {
   const { data: statusData } = useStudioStatus()
   const { data: projects = [] } = useProjects()
   const isRunning = statusData?.status === 'running'
-  const { data: storyboardData } = useStoryboard(isRunning)
+  const isScriptReady = statusData?.status === 'script_ready'
+  const { data: storyboardData, refetch: refetchStoryboard } = useStoryboard(isRunning || isScriptReady)
   const produceMutation = useProduceMovie()
   const cleanMutation = useCleanOutputs()
   const continueMutation = useContinueProduction()
+
+  // Invalidate and refetch storyboard when entering script_ready or completed
+  useEffect(() => {
+    if (statusData?.status === 'script_ready' || statusData?.status === 'completed') {
+      refetchStoryboard()
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    }
+  }, [statusData?.status, queryClient, refetchStoryboard])
 
   // WebSocket Live Log & Status Streaming
   useEffect(() => {
@@ -64,6 +74,9 @@ export default function App() {
             const payload = JSON.parse(event.data)
             if (payload.type === 'status') {
               queryClient.setQueryData(['studio', 'status'], payload.data)
+              if (payload.data?.status === 'script_ready' || payload.data?.status === 'completed') {
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+              }
               if (payload.data?.logs) {
                 setLiveLogs(payload.data.logs)
               }
@@ -271,25 +284,40 @@ export default function App() {
                 </div>
               </div>
 
-              <Button
-                variant="default"
-                size="lg"
-                onClick={handleContinue}
-                disabled={continueMutation.isPending}
-                className="gap-2.5 font-black text-sm bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-500/30 shrink-0 cursor-pointer"
-              >
-                {continueMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Đang kích hoạt...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5 fill-current" />
-                    <span>TIẾP TỤC SẢN XUẤT (STAGES 2 - 5)</span>
-                  </>
-                )}
-              </Button>
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  onClick={() => {
+                    const el = document.getElementById('storyboard-section')
+                    el?.scrollIntoView({ behavior: 'smooth' })
+                  }}
+                  className="gap-2 font-bold text-xs border-amber-500/50 text-amber-300 hover:bg-amber-500/20 cursor-pointer shadow-md"
+                >
+                  <FileEdit className="w-4 h-4" />
+                  <span>Sửa kịch bản ({storyboard?.shots?.length || status.shots_count || 0} cảnh) ↓</span>
+                </Button>
+
+                <Button
+                  variant="default"
+                  size="lg"
+                  onClick={handleContinue}
+                  disabled={continueMutation.isPending}
+                  className="gap-2.5 font-black text-sm bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-500/30 shrink-0 cursor-pointer"
+                >
+                  {continueMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Đang kích hoạt...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-5 h-5 fill-current" />
+                      <span>TIẾP TỤC SẢN XUẤT (STAGES 2 - 5)</span>
+                    </>
+                  )}
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -318,7 +346,11 @@ export default function App() {
         </div>
 
         {/* Bottom Section: Storyboard Gallery */}
-        <StoryboardView storyboard={storyboard} />
+        <StoryboardView
+          storyboard={storyboard}
+          isScriptReady={status.status === 'script_ready'}
+          onContinue={handleContinue}
+        />
       </main>
 
       {/* Video Modal Player */}
