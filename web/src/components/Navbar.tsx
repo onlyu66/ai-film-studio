@@ -64,7 +64,7 @@ export default function Navbar({
       )
     }
     return (
-      <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-900/80 border border-white/[0.08] text-zinc-400 text-xs font-mono">
+      <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-studio-deck border border-studio-border text-studio-muted text-xs font-mono">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
         <span>Ready</span>
       </div>
@@ -80,14 +80,14 @@ export default function Navbar({
 
   return (
     <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2">
-      <div className="max-w-7xl mx-auto glass-panel rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 shadow-2xl">
+      <div className="max-w-7xl mx-auto studio-panel rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 shadow-xl">
         {/* Brand Logo */}
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 shadow-sm">
             <Clapperboard className="w-4 h-4 text-amber-400" />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-extrabold tracking-tight text-white font-sans">
+            <span className="text-sm font-extrabold tracking-tight text-zinc-100 font-sans">
               AI FILM STUDIO
             </span>
             <span className="text-[9px] font-mono uppercase tracking-widest text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
@@ -97,25 +97,25 @@ export default function Navbar({
         </div>
 
         {/* Center Section Navigations */}
-        <nav className="hidden lg:flex items-center p-1 rounded-xl bg-zinc-950/40 border border-white/[0.06] text-xs font-medium text-zinc-400">
+        <nav className="hidden lg:flex items-center p-1 rounded-xl bg-studio-input border border-studio-border text-xs font-medium text-studio-muted">
           <button
             type="button"
             onClick={() => scrollTo('director-inspector')}
-            className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer"
           >
             Đạo diễn
           </button>
           <button
             type="button"
             onClick={() => scrollTo('storyboard-section')}
-            className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer"
           >
             Phân cảnh & Kịch bản
           </button>
           <button
             type="button"
             onClick={() => scrollTo('storyboard-section')}
-            className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer"
           >
             Timeline 35mm
           </button>
@@ -133,14 +133,14 @@ export default function Navbar({
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer border ${
                 showConsole
                   ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
-                  : 'bg-zinc-900/70 text-zinc-400 hover:text-white hover:bg-zinc-800 border-white/[0.08]'
+                  : 'bg-studio-deck text-studio-muted hover:text-zinc-200 hover:bg-studio-card border-studio-border'
               }`}
               title="Mở bảng nhật ký thực thi (Execution Logs)"
             >
               <Terminal className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Console</span>
               {logsCount > 0 && (
-                <span className="text-[10px] px-1 py-0.2 rounded bg-white/[0.08] text-zinc-300">
+                <span className="text-[10px] px-1 py-0.2 rounded bg-studio-input text-zinc-300 border border-studio-border">
                   {logsCount}
                 </span>
               )}
@@ -163,7 +163,7 @@ export default function Navbar({
             variant="outline"
             size="sm"
             onClick={onOpenLibrary}
-            className="gap-1.5 text-xs h-8 border-white/[0.08] hover:bg-white/[0.06] text-zinc-300 cursor-pointer"
+            className="gap-1.5 text-xs h-8 border-studio-border hover:bg-studio-elevated text-zinc-300 cursor-pointer"
             title="Thư viện phim đã sản xuất"
           >
             <Film className="w-3.5 h-3.5 text-zinc-400" />

@@ -384,7 +384,7 @@ export default function App() {
           className={`px-3.5 py-2 rounded-full glass-panel flex items-center gap-2 text-xs font-mono font-medium shadow-2xl transition-all cursor-pointer border ${
             showConsole
               ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 glow-amber-sm'
-              : 'hover:bg-zinc-800 text-zinc-300 hover:text-white border-white/[0.1] hover:border-amber-400/40'
+              : 'bg-studio-deck hover:bg-studio-card text-zinc-300 hover:text-white border-studio-border hover:border-amber-400/40'
           }`}
           title="Bật / Tắt cửa sổ nhật ký thực thi"
         >
@@ -434,7 +434,7 @@ export default function App() {
       />
 
       {/* Modern Studio Footer */}
-      <footer className="border-t border-white/[0.06] py-8 text-center text-xs text-zinc-500 font-mono space-y-1">
+      <footer className="border-t border-studio-border py-8 text-center text-xs text-zinc-500 font-mono space-y-1">
         <p className="font-semibold text-zinc-400 tracking-wider uppercase">AI Film Studio Pro • Cinema Workstation Edition</p>
         <p className="text-[11px] text-zinc-600">Built with React, TypeScript, TanStack Query, Axios, Tailwind CSS & Vite</p>
       </footer>

@@ -8,27 +8,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        cinema: {
-          950: '#07080B', // Deep canvas
-          900: '#0C0E14', // Workstation deck
-          850: '#12151E', // Panel surface
-          800: '#171B26', // Card container
-          750: '#1F2433', // Hover/Active
-          700: '#282F42', // Hairline borders
-          600: '#3E4761',
-          gold: '#F59E0B', // Precision studio amber
-          'gold-hover': '#D97706',
-          emerald: '#10B981',
-          rose: '#EF4444',
-          sky: '#0EA5E9',
-        },
         studio: {
-          900: '#0C0E14',
-          800: '#12151E',
-          700: '#171B26',
-          600: '#282F42',
-          gold: '#F59E0B',
-          cyan: '#06B6D4',
+          canvas: '#0E1015',      // Soft, warm charcoal canvas (not harsh pitch black)
+          deck: '#141720',        // Elevated studio panel deck
+          card: '#1A1E29',        // Rich card surface
+          elevated: '#212634',    // Hover & elevated chips
+          input: '#101219',       // Sunken input background
+          border: '#232838',      // Soft harmonic tonal border (no white wireframe!)
+          'border-hover': '#32394E',
+          'border-focus': '#454E6B',
+          text: '#E2E8F0',        // Restful pearl white text
+          muted: '#8B95A5',       // Gentle slate muted text
+          amber: '#F59E0B',       // Warm golden cinema amber
+          'amber-soft': '#FBBF24',
+          'amber-muted': 'rgba(245, 158, 11, 0.12)',
+        },
+        cinema: {
+          canvas: '#0E1015',
+          deck: '#141720',
+          card: '#1A1E29',
+          border: '#232838',
+          'border-hover': '#32394E',
+          amber: '#F59E0B',
         }
       },
       fontFamily: {

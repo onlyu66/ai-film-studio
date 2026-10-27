@@ -33,13 +33,13 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
   // When Idle: Render an ultra-sleek, minimalist pipeline track (no truncated boxes!)
   if (!isActiveProduction) {
     return (
-      <div className="w-full glass-card rounded-2xl px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all border border-white/[0.06]">
+      <div className="w-full studio-panel rounded-2xl px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all border border-studio-border">
         <div className="flex items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-emerald-400" />
           <span className="text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-300">
             Pipeline 5 Giai Đoạn
           </span>
-          <span className="text-[10px] font-mono text-zinc-500 hidden md:inline">
+          <span className="text-[10px] font-mono text-studio-muted hidden md:inline">
             • Tự động hóa từ Kịch bản đến Master Video
           </span>
         </div>
@@ -50,12 +50,12 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
             const Icon = s.icon
             return (
               <div key={s.id} className="flex items-center gap-2 shrink-0">
-                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/60 border border-white/[0.06] text-zinc-400 text-xs">
-                  <Icon className="w-3 h-3 text-zinc-500" />
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-studio-input border border-studio-border text-zinc-400 text-xs">
+                  <Icon className="w-3 h-3 text-studio-muted" />
                   <span className="font-medium text-[11px] text-zinc-300">{s.shortName}</span>
                 </div>
                 {idx < STAGES.length - 1 && (
-                  <span className="text-zinc-700 text-xs font-mono">→</span>
+                  <span className="text-zinc-600 text-xs font-mono">→</span>
                 )}
               </div>
             )
@@ -67,7 +67,7 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
 
   // When Running / Script Ready / Completed: Expand into active visual production dashboard
   return (
-    <div className="w-full glass-panel rounded-2xl p-4 sm:p-5 transition-all border border-amber-500/20">
+    <div className="w-full studio-panel rounded-2xl p-4 sm:p-5 transition-all border border-amber-500/30">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5">
@@ -78,7 +78,7 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-zinc-400">Tiến độ:</span>
+          <span className="text-xs font-mono text-studio-muted">Tiến độ:</span>
           <span className="text-2xl font-bold font-mono text-amber-400">
             {progress}%
           </span>
@@ -86,7 +86,7 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
       </div>
 
       {/* Progress Track */}
-      <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden mb-4 border border-white/[0.06] p-0.5">
+      <div className="w-full h-2 bg-studio-input rounded-full overflow-hidden mb-4 border border-studio-border p-0.5">
         <motion.div
           className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 rounded-full shadow-sm shadow-amber-500/40"
           initial={{ width: 0 }}
@@ -110,7 +110,7 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
                   ? 'bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/10 ring-1 ring-amber-500/30'
                   : isDone
                   ? 'bg-emerald-500/[0.08] border-emerald-500/30 text-zinc-300'
-                  : 'bg-zinc-900/40 border-white/[0.05] text-zinc-500 opacity-60'
+                  : 'bg-studio-card border-studio-border text-zinc-500 opacity-60'
               }`}
             >
               <div
@@ -119,7 +119,7 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
                     ? 'bg-amber-400 text-zinc-950 font-bold'
                     : isDone
                     ? 'bg-emerald-500/20 text-emerald-400'
-                    : 'bg-zinc-800 text-zinc-500'
+                    : 'bg-studio-input text-studio-muted'
                 }`}
               >
                 {isActive ? (

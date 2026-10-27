@@ -34,10 +34,10 @@ import { useTestWebhook, useFetchLlmModels } from '../api/queries'
 import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem } from '../types'
 
 const LANG_OPTIONS: SelectOption[] = [
-  { value: 'vi', label: 'Tiếng Việt', subtext: 'Giọng AI tự nhiên, truyền cảm', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-amber-300">VI</span> },
-  { value: 'en', label: 'English (US)', subtext: 'Natural American cinematic narration', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300">EN</span> },
-  { value: 'ja', label: 'Japanese (日本語)', subtext: 'Studio narration & anime style', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300">JA</span> },
-  { value: 'fr', label: 'French (Français)', subtext: 'Classic European cinema tone', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300">FR</span> },
+  { value: 'vi', label: 'Tiếng Việt', subtext: 'Giọng AI tự nhiên, truyền cảm', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-studio-card border border-studio-border text-amber-300">VI</span> },
+  { value: 'en', label: 'English (US)', subtext: 'Natural American cinematic narration', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-studio-card border border-studio-border text-zinc-300">EN</span> },
+  { value: 'ja', label: 'Japanese (日本語)', subtext: 'Studio narration & anime style', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-studio-card border border-studio-border text-zinc-300">JA</span> },
+  { value: 'fr', label: 'French (Français)', subtext: 'Classic European cinema tone', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-studio-card border border-studio-border text-zinc-300">FR</span> },
 ]
 
 const LLM_OPTIONS: SelectOption[] = [
@@ -288,7 +288,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               disabled={isRunning}
               rows={3}
               placeholder="Mô tả ý tưởng, cốt truyện, nhân vật hoặc đề tài tài liệu mà bạn muốn AI sản xuất thành phim..."
-              className="w-full px-4 py-3.5 rounded-2xl bg-zinc-950/80 border border-white/[0.09] group-hover:border-white/[0.15] text-zinc-100 placeholder-zinc-500 text-sm focus:outline-none focus:border-amber-400/70 focus:ring-2 focus:ring-amber-400/15 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
+              className="w-full px-4 py-3.5 rounded-2xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-zinc-100 placeholder-zinc-500 text-sm focus:outline-none focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
             />
             {topic && !isRunning && (
               <button
@@ -311,7 +311,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                 type="button"
                 onClick={() => handleApplyPreset(p)}
                 disabled={isRunning}
-                className="px-2.5 py-1 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-white/[0.08] hover:border-amber-400/40 text-[11px] font-medium text-zinc-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-2.5 py-1 rounded-lg bg-studio-card hover:bg-studio-elevated border border-studio-border hover:border-amber-400/40 text-[11px] font-medium text-zinc-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
               >
                 <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/10 text-amber-300 font-bold">{p.tag}</span>
                 <span>{p.title}</span>
@@ -337,7 +337,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between ${
                     isSelected
                       ? 'bg-gradient-to-b ' + st.accent + ' border-amber-400/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/40'
-                      : 'bg-zinc-900/40 border-white/[0.07] hover:border-white/[0.15] hover:bg-zinc-900/70'
+                      : 'bg-studio-card/70 border-studio-border hover:border-studio-border-hover hover:bg-studio-card'
                   }`}
                 >
                   <div>
@@ -372,7 +372,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               <Film className="w-3.5 h-3.5 text-zinc-400" />
               <span>Tỉ lệ khung hình</span>
             </label>
-            <div className="grid grid-cols-2 gap-1.5 bg-zinc-950/70 p-1 rounded-xl border border-white/[0.08]">
+            <div className="grid grid-cols-2 gap-1.5 bg-studio-input p-1 rounded-xl border border-studio-border">
               <button
                 type="button"
                 onClick={() => setAspectRatio('16:9')}
@@ -408,7 +408,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               <Clock className="w-3.5 h-3.5 text-zinc-400" />
               <span>Thời lượng phim</span>
             </label>
-            <div className="grid grid-cols-4 gap-1 bg-zinc-950/70 p-1 rounded-xl border border-white/[0.08]">
+            <div className="grid grid-cols-4 gap-1 bg-studio-input p-1 rounded-xl border border-studio-border">
               {[1, 3, 5, 30].map((d) => (
                 <button
                   key={d}
@@ -418,7 +418,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   className={`py-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     duration === d
                       ? 'bg-amber-400 text-zinc-950 shadow-sm'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                      : 'text-zinc-400 hover:text-white hover:bg-studio-deck'
                   }`}
                 >
                   {d}m
@@ -450,7 +450,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
             className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
               pauseAfterScript
                 ? 'bg-amber-500/10 border-amber-400/40 shadow-sm'
-                : 'bg-zinc-900/40 border-white/[0.06] hover:border-white/[0.12]'
+                : 'bg-studio-card/70 border-studio-border hover:border-studio-border-hover hover:bg-studio-card'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -476,7 +476,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               type="checkbox"
               checked={pauseAfterScript}
               onChange={(e) => setPauseAfterScript(e.target.checked)}
-              className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-zinc-950 border-zinc-700 cursor-pointer"
+              className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-studio-input border-studio-border cursor-pointer"
             />
           </div>
 
@@ -486,7 +486,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
             className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
               hardsub
                 ? 'bg-amber-500/10 border-amber-400/40 shadow-sm'
-                : 'bg-zinc-900/40 border-white/[0.06] hover:border-white/[0.12]'
+                : 'bg-studio-card/70 border-studio-border hover:border-studio-border-hover hover:bg-studio-card'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -512,7 +512,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               type="checkbox"
               checked={hardsub}
               onChange={(e) => setHardsub(e.target.checked)}
-              className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-zinc-950 border-zinc-700 cursor-pointer"
+              className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-studio-input border-studio-border cursor-pointer"
             />
           </div>
         </div>
@@ -529,7 +529,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
           </button>
 
           {showAdvanced && (
-            <div className="relative z-30 mt-3 p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-white/[0.08] grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fadeIn">
+            <div className="relative z-30 mt-3 p-4 sm:p-5 rounded-2xl bg-studio-deck border border-studio-border grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fadeIn">
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Bot className="w-3.5 h-3.5 text-amber-400" />
@@ -570,8 +570,8 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               </div>
 
               {/* API Key & Dynamic Model Selection Card */}
-              <div className="sm:col-span-3 p-4 rounded-xl bg-zinc-900/60 border border-white/[0.08] space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-2.5">
+              <div className="sm:col-span-3 p-4 rounded-xl bg-studio-card border border-studio-border space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-studio-border pb-2.5">
                   <div className="flex items-center gap-2">
                     <Key className="w-4 h-4 text-amber-400" />
                     <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
@@ -643,7 +643,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                             : 'Nhập API key tại đây...'
                         }
                         disabled={isRunning || llm === 'ollama'}
-                        className="w-full pl-3 pr-28 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
+                        className="w-full pl-3 pr-28 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                       />
                       <div className="absolute right-1.5 flex items-center gap-1">
                         {apiKey && (
@@ -703,14 +703,14 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                         value={customModelText}
                         onChange={(e) => setCustomModelText(e.target.value)}
                         placeholder="VD: gemini-3.5-flash, gpt-4o, llama3.2..."
-                        className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
+                        className="w-full px-3 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                       />
                     ) : availableModels.length > 0 ? (
                       <select
                         value={selectedModel}
                         onChange={(e) => setSelectedModel(e.target.value)}
                         disabled={isRunning}
-                        className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-medium cursor-pointer"
+                        className="w-full px-3 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-medium cursor-pointer"
                       >
                         {availableModels.map((m) => (
                           <option key={m.id} value={m.id}>
@@ -720,7 +720,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                         ))}
                       </select>
                     ) : (
-                      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-950/80 border border-dashed border-white/[0.08] text-xs text-zinc-500">
+                      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-studio-input border border-dashed border-studio-border text-xs text-zinc-500">
                         <span>
                           {fetchModelsMutation.isPending
                             ? 'Đang tải danh sách model...'
@@ -757,7 +757,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   value={seriesTitle}
                   onChange={(e) => setSeriesTitle(e.target.value)}
                   placeholder="Để trống nếu là phim độc lập"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+                  className="w-full px-3 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400"
                 />
               </div>
 
@@ -772,12 +772,12 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   max={999}
                   value={episode}
                   onChange={(e) => setEpisode(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-bold"
+                  className="w-full px-3 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-bold"
                 />
               </div>
 
               {/* Webhook */}
-              <div className="sm:col-span-3 pt-2 border-t border-white/[0.06]">
+              <div className="sm:col-span-3 pt-2 border-t border-studio-border">
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Send className="w-3.5 h-3.5 text-emerald-400" />
@@ -808,7 +808,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
                   placeholder="https://discord.com/api/webhooks/... hoặc URL webhook nhận thông báo"
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
+                  className="w-full px-3 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                 />
               </div>
             </div>

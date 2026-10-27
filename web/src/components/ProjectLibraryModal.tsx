@@ -164,11 +164,11 @@ export default function ProjectLibraryModal({
 
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30" />
 
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-zinc-300 font-bold border border-white/10 uppercase">
+                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-zinc-300 font-bold border border-studio-border uppercase">
                           {p.style}
                         </div>
 
-                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 text-[10px] font-mono font-bold uppercase border border-white/10">
+                        <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 text-[10px] font-mono font-bold uppercase border border-studio-border">
                           {p.aspect_ratio || '16:9'}
                         </div>
 

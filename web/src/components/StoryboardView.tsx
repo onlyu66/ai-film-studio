@@ -265,9 +265,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
   if (!storyboard || (!rawShots.length && !Object.keys(rawCharacters).length)) {
     return (
-      <div className="glass-card rounded-2xl p-5 text-center border border-dashed border-white/[0.08] max-w-4xl mx-auto">
+      <div className="glass-card rounded-2xl p-5 text-center border border-dashed border-studio-border bg-studio-deck max-w-4xl mx-auto">
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-zinc-400">
-          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center text-amber-400/80 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-studio-card border border-studio-border flex items-center justify-center text-amber-400/80 shrink-0">
             <Film className="w-4 h-4" />
           </div>
           <div className="text-center sm:text-left">
@@ -607,16 +607,16 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     {/* Film overlay & badges */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-70 group-hover:opacity-40 transition-opacity" />
 
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-cinema-amber font-bold border border-white/10">
+                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-cinema-amber font-bold border border-studio-border">
                       {shot.id}
                     </div>
 
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 text-[10px] font-mono uppercase tracking-wider border border-white/10">
+                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 text-[10px] font-mono uppercase tracking-wider border border-studio-border">
                       {shot.motion || 'zoom_in'}
                     </div>
 
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px]">
-                      <div className="px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-medium flex items-center gap-1.5 border border-white/20">
+                      <div className="px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-medium flex items-center gap-1.5 border border-studio-border-hover">
                         <Maximize2 className="w-3.5 h-3.5" />
                         <span>Xem ảnh HD</span>
                       </div>
