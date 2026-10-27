@@ -103,42 +103,47 @@ export default function Navbar({
         }`}
       >
         {/* Brand Logo */}
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-center text-amber-400 shadow-sm">
-            <Clapperboard className="w-4 h-4 text-amber-400" />
+        <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm shadow-amber-500/15 group-hover:scale-105 transition-transform">
+            <Clapperboard className="w-4 h-4 text-amber-400 stroke-[2.2]" />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-extrabold tracking-tight text-zinc-100 font-sans">
-              AI FILM STUDIO
-            </span>
-            <span className="text-[9px] font-mono uppercase tracking-widest text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
-              PRO
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5 leading-none">
+              <span className="text-sm font-black tracking-tight text-zinc-100 font-sans">
+                AI FILM STUDIO
+              </span>
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.2 rounded-md">
+                PRO
+              </span>
+            </div>
+            <span className="text-[10px] font-mono text-zinc-500 tracking-wider uppercase mt-0.5">
+              Cinema Workstation
             </span>
           </div>
         </div>
 
         {/* Center Section Navigations */}
-        <nav className="hidden lg:flex items-center p-1 rounded-xl bg-studio-input border border-studio-border text-xs font-medium text-studio-muted">
+        <nav className="hidden md:flex items-center p-1 rounded-xl bg-studio-input/80 border border-studio-border text-xs font-medium text-studio-muted">
           <button
             type="button"
             onClick={() => scrollTo('director-inspector')}
-            className="px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-lg hover:text-amber-300 hover:bg-studio-card transition-all cursor-pointer font-medium"
           >
             Đạo diễn
           </button>
           <button
             type="button"
             onClick={() => scrollTo('storyboard-section')}
-            className="px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-lg hover:text-amber-300 hover:bg-studio-card transition-all cursor-pointer font-medium"
           >
-            Phân cảnh & Kịch bản
+            Phân cảnh Storyboard
           </button>
           <button
             type="button"
             onClick={() => scrollTo('storyboard-section')}
-            className="px-3 py-1.5 rounded-lg hover:text-zinc-100 hover:bg-studio-card transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-lg hover:text-amber-300 hover:bg-studio-card transition-all cursor-pointer font-medium"
           >
-            Timeline 35mm
+            Timeline Master
           </button>
         </nav>
 

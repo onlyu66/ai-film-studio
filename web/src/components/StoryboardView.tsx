@@ -142,6 +142,8 @@ const VOICE_OPTIONS_BY_LANG: Record<string, SelectOption[]> = {
 export default function StoryboardView({ storyboard, isScriptReady, onContinue }: StoryboardViewProps) {
   const [activeTab, setActiveTab] = useState<'shots' | 'characters'>('shots')
   const [searchQuery, setSearchQuery] = useState('')
+  const [shotFilter, setShotFilter] = useState<'all' | 'approved' | 'pending' | 'has_video'>('all')
+  const [actFilter, setActFilter] = useState<string>('all')
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
   const [savingCharId, setSavingCharId] = useState<string | null>(null)
   const [savedCharId, setSavedCharId] = useState<string | null>(null)
@@ -415,6 +417,11 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const shots = rawShots
 
   const filteredShots = shots.filter((s) => {
+    if (shotFilter === 'approved' && !s.is_approved) return false
+    if (shotFilter === 'pending' && s.is_approved) return false
+    if (shotFilter === 'has_video' && !s.has_video) return false
+    if (actFilter !== 'all' && String(s.act) !== actFilter) return false
+
     if (!searchQuery.trim()) return true
     const q = searchQuery.toLowerCase()
     return (
@@ -606,7 +613,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
         {/* Characters Tab */}
         {activeTab === 'characters' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {Object.entries(characters).map(([id, char]) => {
               const currentVoice = char.voice || currentVoiceOptions[0]?.value || 'vi-VN-NamMinhNeural'
 
@@ -615,38 +622,67 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   key={id}
                   whileHover={{ y: -2 }}
                   transition={{ duration: 0.15 }}
-                  className="p-4 sm:p-5 rounded-2xl bg-studio-card border border-studio-border hover:border-studio-border-hover shadow-studio-sm hover:shadow-studio-md transition-all flex flex-col justify-between"
+                  className="p-5 rounded-2xl bg-cinema-card border border-cinema-border hover:border-cinema-border-hover shadow-xl transition-all flex flex-col justify-between relative overflow-hidden group"
                 >
+                  {/* Subtle top accent gradient */}
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/0 via-amber-500/50 to-amber-500/0 opacity-60 group-hover:opacity-100 transition-opacity" />
+
                   <div>
-                    <div className="flex items-center justify-between mb-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-studio-input border border-studio-border flex items-center justify-center shadow-inner overflow-hidden relative group shrink-0">
+                    {/* Header: Avatar, Name, ID, Seed */}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3.5">
+                        <div
+                          onClick={() => char.headshot_url && setLightboxImage(char.headshot_url)}
+                          className={`w-14 h-14 rounded-2xl bg-cinema-deck border border-cinema-border ring-1 ring-amber-500/20 flex items-center justify-center overflow-hidden relative group/avatar shrink-0 ${
+                            char.headshot_url ? 'cursor-pointer hover:ring-amber-400/50 transition-all' : ''
+                          }`}
+                          title={char.headshot_url ? 'Bấm để phóng to ảnh chân dung' : 'Chưa có ảnh chân dung'}
+                        >
                           {char.headshot_url ? (
-                            <img
-                              src={char.headshot_url}
-                              alt={char.name}
-                              className="w-full h-full object-cover"
-                            />
+                            <>
+                              <img
+                                src={char.headshot_url}
+                                alt={char.name}
+                                loading="lazy"
+                                decoding="async"
+                                className="w-full h-full object-cover group-hover/avatar:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
+                                <Maximize2 className="w-4 h-4 text-white" />
+                              </div>
+                            </>
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-500/10 to-transparent">
-                              <User className="w-6 h-6 text-zinc-400 stroke-[1.5]" />
+                              <User className="w-7 h-7 text-zinc-500 stroke-[1.5]" />
                             </div>
                           )}
                         </div>
+
                         <div>
-                          <h4 className="text-sm font-bold text-zinc-100">{char.name}</h4>
-                          <span className="text-[10px] font-mono text-amber-400 font-semibold">ID: {id}</span>
+                          <h4 className="text-base font-bold text-zinc-100 leading-tight">{char.name}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] font-mono text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                              ID: {id}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      <span className="font-mono text-zinc-500 text-[10px]">Seed: {String(char.seed ?? '')}</span>
+                      <div className="text-right">
+                        <span className="font-mono text-zinc-500 text-[10px] block">SEED</span>
+                        <span className="font-mono text-zinc-300 text-xs font-semibold">{String(char.seed ?? 'Auto')}</span>
+                      </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-studio-input border border-studio-border/70 mb-3.5">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block mb-1">
-                        Visual DNA Anchor:
-                      </span>
-                      <p className="text-xs text-zinc-300 leading-relaxed font-normal">
+                    {/* Visual DNA Anchor Box */}
+                    <div className="p-3.5 rounded-xl bg-cinema-canvas/80 border border-cinema-border mb-4">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
+                          <Sparkles className="w-3 h-3 text-amber-400" />
+                          Visual DNA Anchor
+                        </span>
+                      </div>
+                      <p className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-4 hover:line-clamp-none transition-all">
                         {typeof char.visual_anchor === 'string'
                           ? char.visual_anchor
                           : JSON.stringify(char.visual_anchor)}
@@ -654,12 +690,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     </div>
 
                     {/* Character Face Headshot Action Buttons */}
-                    <div className="flex items-center gap-2 mb-3.5">
+                    <div className="flex items-center gap-2 mb-4">
                       <button
                         type="button"
                         onClick={() => handleGenerateHeadshot(id, char)}
                         disabled={generatingCharId === id}
-                        className="flex-1 py-1.5 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        className="flex-1 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
                       >
                         {generatingCharId === id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
@@ -669,7 +705,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         <span>Tạo Headshot AI</span>
                       </button>
 
-                      <label className="flex-1 py-1.5 px-2.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-studio-border">
+                      <label className="flex-1 py-2 px-3 rounded-xl bg-cinema-deck hover:bg-cinema-surface text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-cinema-border active:scale-95">
                         {uploadingCharId === id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
                         ) : (
@@ -688,10 +724,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   </div>
 
                   {/* Interactive Voice Customization */}
-                  <div className="pt-3 border-t border-studio-border space-y-2">
+                  <div className="pt-3.5 border-t border-cinema-border space-y-2">
                     <div className="flex items-center justify-between text-[11px]">
-                      <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                        <Volume2 className="w-3.5 h-3.5 text-zinc-400" />
+                      <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                        <Volume2 className="w-3.5 h-3.5 text-amber-400/80" />
                         <span>Giọng lồng tiếng (Voice)</span>
                       </label>
                       {savingCharId === id ? (
@@ -718,13 +754,13 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         type="button"
                         onClick={() => handlePlayVoice(currentVoice)}
                         disabled={playingVoice === currentVoice || previewVoiceMutation.isPending}
-                        className="p-2.5 rounded-xl bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border text-xs font-medium transition-colors flex items-center justify-center cursor-pointer shrink-0"
+                        className="p-2.5 rounded-xl bg-cinema-deck hover:bg-amber-500/15 text-zinc-300 hover:text-amber-300 border border-cinema-border hover:border-amber-500/30 text-xs font-medium transition-all flex items-center justify-center cursor-pointer shrink-0 active:scale-95"
                         title="Nghe thử giọng này"
                       >
                         {playingVoice === currentVoice ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-zinc-300" />
+                          <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
                         ) : (
-                          <Play className="w-4 h-4 text-zinc-300" />
+                          <Play className="w-4 h-4" />
                         )}
                       </button>
                     </div>
@@ -738,6 +774,79 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         {/* Shots Tab */}
         {activeTab === 'shots' && (
           <>
+            {/* Quick Status & Act Filters */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-studio-input/70 border border-studio-border text-xs mb-1">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mr-1">Bộ lọc:</span>
+                <button
+                  type="button"
+                  onClick={() => setShotFilter('all')}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    shotFilter === 'all'
+                      ? 'bg-amber-400 text-zinc-950 font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-white hover:bg-studio-card'
+                  }`}
+                >
+                  Tất cả ({totalShots})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShotFilter('approved')}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    shotFilter === 'approved'
+                      ? 'bg-emerald-500 text-white font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-emerald-300 hover:bg-studio-card'
+                  }`}
+                >
+                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Đã duyệt ({approvedShots})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShotFilter('pending')}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    shotFilter === 'pending'
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-400/50 font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-amber-300 hover:bg-studio-card'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span>Chờ duyệt ({totalShots - approvedShots})</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShotFilter('has_video')}
+                  className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    shotFilter === 'has_video'
+                      ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-cyan-300 hover:bg-studio-card'
+                  }`}
+                >
+                  <Video className="w-3.5 h-3.5" />
+                  <span>Đã có Clip ({readyClips})</span>
+                </button>
+              </div>
+
+              {/* Right: Quick Act Filter */}
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mr-1">Hồi:</span>
+                {(['all', '1', '2', '3'] as const).map((actVal) => (
+                  <button
+                    key={actVal}
+                    type="button"
+                    onClick={() => setActFilter(actVal)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
+                      actFilter === actVal
+                        ? 'bg-studio-elevated text-amber-300 border border-amber-400/40 font-bold'
+                        : 'text-zinc-400 hover:text-zinc-200 hover:bg-studio-card'
+                    }`}
+                  >
+                    {actVal === 'all' ? 'Tất cả' : `Hồi ${actVal}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredShots.map((shot, index) => {
               const hasImage = Boolean(shot.has_image || cacheBuster[shot.id])
@@ -765,6 +874,8 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       <img
                         src={imgSrc}
                         alt={shot.id}
+                        loading="lazy"
+                        decoding="async"
                         onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
                           const target = e.currentTarget
                           target.style.display = 'none'
@@ -1087,18 +1198,21 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
           </div>
 
           {/* Master Assembly & Quality Assurance Dashboard */}
-          <div className="mt-8 rounded-2xl bg-gradient-to-b from-studio-input/80 to-studio-card/90 border border-cinema-border p-5 sm:p-6 shadow-2xl">
+          <div className="mt-8 rounded-2xl bg-gradient-to-b from-cinema-deck/90 to-cinema-card/95 border border-cinema-border p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+            {/* Top Amber glow accent */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
               {/* Left: Status & Quality Metrics */}
-              <div className="space-y-3">
+              <div className="space-y-3.5 flex-1">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                     <Film className="w-5 h-5 stroke-[2.2]" />
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
                       <span>Bảng điều khiển & Xuất bản Master Movie</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
                         Quy trình duyệt tỉ mỉ
                       </span>
                     </h3>
@@ -1108,31 +1222,70 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   </div>
                 </div>
 
-                {/* Progress Indicators */}
-                <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
-                  <div className="px-3 py-1.5 rounded-xl bg-studio-deck border border-studio-border flex items-center gap-2">
-                    <span className="text-zinc-500">Ảnh:</span>
-                    <span className={`font-bold ${readyImages === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {readyImages}/{totalShots}
-                    </span>
+                {/* Visual Progress Gauges */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                  {/* Gauge 1: Images */}
+                  <div className="px-3 py-2 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-400 font-medium">Ảnh Flux</span>
+                      <span className={`font-mono font-bold ${readyImages === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {readyImages}/{totalShots}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${readyImages === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        style={{ width: `${totalShots ? (readyImages / totalShots) * 100 : 0}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="px-3 py-1.5 rounded-xl bg-studio-deck border border-studio-border flex items-center gap-2">
-                    <span className="text-zinc-500">Giọng (TTS):</span>
-                    <span className={`font-bold ${readyAudios === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {readyAudios}/{totalShots}
-                    </span>
+
+                  {/* Gauge 2: Audio TTS */}
+                  <div className="px-3 py-2 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-400 font-medium">Giọng TTS</span>
+                      <span className={`font-mono font-bold ${readyAudios === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {readyAudios}/{totalShots}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${readyAudios === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        style={{ width: `${totalShots ? (readyAudios / totalShots) * 100 : 0}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="px-3 py-1.5 rounded-xl bg-studio-deck border border-studio-border flex items-center gap-2">
-                    <span className="text-zinc-500">Clips:</span>
-                    <span className={`font-bold ${readyClips === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {readyClips}/{totalShots}
-                    </span>
+
+                  {/* Gauge 3: Video Clips */}
+                  <div className="px-3 py-2 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-400 font-medium">Clips MP4</span>
+                      <span className={`font-mono font-bold ${readyClips === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {readyClips}/{totalShots}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${readyClips === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        style={{ width: `${totalShots ? (readyClips / totalShots) * 100 : 0}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="px-3 py-1.5 rounded-xl bg-studio-deck border border-studio-border flex items-center gap-2">
-                    <span className="text-zinc-500">Đã duyệt:</span>
-                    <span className={`font-bold ${approvedShots === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {approvedShots}/{totalShots}
-                    </span>
+
+                  {/* Gauge 4: Approval Status */}
+                  <div className="px-3 py-2 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-zinc-400 font-medium">Đã Duyệt</span>
+                      <span className={`font-mono font-bold ${approvedShots === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {approvedShots}/{totalShots}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${approvedShots === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                        style={{ width: `${totalShots ? (approvedShots / totalShots) * 100 : 0}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1151,7 +1304,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       }
                     }}
                     disabled={approveShotMutation.isPending}
-                    className="px-4 py-3 rounded-xl bg-studio-deck hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+                    className="px-4 py-3 rounded-xl bg-cinema-card hover:bg-cinema-deck text-zinc-300 hover:text-white border border-cinema-border hover:border-emerald-500/40 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
                     title="Xác nhận duyệt toàn bộ các phân cảnh hiện tại"
                   >
                     <Check className="w-4 h-4 text-emerald-400" />
@@ -1164,7 +1317,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   type="button"
                   onClick={handleAssembleMaster}
                   disabled={assembleMasterMutation.isPending || readyClips === 0}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-xs sm:text-sm tracking-wide shadow-xl shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]"
+                  className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-xs sm:text-sm tracking-wide shadow-xl shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]"
                 >
                   {assembleMasterMutation.isPending ? (
                     <>

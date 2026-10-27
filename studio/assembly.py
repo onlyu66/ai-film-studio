@@ -224,7 +224,6 @@ def build_master_audio(
             else:
                 bgm_timeline = bgm_timeline[:len(master)]
             master = master.overlay(bgm_timeline)
-            master = master.overlay(bgm_timeline)
 
     # Smooth audio fade in (800ms) and fade out (1000ms)
     if len(master) > 2000:

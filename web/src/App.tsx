@@ -1,16 +1,16 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import confetti from 'canvas-confetti'
 import { useQueryClient } from '@tanstack/react-query'
 import Navbar from './components/Navbar'
 import ProductionForm from './components/ProductionForm'
 import ProgressStage from './components/ProgressStage'
 import TerminalLogs from './components/TerminalLogs'
 import StoryboardView from './components/StoryboardView'
-import VideoPlayerModal from './components/VideoPlayerModal'
-import ProjectLibraryModal from './components/ProjectLibraryModal'
-import SeoPublishModal from './components/SeoPublishModal'
 import { Button } from './components/ui/button'
+
+const VideoPlayerModal = lazy(() => import('./components/VideoPlayerModal'))
+const ProjectLibraryModal = lazy(() => import('./components/ProjectLibraryModal'))
+const SeoPublishModal = lazy(() => import('./components/SeoPublishModal'))
 import { CheckCircle2, MonitorPlay, FileEdit, Play, Loader2, Share2, Terminal } from 'lucide-react'
 import {
   useStudioStatus,
@@ -142,10 +142,12 @@ export default function App() {
   const prevStatusRef = useRef(status.status)
   useEffect(() => {
     if (status.status === 'completed' && prevStatusRef.current === 'running') {
-      confetti({
-        particleCount: 100,
-        spread: 80,
-        origin: { y: 0.5 }
+      import('canvas-confetti').then(({ default: confetti }) => {
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { y: 0.5 }
+        })
       })
     }
     prevStatusRef.current = status.status
@@ -407,40 +409,43 @@ export default function App() {
         </button>
       </div>
 
-      {/* Video Modal Player */}
-      {showVideoModal && activeVideoUrl && (
-        <VideoPlayerModal
-          videoUrl={activeVideoUrl}
-          srtUrl={activeSrtUrl}
+      {/* Lazy-loaded Modals */}
+      <Suspense fallback={null}>
+        {/* Video Modal Player */}
+        {showVideoModal && activeVideoUrl && (
+          <VideoPlayerModal
+            videoUrl={activeVideoUrl}
+            srtUrl={activeSrtUrl}
+            onClose={() => {
+              setShowVideoModal(false)
+              setActiveVideoUrl(null)
+              setActiveSrtUrl(null)
+            }}
+          />
+        )}
+
+        {/* Project Library Modal */}
+        <ProjectLibraryModal
+          isOpen={showLibraryModal}
+          onClose={() => setShowLibraryModal(false)}
+          onPlayMovie={handlePlayFromLibrary}
+          onOpenSeo={(projId) => {
+            setActiveSeoProjectId(projId)
+            setShowSeoModal(true)
+          }}
+          onProduceNextEpisode={handleProduceNextEpisode}
+        />
+
+        {/* SEO Publishing & Thumbnail Hub Modal */}
+        <SeoPublishModal
+          projectId={activeSeoProjectId}
+          isOpen={showSeoModal}
           onClose={() => {
-            setShowVideoModal(false)
-            setActiveVideoUrl(null)
-            setActiveSrtUrl(null)
+            setShowSeoModal(false)
+            setActiveSeoProjectId(null)
           }}
         />
-      )}
-
-      {/* Project Library Modal */}
-      <ProjectLibraryModal
-        isOpen={showLibraryModal}
-        onClose={() => setShowLibraryModal(false)}
-        onPlayMovie={handlePlayFromLibrary}
-        onOpenSeo={(projId) => {
-          setActiveSeoProjectId(projId)
-          setShowSeoModal(true)
-        }}
-        onProduceNextEpisode={handleProduceNextEpisode}
-      />
-
-      {/* SEO Publishing & Thumbnail Hub Modal */}
-      <SeoPublishModal
-        projectId={activeSeoProjectId}
-        isOpen={showSeoModal}
-        onClose={() => {
-          setShowSeoModal(false)
-          setActiveSeoProjectId(null)
-        }}
-      />
+      </Suspense>
 
       {/* Minimal Studio Footer */}
       <footer className="border-t border-studio-border/60 py-5 text-center text-xs text-zinc-500 font-mono">

@@ -47,6 +47,16 @@ def test_build_ffmpeg_letterbox():
     cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 3.0, "zoom_in", letterbox=True)
     assert "drawbox" in " ".join(cmd)
 
+def test_build_ffmpeg_performance_flags():
+    cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 3.0, "zoom_in")
+    assert "-preset" in cmd
+    idx_preset = cmd.index("-preset")
+    assert cmd[idx_preset + 1] in ("veryfast", "ultrafast")
+    assert "-tune" in cmd
+    idx_tune = cmd.index("-tune")
+    assert cmd[idx_tune + 1] == "stillimage"
+    assert "-threads" in cmd
+
 def test_lipsync_fallback_when_no_token(tmp_path):
     from studio.lipsync import apply_lipsync_for_shot
     img = tmp_path / "img.png"

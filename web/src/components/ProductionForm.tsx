@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
   Sparkles,
-  Play,
   Settings2,
   Languages,
   Clock,
@@ -288,8 +287,13 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               disabled={isRunning}
               rows={3}
               placeholder="Mô tả ý tưởng, cốt truyện, nhân vật hoặc đề tài tài liệu mà bạn muốn AI sản xuất thành phim..."
-              className="w-full px-4 py-3.5 rounded-2xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-zinc-100 placeholder-zinc-500 text-sm focus:outline-none focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/10 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
+              className="w-full px-4 py-3.5 rounded-2xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-zinc-100 placeholder-zinc-500 text-sm focus:outline-none focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/15 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
             />
+            <div className="absolute bottom-2.5 right-3 flex items-center gap-2 pointer-events-none">
+              <span className="text-[10px] font-mono text-zinc-500 bg-studio-deck/80 px-2 py-0.5 rounded-md border border-studio-border/50">
+                {topic.length} ký tự
+              </span>
+            </div>
             {topic && !isRunning && (
               <button
                 type="button"
@@ -304,16 +308,23 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
 
           {/* Clean Quick Inspiration Chips Below Textarea */}
           <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mr-1">Gợi ý nhanh:</span>
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mr-1">Ý tưởng mẫu:</span>
             {PRESET_IDEAS.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleApplyPreset(p)}
                 disabled={isRunning}
-                className="px-2.5 py-1 rounded-lg bg-studio-card hover:bg-studio-elevated border border-studio-border hover:border-amber-400/40 text-[11px] font-medium text-zinc-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-2.5 py-1 rounded-xl bg-studio-card hover:bg-studio-elevated border border-studio-border hover:border-amber-400/50 text-[11px] font-medium text-zinc-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-sm"
               >
-                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/10 text-amber-300 font-bold">{p.tag}</span>
+                <span className={`text-[9px] font-mono px-1 py-0.2 rounded font-bold ${
+                  p.tag === 'Sci-Fi' ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30' :
+                  p.tag === 'Cyberpunk' ? 'bg-purple-500/15 text-purple-300 border border-purple-500/30' :
+                  p.tag === 'Anime' ? 'bg-pink-500/15 text-pink-300 border border-pink-500/30' :
+                  'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                }`}>
+                  {p.tag}
+                </span>
                 <span>{p.title}</span>
               </button>
             ))}
@@ -322,46 +333,51 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
 
         {/* 2. Visual Style Gallery Deck */}
         <div className="space-y-2.5">
-          <label className="text-xs font-semibold text-zinc-300 flex items-center gap-2">
-            <Palette className="w-4 h-4 text-amber-400" />
-            <span>Phong cách hình ảnh điện ảnh</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-zinc-300 flex items-center gap-2">
+              <Palette className="w-4 h-4 text-amber-400" />
+              <span>Phong cách hình ảnh & Màu sắc điện ảnh</span>
+            </label>
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider hidden sm:inline">
+              Flux LoRA • Cinematic Color Grade
+            </span>
+          </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {STYLES.map((st) => {
               const isSelected = style === st.id
               return (
                 <div
                   key={st.id}
                   onClick={() => !isRunning && setStyle(st.id)}
-                  className={`p-3.5 pt-4 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between group card-lift ${
+                  className={`p-4 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between group active:scale-[0.98] ${
                     isSelected
-                      ? 'bg-gradient-to-b ' + st.accent + ' border-amber-400/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/40'
-                      : 'bg-studio-card/70 border-studio-border hover:border-studio-border-hover hover:bg-studio-card'
+                      ? 'bg-gradient-to-b ' + st.accent + ' border-amber-400/80 shadow-xl shadow-amber-500/15 ring-2 ring-amber-400/30'
+                      : 'bg-studio-card/80 border-studio-border hover:border-studio-border-hover hover:bg-studio-elevated/70'
                   }`}
                 >
                   {/* Subtle Top Accent Gradient Bar */}
                   <div
                     className={`absolute top-0 left-0 right-0 h-1 transition-opacity bg-gradient-to-r ${st.gradient} ${
-                      isSelected ? 'opacity-100' : 'opacity-25 group-hover:opacity-75'
+                      isSelected ? 'opacity-100' : 'opacity-30 group-hover:opacity-80'
                     }`}
                   />
 
                   <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400/90 font-bold bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
                         {st.tag}
                       </span>
                       {isSelected && (
-                        <div className="w-4 h-4 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center">
+                        <div className="w-4 h-4 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center shadow-sm">
                           <Check className="w-2.5 h-2.5 stroke-[3]" />
                         </div>
                       )}
                     </div>
-                    <h4 className={`text-xs sm:text-sm font-bold ${isSelected ? 'text-amber-300' : 'text-zinc-100'}`}>
+                    <h4 className={`text-sm font-bold tracking-tight ${isSelected ? 'text-amber-300' : 'text-zinc-100'}`}>
                       {st.label}
                     </h4>
-                    <p className="text-[11px] text-zinc-400 leading-snug mt-1">
+                    <p className="text-[11px] text-zinc-400 leading-relaxed mt-1">
                       {st.desc}
                     </p>
                   </div>
@@ -823,24 +839,24 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
         </div>
 
         {/* 6. Primary Action CTA Button */}
-        <div className="pt-3 flex justify-center">
+        <div className="pt-4 flex justify-center">
           <button
             type="submit"
             disabled={isRunning || !topic.trim()}
-            className="w-full sm:w-auto min-w-[260px] px-8 py-3 rounded-xl font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-lg shadow-amber-500/20 relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-zinc-950 disabled:opacity-40 disabled:cursor-not-allowed group active:scale-[0.98]"
+            className="w-full sm:w-auto min-w-[300px] px-10 py-3.5 rounded-2xl font-black text-sm tracking-wider uppercase flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer shadow-xl shadow-amber-500/25 relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-zinc-950 disabled:opacity-40 disabled:cursor-not-allowed group active:scale-[0.98] glow-amber-sm hover:glow-amber-md"
           >
             {/* Shimmer line */}
-            <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12 animate-shimmer pointer-events-none" />
+            <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 animate-shimmer pointer-events-none" />
 
             {isRunning ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-                <span>Đang xử lý phim...</span>
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-950 stroke-[3]" />
+                <span className="font-extrabold tracking-wide">Đang bấm máy sản xuất...</span>
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-current" />
-                <span>{pauseAfterScript ? 'Tạo Kịch Bản' : 'Bắt Đầu Sản Xuất'}</span>
+                <Clapperboard className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
+                <span className="font-extrabold tracking-wide">{pauseAfterScript ? 'Khởi Tạo Kịch Bản & Phân Cảnh' : 'Bắt Đầu Sản Xuất Phim Chiếu Rạp'}</span>
               </>
             )}
           </button>

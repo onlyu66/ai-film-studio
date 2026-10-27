@@ -331,3 +331,38 @@ def test_assemble_master_validation(tmp_path, monkeypatch):
     assert resp.status_code == 400
     assert "chưa được render" in resp.json()["detail"]
 
+def test_storyboard_caching(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    sb_file = tmp_path / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Cached Film",
+        "characters": {},
+        "shots": [{"id": "s1", "dialogue": "Hello"}]
+    }), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        if str(arg) == "outputs/storyboard.json":
+            return sb_file
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    # First fetch (populates cache)
+    resp1 = client.get("/api/storyboard")
+    assert resp1.status_code == 200
+    assert resp1.json()["title"] == "Cached Film"
+
+    # Second fetch (serves from cache)
+    resp2 = client.get("/api/storyboard")
+    assert resp2.status_code == 200
+    assert resp2.json()["shots"][0]["dialogue"] == "Hello"
+
+def test_gzip_compression_enabled():
+    from starlette.middleware.gzip import GZipMiddleware
+    # Verify GZipMiddleware is in the FastAPI middleware stack
+    has_gzip = any(m.cls == GZipMiddleware for m in app.user_middleware)
+    assert has_gzip, "GZipMiddleware should be registered in FastAPI app"
+

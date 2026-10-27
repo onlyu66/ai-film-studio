@@ -55,8 +55,8 @@ export function useStoryboard(active = false) {
   return useQuery<StoryboardData>({
     queryKey: QUERY_KEYS.storyboard,
     queryFn: fetchStoryboard,
-    refetchInterval: active ? 2000 : 5000,
-    staleTime: 1000,
+    refetchInterval: active ? 2000 : false,
+    staleTime: active ? 1000 : 30000,
   })
 }
 
@@ -187,7 +187,16 @@ export function useApproveShot() {
   return useMutation({
     mutationFn: ({ shotId, approved }: { shotId: string; approved: boolean }) =>
       approveShot(shotId, approved),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      queryClient.setQueryData<StoryboardData | undefined>(QUERY_KEYS.storyboard, (old) => {
+        if (!old || !old.shots) return old
+        return {
+          ...old,
+          shots: old.shots.map((s) =>
+            s.id === variables.shotId ? { ...s, is_approved: variables.approved } : s
+          ),
+        }
+      })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
     },
   })

@@ -24,12 +24,18 @@ export default {
           'amber-muted': 'rgba(245, 158, 11, 0.12)',
         },
         cinema: {
-          canvas: '#0E1015',
-          deck: '#141720',
-          card: '#1A1E29',
-          border: '#232838',
-          'border-hover': '#32394E',
+          canvas: '#08090D',
+          deck: '#0E1118',
+          surface: '#0F121C',
+          card: '#141824',
+          'card-hover': '#1B2030',
+          border: '#1F2538',
+          'border-hover': '#2D354F',
           amber: '#F59E0B',
+          gold: '#FBBF24',
+          ruby: '#E11D48',
+          cyan: '#06B6D4',
+          emerald: '#10B981',
         }
       },
       fontFamily: {

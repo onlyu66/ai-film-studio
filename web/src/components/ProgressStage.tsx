@@ -109,27 +109,32 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
           return (
             <div
               key={s.id}
-              className={`rounded-xl p-3 transition-all border flex items-center gap-2.5 ${
+              className={`rounded-2xl p-3.5 transition-all border relative overflow-hidden flex items-center gap-3 ${
                 isActive
-                  ? 'bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/10 ring-1 ring-amber-500/30'
+                  ? 'bg-amber-500/10 border-amber-400/60 shadow-lg shadow-amber-500/15 ring-2 ring-amber-400/20'
                   : isDone
                   ? 'bg-emerald-500/[0.08] border-emerald-500/30 text-zinc-300'
-                  : 'bg-studio-card border-studio-border text-zinc-500 opacity-60'
+                  : 'bg-studio-card/80 border-studio-border text-zinc-500 opacity-60'
               }`}
             >
+              {/* Active stage top border accent */}
+              {isActive && (
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500" />
+              )}
+
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-all shadow-sm ${
                   isActive
-                    ? 'bg-amber-400 text-zinc-950 font-bold'
+                    ? 'bg-amber-400 text-zinc-950 font-bold shadow-amber-500/30'
                     : isDone
                     ? 'bg-emerald-500/20 text-emerald-400'
                     : 'bg-studio-input text-studio-muted'
                 }`}
               >
                 {isActive ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                  <Loader2 className="w-4 h-4 animate-spin text-zinc-950 stroke-[3]" />
                 ) : isDone ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 stroke-[2.5]" />
                 ) : (
                   <Icon className="w-4 h-4" />
                 )}
@@ -137,12 +142,14 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-1">
-                  <span className={`text-xs font-semibold truncate ${isActive ? 'text-amber-300 font-bold' : isDone ? 'text-zinc-200' : 'text-zinc-400'}`}>
+                  <span className={`text-xs font-bold truncate ${isActive ? 'text-amber-300' : isDone ? 'text-zinc-100' : 'text-zinc-400'}`}>
                     {s.name}
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-500 shrink-0">0{s.id}</span>
+                  <span className="text-[9px] font-mono font-bold px-1 py-0.2 rounded bg-studio-deck border border-studio-border/60 text-zinc-400 shrink-0">
+                    {s.tag}
+                  </span>
                 </div>
-                <p className="text-[10px] text-zinc-500 truncate leading-tight mt-0.5">
+                <p className="text-[10px] text-zinc-400 truncate leading-tight mt-0.5">
                   {s.desc}
                 </p>
               </div>

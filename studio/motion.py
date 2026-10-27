@@ -88,6 +88,9 @@ def build_ffmpeg_command(
         "-vf", vf_filter,
         "-t", str(float(duration)),
         "-c:v", "libx264",
+        "-preset", "veryfast",
+        "-tune", "stillimage",
+        "-threads", "0",
         "-pix_fmt", "yuv420p",
         str(output_path),
     ]

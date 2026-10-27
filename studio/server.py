@@ -12,6 +12,7 @@ import urllib.error
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -47,6 +48,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 class ProduceRequest(BaseModel):
     topic: str
@@ -384,22 +386,42 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
         broadcast_ws("status", get_status())
         log_message(f"Lỗi quy trình: {e}")
 
+# Global caching for storyboard and status
+_sb_cache: Dict[str, Any] = {}
+_sb_cached_mtime: float = -1.0
+_sb_cached_dir_counts: tuple = (0, 0, 0)
+_status_sb_mtime: float = -1.0
+_status_shots_count_cache: int = 0
+_sb_lock = threading.Lock()
+
+def invalidate_storyboard_cache():
+    """Invalidate in-memory storyboard and status cache on any mutation."""
+    global _sb_cached_mtime, _status_sb_mtime
+    with _sb_lock:
+        _sb_cached_mtime = -1.0
+        _status_sb_mtime = -1.0
+
 @app.get("/api/status")
 def get_status():
-    # Check if storyboard exists to return total shots count
+    global _status_sb_mtime, _status_shots_count_cache
+    # Return shots count using cached mtime check to prevent disk parse thrashing
     sb_file = Path("outputs/storyboard.json")
-    shots_count = 0
     if sb_file.exists():
         try:
-            with open(sb_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                shots_count = len(data.get("shots", []))
+            mtime = sb_file.stat().st_mtime
+            if mtime != _status_sb_mtime:
+                with open(sb_file, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    _status_shots_count_cache = len(data.get("shots", []))
+                _status_sb_mtime = mtime
         except Exception:
             pass
+    else:
+        _status_shots_count_cache = 0
 
     return {
         **pipeline_state,
-        "shots_count": shots_count,
+        "shots_count": _status_shots_count_cache,
     }
 
 class LLMModelsRequest(BaseModel):
@@ -463,27 +485,47 @@ def produce_film(req: ProduceRequest, background_tasks: BackgroundTasks):
 
 @app.get("/api/storyboard")
 def get_storyboard():
+    global _sb_cache, _sb_cached_mtime, _sb_cached_dir_counts
     sb_file = Path("outputs/storyboard.json")
     if not sb_file.exists():
         return {"title": "", "language": "vi", "characters": {}, "shots": []}
     try:
-        with open(sb_file, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
+        sb_mtime = sb_file.stat().st_mtime
         img_dir = Path("outputs/images")
         audio_dir = Path("outputs/audio")
         vid_dir = Path("outputs/videos")
-        for s in data.get("shots", []):
-            sid = s.get("id")
-            s["has_image"] = bool(sid and (img_dir / f"{sid}.png").is_file() and (img_dir / f"{sid}.png").stat().st_size > 0)
-            s["has_audio"] = bool(sid and (audio_dir / f"{sid}.mp3").is_file() and (audio_dir / f"{sid}.mp3").stat().st_size > 0)
-            s["has_video"] = bool(sid and (vid_dir / f"{sid}.mp4").is_file() and (vid_dir / f"{sid}.mp4").stat().st_size > 0)
-            s["is_approved"] = bool(s.get("is_approved", False))
-            s["image_url"] = f"/api/outputs/images/{sid}.png" if s["has_image"] else None
-            s["audio_url"] = f"/api/outputs/audio/{sid}.mp3" if s["has_audio"] else None
-            s["video_url"] = f"/api/outputs/videos/{sid}.mp4" if s["has_video"] else None
 
-        return data
+        img_count = len(os.listdir(img_dir)) if img_dir.exists() else 0
+        audio_count = len(os.listdir(audio_dir)) if audio_dir.exists() else 0
+        vid_count = len(os.listdir(vid_dir)) if vid_dir.exists() else 0
+        current_dir_counts = (img_count, audio_count, vid_count)
+
+        with _sb_lock:
+            if _sb_cache and sb_mtime == _sb_cached_mtime and current_dir_counts == _sb_cached_dir_counts:
+                return _sb_cache
+
+            with open(sb_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            # Batch scan existing files with size > 0 into sets (O(1) memory lookup)
+            valid_imgs = {f[:-4] for f in os.listdir(img_dir) if f.endswith(".png") and (img_dir / f).stat().st_size > 0} if img_dir.exists() else set()
+            valid_audios = {f[:-4] for f in os.listdir(audio_dir) if f.endswith(".mp3") and (audio_dir / f).stat().st_size > 0} if audio_dir.exists() else set()
+            valid_vids = {f[:-4] for f in os.listdir(vid_dir) if f.endswith(".mp4") and (vid_dir / f).stat().st_size > 0} if vid_dir.exists() else set()
+
+            for s in data.get("shots", []):
+                sid = s.get("id")
+                s["has_image"] = bool(sid and sid in valid_imgs)
+                s["has_audio"] = bool(sid and sid in valid_audios)
+                s["has_video"] = bool(sid and sid in valid_vids)
+                s["is_approved"] = bool(s.get("is_approved", False))
+                s["image_url"] = f"/api/outputs/images/{sid}.png" if s["has_image"] else None
+                s["audio_url"] = f"/api/outputs/audio/{sid}.mp3" if s["has_audio"] else None
+                s["video_url"] = f"/api/outputs/videos/{sid}.mp4" if s["has_video"] else None
+
+            _sb_cache = data
+            _sb_cached_mtime = sb_mtime
+            _sb_cached_dir_counts = current_dir_counts
+            return _sb_cache
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -539,6 +581,7 @@ def update_character_voice(req: UpdateVoiceRequest):
         if state:
             state.save()
 
+        invalidate_storyboard_cache()
         char_name = characters[req.character_id].get("name", req.character_id)
         log_message(f"Đã cập nhật giọng cho nhân vật '{char_name}': {old_voice} -> {req.voice}")
 
@@ -662,6 +705,7 @@ def update_shot(req: UpdateShotRequest):
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
+        invalidate_storyboard_cache()
         log_message(f"Đã cập nhật phân cảnh '{req.shot_id}'.")
         return {"success": True, "message": f"Đã cập nhật phân cảnh {req.shot_id}", "shot": target_shot}
     except HTTPException:
@@ -726,6 +770,7 @@ def add_shot(req: AddShotRequest):
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
+        invalidate_storyboard_cache()
         log_message(f"Đã chèn thêm phân cảnh mới '{new_shot_id}'.")
         return {"success": True, "message": f"Đã thêm phân cảnh mới {new_shot_id}", "shot": new_shot}
     except HTTPException:
@@ -771,6 +816,7 @@ def delete_shot(req: DeleteShotRequest):
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
+        invalidate_storyboard_cache()
         log_message(f"Đã xóa phân cảnh '{req.shot_id}'.")
         return {"success": True, "message": f"Đã xóa phân cảnh {req.shot_id}", "shot_id": req.shot_id}
     except HTTPException:
@@ -806,6 +852,7 @@ def reorder_shots(req: ReorderShotsRequest):
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
+        invalidate_storyboard_cache()
         log_message("Đã cập nhật lại thứ tự các phân cảnh trên kịch bản.")
         return {"success": True, "message": "Đã sắp xếp lại thứ tự phân cảnh", "shots_count": len(reordered)}
     except HTTPException:
@@ -928,6 +975,7 @@ def reroll_shot(req: RerollShotRequest):
         aspect_ratio=aspect_ratio
     )
 
+    invalidate_storyboard_cache()
     log_message(f"Đã tạo lại ảnh và video mới cho phân cảnh '{req.shot_id}' (Seed: {new_seed}).")
     return {
         "success": True,
@@ -998,6 +1046,7 @@ def upload_shot_image(req: UploadShotImageRequest):
         aspect_ratio=aspect_ratio
     )
 
+    invalidate_storyboard_cache()
     log_message(f"Đã cập nhật ảnh tùy chỉnh cho phân cảnh '{req.shot_id}'.")
     return {
         "success": True,
@@ -1032,6 +1081,7 @@ def approve_shot(req: ApproveShotRequest):
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
+        invalidate_storyboard_cache()
         status_str = "Đã duyệt" if req.approved else "Đã bỏ duyệt"
         log_message(f"[Approval] {status_str} phân cảnh '{req.shot_id}'.")
         return {"success": True, "shot_id": req.shot_id, "is_approved": req.approved}
@@ -1086,6 +1136,7 @@ def render_shot_audio(req: RenderShotAudioRequest):
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
+        invalidate_storyboard_cache()
         log_message(f"[Audio] Hoàn thành giọng đọc '{req.shot_id}' ({dur:.1f}s).")
         return {
             "success": True,
@@ -1174,6 +1225,7 @@ def render_shot_video(req: RenderShotVideoRequest):
             style=style,
         )
 
+        invalidate_storyboard_cache()
         log_message(f"[Motion] Hoàn tất clip phân cảnh '{req.shot_id}.mp4'.")
         return {
             "success": True,
