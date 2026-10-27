@@ -5,6 +5,7 @@ services:
       - .:/app
     environment:
       - GEMINI_API_KEY
+      - GEMINI_MODEL
       - GROQ_API_KEY
       - OPENAI_API_KEY
       - OPENAI_BASE_URL
@@ -23,6 +24,7 @@ services:
       - "${UI_PORT:-8080}:8000"
     environment:
       - GEMINI_API_KEY
+      - GEMINI_MODEL
       - GROQ_API_KEY
       - OPENAI_API_KEY
       - OPENAI_BASE_URL
