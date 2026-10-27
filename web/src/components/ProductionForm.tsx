@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic, FileEdit, Clapperboard, X, Send, Check, Loader2 } from 'lucide-react'
+import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic, FileEdit, Clapperboard, X, Send, Check, Loader2, Key, Eye, EyeOff, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
-import { useTestWebhook } from '../api/queries'
-import type { PresetIdea, StyleOption, SelectOption, ProductionFormData } from '../types'
+import { useTestWebhook, useFetchLlmModels } from '../api/queries'
+import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem } from '../types'
 
 const LANG_OPTIONS: SelectOption[] = [
   { value: 'vi', label: 'Tiếng Việt', subtext: 'Nam/Nữ AI mượt mà', icon: '🇻🇳' },
@@ -84,6 +84,58 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   const [duration, setDuration] = useState(5)
   const [style, setStyle] = useState('cinematic')
   const [llm, setLlm] = useState('gemini')
+  const [apiKey, setApiKey] = useState('')
+  const [selectedModel, setSelectedModel] = useState('')
+  const [availableModels, setAvailableModels] = useState<LLMModelItem[]>([])
+  const [hasEnvKey, setHasEnvKey] = useState(false)
+  const [showApiKey, setShowApiKey] = useState(false)
+  const [modelsError, setModelsError] = useState<string | null>(null)
+  const [isCustomModel, setIsCustomModel] = useState(false)
+  const [customModelText, setCustomModelText] = useState('')
+
+  const fetchModelsMutation = useFetchLlmModels()
+
+  const loadModelsForProvider = (provider: string, customKey?: string) => {
+    setModelsError(null)
+    const keyToUse = customKey !== undefined ? customKey : (localStorage.getItem(`studio_llm_key_${provider}`) || '')
+    fetchModelsMutation.mutate(
+      { provider, apiKey: keyToUse.trim() || undefined },
+      {
+        onSuccess: (data) => {
+          if (data.success && data.models && data.models.length > 0) {
+            setAvailableModels(data.models)
+            setHasEnvKey(!!data.has_env_key)
+            setSelectedModel((prev) => {
+              const exists = data.models.some((m) => m.id === prev)
+              return exists && prev ? prev : (data.default || data.models[0].id)
+            })
+          } else {
+            setAvailableModels([])
+            setHasEnvKey(!!data.has_env_key)
+            if (data.error) {
+              setModelsError(data.error)
+            }
+          }
+        },
+        onError: (err: any) => {
+          setModelsError(err?.message || 'Không thể kết nối lấy danh sách model')
+          setAvailableModels([])
+        },
+      }
+    )
+  }
+
+  useEffect(() => {
+    const savedKey = localStorage.getItem(`studio_llm_key_${llm}`) || ''
+    setApiKey(savedKey)
+    loadModelsForProvider(llm, savedKey)
+  }, [llm])
+
+  const handleApiKeyChange = (val: string) => {
+    setApiKey(val)
+    localStorage.setItem(`studio_llm_key_${llm}`, val)
+  }
+
   const [motion, setMotion] = useState('vfx')
   const [lipSync, setLipSync] = useState('none')
   const [aspectRatio, setAspectRatio] = useState('16:9')
@@ -133,12 +185,15 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!topic.trim()) return
+    const finalModel = isCustomModel ? customModelText.trim() : selectedModel
     onSubmit({
       topic,
       lang,
       duration: Number(duration),
       style,
       llm,
+      llm_api_key: apiKey.trim() || undefined,
+      llm_model: finalModel || undefined,
       motion,
       lip_sync: lipSync,
       aspect_ratio: aspectRatio,
@@ -394,6 +449,186 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   options={LIPSYNC_OPTIONS}
                   disabled={isRunning}
                 />
+              </div>
+
+              {/* API Key & Dynamic Model Selection Card */}
+              <div className="sm:col-span-3 p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Key className="w-4 h-4 text-amber-400" />
+                    <span className="text-xs font-bold text-white uppercase tracking-wider">
+                      Cấu hình API Key & Chọn Model ({LLM_OPTIONS.find((o) => o.value === llm)?.label})
+                    </span>
+                  </div>
+                  {hasEnvKey && !apiKey && (
+                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Đã kết nối qua file .env máy chủ
+                    </span>
+                  )}
+                  {apiKey && (
+                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-950/60 border border-amber-800/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Dùng API Key tùy chỉnh (lưu cục bộ)
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* API Key Input */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                        <span>API Key ({LLM_OPTIONS.find((o) => o.value === llm)?.label})</span>
+                      </label>
+                      {llm === 'gemini' && (
+                        <a
+                          href="https://aistudio.google.com/app/apikey"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] text-amber-400 hover:underline"
+                        >
+                          Lấy key miễn phí ↗
+                        </a>
+                      )}
+                      {llm === 'groq' && (
+                        <a
+                          href="https://console.groq.com/keys"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] text-amber-400 hover:underline"
+                        >
+                          Lấy key Groq ↗
+                        </a>
+                      )}
+                      {llm === 'openai' && (
+                        <a
+                          href="https://platform.openai.com/api-keys"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] text-amber-400 hover:underline"
+                        >
+                          Lấy key OpenAI ↗
+                        </a>
+                      )}
+                    </div>
+                    <div className="relative flex items-center">
+                      <input
+                        type={showApiKey ? 'text' : 'password'}
+                        value={apiKey}
+                        onChange={(e) => handleApiKeyChange(e.target.value)}
+                        placeholder={
+                          hasEnvKey
+                            ? 'Đã nhận diện key từ .env (nhập để ghi đè)'
+                            : llm === 'ollama'
+                            ? 'Ollama không cần API key'
+                            : 'Nhập API key tại đây...'
+                        }
+                        disabled={isRunning || llm === 'ollama'}
+                        className="w-full pl-3 pr-28 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      />
+                      <div className="absolute right-1.5 flex items-center gap-1">
+                        {apiKey && (
+                          <button
+                            type="button"
+                            onClick={() => handleApiKeyChange('')}
+                            className="p-1 text-slate-400 hover:text-white text-xs"
+                            title="Xóa key"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowApiKey(!showApiKey)}
+                          className="p-1 text-slate-400 hover:text-white"
+                          title={showApiKey ? 'Ẩn key' : 'Hiện key'}
+                        >
+                          {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => loadModelsForProvider(llm, apiKey)}
+                          disabled={fetchModelsMutation.isPending || isRunning}
+                          className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-colors border border-amber-500/30 cursor-pointer"
+                          title="Tải danh sách model"
+                        >
+                          {fetchModelsMutation.isPending ? (
+                            <Loader2 className="w-3 h-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-3 h-3" />
+                          )}
+                          <span>Tải Models</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Model Selection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-amber-400" />
+                        <span>
+                          Model Kịch bản {availableModels.length > 0 && `(${availableModels.length} khả dụng)`}
+                        </span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsCustomModel(!isCustomModel)}
+                        className="text-[10px] text-amber-400 hover:underline cursor-pointer"
+                      >
+                        {isCustomModel ? 'Chọn từ danh sách' : 'Nhập model khác'}
+                      </button>
+                    </div>
+
+                    {isCustomModel ? (
+                      <input
+                        type="text"
+                        value={customModelText}
+                        onChange={(e) => setCustomModelText(e.target.value)}
+                        placeholder="VD: gemini-3.5-flash, gpt-4o, llama3.2..."
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                      />
+                    ) : availableModels.length > 0 ? (
+                      <select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value)}
+                        disabled={isRunning}
+                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 font-medium cursor-pointer"
+                      >
+                        {availableModels.map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.recommended ? '⭐ ' : ''}
+                            {m.name || m.id} {m.description ? `— ${m.description}` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/80 border border-dashed border-slate-700 text-xs text-slate-400">
+                        <span>
+                          {fetchModelsMutation.isPending
+                            ? 'Đang tải danh sách model...'
+                            : 'Chưa có model. Bấm "Tải Models" sau khi điền API Key.'}
+                        </span>
+                        {fetchModelsMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Error Banner if any */}
+                {modelsError && (
+                  <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/80 flex items-start gap-2 text-rose-300 text-xs animate-fadeIn">
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold">{modelsError}</p>
+                      <p className="text-[11px] text-rose-400/80 mt-0.5">
+                        Hãy kiểm tra lại API Key hoặc tạo key mới tại bảng điều khiển nhà cung cấp.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="sm:col-span-2">

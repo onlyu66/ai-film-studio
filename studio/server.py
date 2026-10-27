@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+import os
 import asyncio
 import threading
 import json
@@ -18,6 +19,12 @@ from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from studio.config import StudioConfig
 from studio.orchestrator import run_pipeline
+from studio.llm.discovery import (
+    list_gemini_models,
+    list_groq_models,
+    list_openai_models,
+    list_ollama_models,
+)
 
 active_websockets: List[WebSocket] = []
 server_event_loop: Optional[asyncio.AbstractEventLoop] = None
@@ -47,6 +54,8 @@ class ProduceRequest(BaseModel):
     duration: int = 5
     style: str = "cinematic"
     llm: str = "gemini"
+    llm_api_key: Optional[str] = None
+    llm_model: Optional[str] = None
     motion: str = "kenburns"
     lip_sync: str = "none"
     aspect_ratio: str = "16:9"
@@ -272,6 +281,8 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             duration=req.duration,
             style=req.style,
             llm_provider=req.llm,
+            llm_api_key=req.llm_api_key,
+            llm_model=req.llm_model,
             motion_engine=req.motion,
             lip_sync=req.lip_sync,
             aspect_ratio=req.aspect_ratio,
@@ -361,6 +372,56 @@ def get_status():
         **pipeline_state,
         "shots_count": shots_count,
     }
+
+class LLMModelsRequest(BaseModel):
+    provider: str = "gemini"
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+
+@app.post("/api/llm/models")
+def get_llm_models(req: LLMModelsRequest):
+    provider = (req.provider or "gemini").lower().strip()
+    has_env_key = False
+    if provider == "gemini":
+        has_env_key = bool(os.environ.get("GEMINI_API_KEY"))
+    elif provider == "groq":
+        has_env_key = bool(os.environ.get("GROQ_API_KEY"))
+    elif provider in ("openai", "deepseek", "together"):
+        has_env_key = bool(os.environ.get("OPENAI_API_KEY"))
+    elif provider == "ollama":
+        has_env_key = True
+
+    try:
+        if provider == "gemini":
+            models = list_gemini_models(api_key=req.api_key)
+            default_model = "gemini-3.5-flash"
+        elif provider == "groq":
+            models = list_groq_models(api_key=req.api_key)
+            default_model = "llama-3.3-70b-versatile"
+        elif provider in ("openai", "deepseek", "together"):
+            models = list_openai_models(api_key=req.api_key, base_url=req.base_url)
+            default_model = "gpt-4o-mini"
+        elif provider == "ollama":
+            models = list_ollama_models(base_url=req.base_url)
+            default_model = models[0]["id"] if models else "llama3.2"
+        else:
+            raise HTTPException(status_code=400, detail=f"Không hỗ trợ provider: '{provider}'")
+
+        return {
+            "success": True,
+            "provider": provider,
+            "models": models,
+            "default": default_model,
+            "has_env_key": has_env_key,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "provider": provider,
+            "error": str(e),
+            "models": [],
+            "has_env_key": has_env_key,
+        }
 
 @app.post("/api/produce")
 def produce_film(req: ProduceRequest, background_tasks: BackgroundTasks):

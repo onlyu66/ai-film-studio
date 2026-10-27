@@ -22,12 +22,30 @@ export interface StyleOption {
   gradient: string
 }
 
+export interface LLMModelItem {
+  id: string
+  name: string
+  description?: string
+  recommended?: boolean
+}
+
+export interface LLMModelsResponse {
+  success: boolean
+  provider: string
+  models: LLMModelItem[]
+  default?: string
+  has_env_key?: boolean
+  error?: string
+}
+
 export interface ProductionFormData {
   topic: string
   lang: string
   duration: number
   style: string
   llm: string
+  llm_api_key?: string
+  llm_model?: string
   motion: string
   lip_sync: string
   aspect_ratio?: string

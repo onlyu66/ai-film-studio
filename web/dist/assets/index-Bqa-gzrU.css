@@ -544,6 +544,9 @@ video {
 .right-0 {
   right: 0px;
 }
+.right-1\.5 {
+  right: 0.375rem;
+}
 .right-2 {
   right: 0.5rem;
 }
@@ -1095,6 +1098,9 @@ video {
 .border-amber-500\/80 {
   border-color: rgb(245 158 11 / 0.8);
 }
+.border-amber-800\/80 {
+  border-color: rgb(146 64 14 / 0.8);
+}
 .border-cyan-400 {
   --tw-border-opacity: 1;
   border-color: rgb(34 211 238 / var(--tw-border-opacity, 1));
@@ -1123,6 +1129,9 @@ video {
 .border-emerald-700\/60 {
   border-color: rgb(4 120 87 / 0.6);
 }
+.border-emerald-800\/80 {
+  border-color: rgb(6 95 70 / 0.8);
+}
 .border-indigo-500\/30 {
   border-color: rgb(99 102 241 / 0.3);
 }
@@ -1138,6 +1147,9 @@ video {
 }
 .border-rose-500\/30 {
   border-color: rgb(244 63 94 / 0.3);
+}
+.border-rose-800\/80 {
+  border-color: rgb(159 18 57 / 0.8);
 }
 .border-slate-700 {
   --tw-border-opacity: 1;
@@ -1241,6 +1253,9 @@ video {
 .bg-amber-500\/5 {
   background-color: rgb(245 158 11 / 0.05);
 }
+.bg-amber-950\/60 {
+  background-color: rgb(69 26 3 / 0.6);
+}
 .bg-black {
   --tw-bg-opacity: 1;
   background-color: rgb(0 0 0 / var(--tw-bg-opacity, 1));
@@ -1299,6 +1314,9 @@ video {
 .bg-emerald-950\/40 {
   background-color: rgb(2 44 34 / 0.4);
 }
+.bg-emerald-950\/60 {
+  background-color: rgb(2 44 34 / 0.6);
+}
 .bg-indigo-500 {
   --tw-bg-opacity: 1;
   background-color: rgb(99 102 241 / var(--tw-bg-opacity, 1));
@@ -1330,6 +1348,9 @@ video {
 }
 .bg-rose-500\/5 {
   background-color: rgb(244 63 94 / 0.05);
+}
+.bg-rose-950\/40 {
+  background-color: rgb(76 5 25 / 0.4);
 }
 .bg-slate-700 {
   --tw-bg-opacity: 1;
@@ -1775,6 +1796,9 @@ video {
 .pb-5 {
   padding-bottom: 1.25rem;
 }
+.pl-3 {
+  padding-left: 0.75rem;
+}
 .pl-8 {
   padding-left: 2rem;
 }
@@ -1783,6 +1807,9 @@ video {
 }
 .pr-2 {
   padding-right: 0.5rem;
+}
+.pr-28 {
+  padding-right: 7rem;
 }
 .pr-3 {
   padding-right: 0.75rem;
@@ -1980,6 +2007,9 @@ video {
 .text-rose-400 {
   --tw-text-opacity: 1;
   color: rgb(251 113 133 / var(--tw-text-opacity, 1));
+}
+.text-rose-400\/80 {
+  color: rgb(251 113 133 / 0.8);
 }
 .text-slate-100 {
   --tw-text-opacity: 1;
@@ -2470,6 +2500,9 @@ video {
 .hover\:text-white:hover {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+.hover\:underline:hover {
+  text-decoration-line: underline;
 }
 .hover\:opacity-95:hover {
   opacity: 0.95;

@@ -10,6 +10,8 @@ class StudioConfig:
     duration: int = 30
     style: str = "cinematic"
     llm_provider: str = "gemini"
+    llm_api_key: Optional[str] = None
+    llm_model: Optional[str] = None
     motion_engine: str = "kenburns"
     lip_sync: str = "none"
     aspect_ratio: str = "16:9"
@@ -38,6 +40,10 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
         if v is not None:
             if k == "llm":
                 merged["llm_provider"] = v
+            elif k in ("llm_model", "model"):
+                merged["llm_model"] = v
+            elif k in ("llm_api_key", "api_key"):
+                merged["llm_api_key"] = v
             elif k in ("motion", "motion_engine"):
                 merged["motion_engine"] = v
             elif k in ("lip_sync", "lipsync"):
@@ -67,6 +73,8 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
     duration = int(merged.get("duration", 30))
     style = merged.get("style", "cinematic")
     llm_provider = merged.get("llm_provider", "gemini")
+    llm_api_key = merged.get("llm_api_key")
+    llm_model = merged.get("llm_model")
     motion_engine = merged.get("motion_engine", "kenburns")
     lip_sync = merged.get("lip_sync", "none")
     aspect_ratio = merged.get("aspect_ratio", "16:9")
@@ -85,6 +93,8 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
         duration=duration,
         style=style,
         llm_provider=llm_provider,
+        llm_api_key=llm_api_key,
+        llm_model=llm_model,
         motion_engine=motion_engine,
         lip_sync=lip_sync,
         aspect_ratio=aspect_ratio,

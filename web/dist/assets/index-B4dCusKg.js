@@ -20406,29 +20406,29 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$M = [
+const __iconNode$P = [
   ["path", { d: "M12 5v14", key: "s699le" }],
   ["path", { d: "m19 12-7 7-7-7", key: "1idqje" }]
 ];
-const ArrowDown = createLucideIcon("ArrowDown", __iconNode$M);
+const ArrowDown = createLucideIcon("ArrowDown", __iconNode$P);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$L = [
+const __iconNode$O = [
   ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
   ["path", { d: "M12 19V5", key: "x0mq9r" }]
 ];
-const ArrowUp = createLucideIcon("ArrowUp", __iconNode$L);
+const ArrowUp = createLucideIcon("ArrowUp", __iconNode$O);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$K = [
+const __iconNode$N = [
   ["path", { d: "M12 8V4H8", key: "hb8ula" }],
   ["rect", { width: "16", height: "12", x: "4", y: "8", rx: "2", key: "enze0r" }],
   ["path", { d: "M2 14h2", key: "vft8re" }],
@@ -20436,27 +20436,27 @@ const __iconNode$K = [
   ["path", { d: "M15 13v2", key: "1xurst" }],
   ["path", { d: "M9 13v2", key: "rq6x2g" }]
 ];
-const Bot = createLucideIcon("Bot", __iconNode$K);
+const Bot = createLucideIcon("Bot", __iconNode$N);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$J = [
+const __iconNode$M = [
   ["path", { d: "M8 2v4", key: "1cmpym" }],
   ["path", { d: "M16 2v4", key: "4m81vk" }],
   ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
   ["path", { d: "M3 10h18", key: "8toen8" }]
 ];
-const Calendar = createLucideIcon("Calendar", __iconNode$J);
+const Calendar = createLucideIcon("Calendar", __iconNode$M);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$I = [
+const __iconNode$L = [
   [
     "path",
     {
@@ -20466,23 +20466,58 @@ const __iconNode$I = [
   ],
   ["circle", { cx: "12", cy: "13", r: "3", key: "1vg3eu" }]
 ];
-const Camera = createLucideIcon("Camera", __iconNode$I);
+const Camera = createLucideIcon("Camera", __iconNode$L);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$H = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("Check", __iconNode$H);
+const __iconNode$K = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("Check", __iconNode$K);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$G = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
-const ChevronDown = createLucideIcon("ChevronDown", __iconNode$G);
+const __iconNode$J = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
+const ChevronDown = createLucideIcon("ChevronDown", __iconNode$J);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$I = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
+  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+];
+const CircleAlert = createLucideIcon("CircleAlert", __iconNode$I);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$H = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 8v8", key: "napkw2" }],
+  ["path", { d: "m8 12 4 4 4-4", key: "k98ssh" }]
+];
+const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$H);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$G = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
+];
+const CircleCheck = createLucideIcon("CircleCheck", __iconNode$G);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20490,41 +20525,6 @@ const ChevronDown = createLucideIcon("ChevronDown", __iconNode$G);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$F = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
-  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
-];
-const CircleAlert = createLucideIcon("CircleAlert", __iconNode$F);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$E = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "M12 8v8", key: "napkw2" }],
-  ["path", { d: "m8 12 4 4 4-4", key: "k98ssh" }]
-];
-const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$E);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$D = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
-];
-const CircleCheck = createLucideIcon("CircleCheck", __iconNode$D);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$C = [
   [
     "path",
     { d: "M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z", key: "1tn4o7" }
@@ -20533,7 +20533,41 @@ const __iconNode$C = [
   ["path", { d: "m12.4 3.4 3.1 4", key: "6hsd6n" }],
   ["path", { d: "M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z", key: "ltgou9" }]
 ];
-const Clapperboard = createLucideIcon("Clapperboard", __iconNode$C);
+const Clapperboard = createLucideIcon("Clapperboard", __iconNode$F);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$E = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["polyline", { points: "12 6 12 12 16 14", key: "68esgv" }]
+];
+const Clock = createLucideIcon("Clock", __iconNode$E);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$D = [
+  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+];
+const Copy = createLucideIcon("Copy", __iconNode$D);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$C = [
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
+  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
+];
+const Download = createLucideIcon("Download", __iconNode$C);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20541,10 +20575,24 @@ const Clapperboard = createLucideIcon("Clapperboard", __iconNode$C);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$B = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["polyline", { points: "12 6 12 12 16 14", key: "68esgv" }]
+  [
+    "path",
+    {
+      d: "M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49",
+      key: "ct8e1f"
+    }
+  ],
+  ["path", { d: "M14.084 14.158a3 3 0 0 1-4.242-4.242", key: "151rxh" }],
+  [
+    "path",
+    {
+      d: "M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143",
+      key: "13bj9a"
+    }
+  ],
+  ["path", { d: "m2 2 20 20", key: "1ooewy" }]
 ];
-const Clock = createLucideIcon("Clock", __iconNode$B);
+const EyeOff = createLucideIcon("EyeOff", __iconNode$B);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20552,10 +20600,16 @@ const Clock = createLucideIcon("Clock", __iconNode$B);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$A = [
-  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
-  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
+  [
+    "path",
+    {
+      d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
+      key: "1nclc0"
+    }
+  ],
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
 ];
-const Copy = createLucideIcon("Copy", __iconNode$A);
+const Eye = createLucideIcon("Eye", __iconNode$A);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20563,18 +20617,6 @@ const Copy = createLucideIcon("Copy", __iconNode$A);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$z = [
-  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
-  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
-  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
-];
-const Download = createLucideIcon("Download", __iconNode$z);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$y = [
   ["path", { d: "M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5", key: "1couwa" }],
   ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
   [
@@ -20585,7 +20627,21 @@ const __iconNode$y = [
     }
   ]
 ];
-const FilePen = createLucideIcon("FilePen", __iconNode$y);
+const FilePen = createLucideIcon("FilePen", __iconNode$z);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$y = [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M10 9H8", key: "b1mrlr" }],
+  ["path", { d: "M16 13H8", key: "t4e002" }],
+  ["path", { d: "M16 17H8", key: "z1uh3a" }]
+];
+const FileText = createLucideIcon("FileText", __iconNode$y);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20593,20 +20649,6 @@ const FilePen = createLucideIcon("FilePen", __iconNode$y);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$x = [
-  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["path", { d: "M10 9H8", key: "b1mrlr" }],
-  ["path", { d: "M16 13H8", key: "t4e002" }],
-  ["path", { d: "M16 17H8", key: "z1uh3a" }]
-];
-const FileText = createLucideIcon("FileText", __iconNode$x);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$w = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }],
   ["path", { d: "M7 3v18", key: "bbkbws" }],
   ["path", { d: "M3 7.5h4", key: "zfgn84" }],
@@ -20616,7 +20658,19 @@ const __iconNode$w = [
   ["path", { d: "M17 7.5h4", key: "myr1c1" }],
   ["path", { d: "M17 16.5h4", key: "go4c1d" }]
 ];
-const Film = createLucideIcon("Film", __iconNode$w);
+const Film = createLucideIcon("Film", __iconNode$x);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$w = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
+  ["path", { d: "M2 12h20", key: "9i4pu4" }]
+];
+const Globe = createLucideIcon("Globe", __iconNode$w);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20624,11 +20678,12 @@ const Film = createLucideIcon("Film", __iconNode$w);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$v = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
-  ["path", { d: "M2 12h20", key: "9i4pu4" }]
+  ["line", { x1: "4", x2: "20", y1: "9", y2: "9", key: "4lhtct" }],
+  ["line", { x1: "4", x2: "20", y1: "15", y2: "15", key: "vyu0kd" }],
+  ["line", { x1: "10", x2: "8", y1: "3", y2: "21", key: "1ggp8o" }],
+  ["line", { x1: "16", x2: "14", y1: "3", y2: "21", key: "weycgp" }]
 ];
-const Globe = createLucideIcon("Globe", __iconNode$v);
+const Hash = createLucideIcon("Hash", __iconNode$v);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20636,12 +20691,11 @@ const Globe = createLucideIcon("Globe", __iconNode$v);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$u = [
-  ["line", { x1: "4", x2: "20", y1: "9", y2: "9", key: "4lhtct" }],
-  ["line", { x1: "4", x2: "20", y1: "15", y2: "15", key: "vyu0kd" }],
-  ["line", { x1: "10", x2: "8", y1: "3", y2: "21", key: "1ggp8o" }],
-  ["line", { x1: "16", x2: "14", y1: "3", y2: "21", key: "weycgp" }]
+  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
+  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
+  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
 ];
-const Hash = createLucideIcon("Hash", __iconNode$u);
+const Image = createLucideIcon("Image", __iconNode$u);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20649,11 +20703,11 @@ const Hash = createLucideIcon("Hash", __iconNode$u);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$t = [
-  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
-  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
-  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
+  ["path", { d: "m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4", key: "g0fldk" }],
+  ["path", { d: "m21 2-9.6 9.6", key: "1j0ho8" }],
+  ["circle", { cx: "7.5", cy: "15.5", r: "5.5", key: "yqb3hr" }]
 ];
-const Image = createLucideIcon("Image", __iconNode$t);
+const Key = createLucideIcon("Key", __iconNode$t);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -28468,6 +28522,13 @@ async function testWebhook(webhookUrl) {
   );
   return response.data;
 }
+async function fetchLlmModels(provider, apiKey, baseUrl) {
+  const response = await apiClient.post(
+    "/api/llm/models",
+    { provider, api_key: apiKey || void 0, base_url: baseUrl || void 0 }
+  );
+  return response.data;
+}
 const QUERY_KEYS = {
   status: ["studio", "status"],
   storyboard: ["studio", "storyboard"],
@@ -28661,6 +28722,11 @@ function useTestWebhook() {
     mutationFn: (webhookUrl) => testWebhook(webhookUrl)
   });
 }
+function useFetchLlmModels() {
+  return useMutation({
+    mutationFn: ({ provider, apiKey, baseUrl }) => fetchLlmModels(provider, apiKey, baseUrl)
+  });
+}
 const LANG_OPTIONS = [
   { value: "vi", label: "Tiếng Việt", subtext: "Nam/Nữ AI mượt mà", icon: "🇻🇳" },
   { value: "en", label: "English (US)", subtext: "Natural American voice", icon: "🇺🇸" },
@@ -28719,11 +28785,59 @@ const STYLES = [
   { id: "documentary", label: "Documentary", desc: "Ảnh tư liệu National Geographic 8K", emoji: "🌍", gradient: "from-emerald-500/20 to-teal-500/10" }
 ];
 function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
+  var _a2, _b2;
   const [topic, setTopic] = reactExports.useState("Bí ẩn thành phố Atlantis chìm sâu dưới đáy đại dương và đoàn thám hiểm cổ vật");
   const [lang, setLang] = reactExports.useState("vi");
   const [duration, setDuration] = reactExports.useState(5);
   const [style, setStyle2] = reactExports.useState("cinematic");
   const [llm, setLlm] = reactExports.useState("gemini");
+  const [apiKey, setApiKey] = reactExports.useState("");
+  const [selectedModel, setSelectedModel] = reactExports.useState("");
+  const [availableModels, setAvailableModels] = reactExports.useState([]);
+  const [hasEnvKey, setHasEnvKey] = reactExports.useState(false);
+  const [showApiKey, setShowApiKey] = reactExports.useState(false);
+  const [modelsError, setModelsError] = reactExports.useState(null);
+  const [isCustomModel, setIsCustomModel] = reactExports.useState(false);
+  const [customModelText, setCustomModelText] = reactExports.useState("");
+  const fetchModelsMutation = useFetchLlmModels();
+  const loadModelsForProvider = (provider, customKey) => {
+    setModelsError(null);
+    const keyToUse = customKey !== void 0 ? customKey : localStorage.getItem(`studio_llm_key_${provider}`) || "";
+    fetchModelsMutation.mutate(
+      { provider, apiKey: keyToUse.trim() || void 0 },
+      {
+        onSuccess: (data) => {
+          if (data.success && data.models && data.models.length > 0) {
+            setAvailableModels(data.models);
+            setHasEnvKey(!!data.has_env_key);
+            setSelectedModel((prev) => {
+              const exists = data.models.some((m) => m.id === prev);
+              return exists && prev ? prev : data.default || data.models[0].id;
+            });
+          } else {
+            setAvailableModels([]);
+            setHasEnvKey(!!data.has_env_key);
+            if (data.error) {
+              setModelsError(data.error);
+            }
+          }
+        },
+        onError: (err) => {
+          setModelsError((err == null ? void 0 : err.message) || "Không thể kết nối lấy danh sách model");
+          setAvailableModels([]);
+        }
+      }
+    );
+  };
+  reactExports.useEffect(() => {
+    const savedKey = localStorage.getItem(`studio_llm_key_${llm}`) || "";
+    setApiKey(savedKey);
+    loadModelsForProvider(llm, savedKey);
+  }, [llm]);
+  const handleApiKeyChange = (val) => {
+    setApiKey(val);
+    localStorage.setItem(`studio_llm_key_${llm}`, val);
+  };
   const [motion2, setMotion] = reactExports.useState("vfx");
   const [lipSync, setLipSync] = reactExports.useState("none");
   const [aspectRatio2, setAspectRatio] = reactExports.useState("16:9");
@@ -28768,12 +28882,15 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!topic.trim()) return;
+    const finalModel = isCustomModel ? customModelText.trim() : selectedModel;
     onSubmit({
       topic,
       lang,
       duration: Number(duration),
       style,
       llm,
+      llm_api_key: apiKey.trim() || void 0,
+      llm_model: finalModel || void 0,
       motion: motion2,
       lip_sync: lipSync,
       aspect_ratio: aspectRatio2,
@@ -29004,6 +29121,170 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                 disabled: isRunning
               }
             )
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "sm:col-span-3 p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Key, { className: "w-4 h-4 text-amber-400" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs font-bold text-white uppercase tracking-wider", children: [
+                  "Cấu hình API Key & Chọn Model (",
+                  (_a2 = LLM_OPTIONS.find((o) => o.value === llm)) == null ? void 0 : _a2.label,
+                  ")"
+                ] })
+              ] }),
+              hasEnvKey && !apiKey && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2 py-0.5 rounded-full flex items-center gap-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-3 h-3" }),
+                "Đã kết nối qua file .env máy chủ"
+              ] }),
+              apiKey && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-semibold text-amber-400 bg-amber-950/60 border border-amber-800/80 px-2 py-0.5 rounded-full flex items-center gap-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-3 h-3" }),
+                "Dùng API Key tùy chỉnh (lưu cục bộ)"
+              ] })
+            ] }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                    "API Key (",
+                    (_b2 = LLM_OPTIONS.find((o) => o.value === llm)) == null ? void 0 : _b2.label,
+                    ")"
+                  ] }) }),
+                  llm === "gemini" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "a",
+                    {
+                      href: "https://aistudio.google.com/app/apikey",
+                      target: "_blank",
+                      rel: "noreferrer",
+                      className: "text-[10px] text-amber-400 hover:underline",
+                      children: "Lấy key miễn phí ↗"
+                    }
+                  ),
+                  llm === "groq" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "a",
+                    {
+                      href: "https://console.groq.com/keys",
+                      target: "_blank",
+                      rel: "noreferrer",
+                      className: "text-[10px] text-amber-400 hover:underline",
+                      children: "Lấy key Groq ↗"
+                    }
+                  ),
+                  llm === "openai" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "a",
+                    {
+                      href: "https://platform.openai.com/api-keys",
+                      target: "_blank",
+                      rel: "noreferrer",
+                      className: "text-[10px] text-amber-400 hover:underline",
+                      children: "Lấy key OpenAI ↗"
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative flex items-center", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "input",
+                    {
+                      type: showApiKey ? "text" : "password",
+                      value: apiKey,
+                      onChange: (e) => handleApiKeyChange(e.target.value),
+                      placeholder: hasEnvKey ? "Đã nhận diện key từ .env (nhập để ghi đè)" : llm === "ollama" ? "Ollama không cần API key" : "Nhập API key tại đây...",
+                      disabled: isRunning || llm === "ollama",
+                      className: "w-full pl-3 pr-28 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "absolute right-1.5 flex items-center gap-1", children: [
+                    apiKey && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => handleApiKeyChange(""),
+                        className: "p-1 text-slate-400 hover:text-white text-xs",
+                        title: "Xóa key",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-3.5 h-3.5" })
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => setShowApiKey(!showApiKey),
+                        className: "p-1 text-slate-400 hover:text-white",
+                        title: showApiKey ? "Ẩn key" : "Hiện key",
+                        children: showApiKey ? /* @__PURE__ */ jsxRuntimeExports.jsx(EyeOff, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "w-3.5 h-3.5" })
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        type: "button",
+                        onClick: () => loadModelsForProvider(llm, apiKey),
+                        disabled: fetchModelsMutation.isPending || isRunning,
+                        className: "px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-colors border border-amber-500/30 cursor-pointer",
+                        title: "Tải danh sách model",
+                        children: [
+                          fetchModelsMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3 h-3 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Tải Models" })
+                        ]
+                      }
+                    )
+                  ] })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3 h-3 text-amber-400" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                      "Model Kịch bản ",
+                      availableModels.length > 0 && `(${availableModels.length} khả dụng)`
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "button",
+                    {
+                      type: "button",
+                      onClick: () => setIsCustomModel(!isCustomModel),
+                      className: "text-[10px] text-amber-400 hover:underline cursor-pointer",
+                      children: isCustomModel ? "Chọn từ danh sách" : "Nhập model khác"
+                    }
+                  )
+                ] }),
+                isCustomModel ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "input",
+                  {
+                    type: "text",
+                    value: customModelText,
+                    onChange: (e) => setCustomModelText(e.target.value),
+                    placeholder: "VD: gemini-3.5-flash, gpt-4o, llama3.2...",
+                    className: "w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                  }
+                ) : availableModels.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "select",
+                  {
+                    value: selectedModel,
+                    onChange: (e) => setSelectedModel(e.target.value),
+                    disabled: isRunning,
+                    className: "w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 font-medium cursor-pointer",
+                    children: availableModels.map((m) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: m.id, children: [
+                      m.recommended ? "⭐ " : "",
+                      m.name || m.id,
+                      " ",
+                      m.description ? `— ${m.description}` : ""
+                    ] }, m.id))
+                  }
+                ) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/80 border border-dashed border-slate-700 text-xs text-slate-400", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: fetchModelsMutation.isPending ? "Đang tải danh sách model..." : 'Chưa có model. Bấm "Tải Models" sau khi điền API Key.' }),
+                  fetchModelsMutation.isPending && /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-amber-400" })
+                ] })
+              ] })
+            ] }),
+            modelsError && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/80 flex items-start gap-2 text-rose-300 text-xs animate-fadeIn", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "w-4 h-4 text-rose-400 shrink-0 mt-0.5" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: modelsError }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-rose-400/80 mt-0.5", children: "Hãy kiểm tra lại API Key hoặc tạo key mới tại bảng điều khiển nhà cung cấp." })
+              ] })
+            ] })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "sm:col-span-2", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [

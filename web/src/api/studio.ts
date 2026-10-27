@@ -195,4 +195,17 @@ export async function testWebhook(webhookUrl: string): Promise<{ success: boolea
   return response.data
 }
 
+export async function fetchLlmModels(
+  provider: string,
+  apiKey?: string,
+  baseUrl?: string
+): Promise<import('../types').LLMModelsResponse> {
+  const response = await apiClient.post<import('../types').LLMModelsResponse>(
+    '/api/llm/models',
+    { provider, api_key: apiKey || undefined, base_url: baseUrl || undefined }
+  )
+  return response.data
+}
+
+
 

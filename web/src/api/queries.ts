@@ -21,6 +21,7 @@ import {
   generateCharacterHeadshot,
   uploadCharacterHeadshot,
   testWebhook,
+  fetchLlmModels,
   type UpdateShotParams,
   type AddShotParams,
   type DubProjectParams,
@@ -264,6 +265,13 @@ export function useUploadHeadshot() {
 export function useTestWebhook() {
   return useMutation({
     mutationFn: (webhookUrl: string) => testWebhook(webhookUrl),
+  })
+}
+
+export function useFetchLlmModels() {
+  return useMutation({
+    mutationFn: ({ provider, apiKey, baseUrl }: { provider: string; apiKey?: string; baseUrl?: string }) =>
+      fetchLlmModels(provider, apiKey, baseUrl),
   })
 }
 

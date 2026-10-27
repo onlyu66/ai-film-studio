@@ -41,7 +41,7 @@ def run_pipeline(config: StudioConfig, stop_after_stage: int | None = None) -> P
         with open(storyboard_file, "r", encoding="utf-8") as f:
             storyboard = parse_storyboard_json(f.read())
     else:
-        llm = create_llm(config.llm_provider)
+        llm = create_llm(config.llm_provider, api_key=config.llm_api_key, model=config.llm_model)
         storyboard = generate_storyboard(config, llm)
         with open(storyboard_file, "w", encoding="utf-8") as f:
             json.dump(storyboard.to_dict(), f, indent=2, ensure_ascii=False)
