@@ -1,8 +1,6 @@
 
-import { motion } from 'framer-motion'
-import { Clapperboard, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit, Film } from 'lucide-react'
+import { Film, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit, Clapperboard } from 'lucide-react'
 import { Button } from './ui/button'
-import { Badge } from './ui/badge'
 import type { StudioStatus } from '../types'
 
 export interface NavbarProps {
@@ -18,84 +16,96 @@ export default function Navbar({ status, onClean, isCleaning, onWatchMovie, onOp
     switch (status?.status) {
       case 'script_ready':
         return (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/50 text-amber-300 text-xs font-bold shadow-sm shadow-amber-500/20"
-          >
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             <FileEdit className="w-3.5 h-3.5 text-amber-400" />
             <span>Kịch bản chờ duyệt</span>
-          </motion.div>
+          </div>
         )
       case 'running':
         return (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold shadow-sm shadow-amber-500/20"
-          >
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
-            <span>{status.stage_name || 'Đang sản xuất...'}</span>
-          </motion.div>
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" />
+            <span className="truncate max-w-[150px]">{status.stage_name || 'Đang render...'}</span>
+          </div>
         )
       case 'completed':
         return (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold shadow-sm shadow-emerald-500/20"
-          >
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Phim hoàn tất</span>
-          </motion.div>
+          </div>
         )
       case 'error':
         return (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold">
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium">
             <AlertCircle className="w-3.5 h-3.5" />
             <span>Có lỗi phát sinh</span>
           </div>
         )
       default:
         return (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-slate-400 text-xs font-medium">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span>Studio Sẵn Sàng</span>
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#121622] border border-white/[0.08] text-slate-400 text-xs font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>Ready</span>
           </div>
         )
     }
   }
 
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
   return (
-    <header className="sticky top-0 z-40 bg-[#070A11]/80 backdrop-blur-xl border-b border-slate-800/80 px-6 py-3.5 transition-all">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Brand Logo & Name */}
-        <div className="flex items-center gap-3.5">
-          <motion.div
-            whileHover={{ scale: 1.05, rotate: 2 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-amber-500/25 ring-1 ring-white/20"
-          >
-            <Clapperboard className="w-5 h-5 text-white" />
-          </motion.div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-base font-extrabold tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-white via-slate-100 to-slate-400">
-                AI FILM STUDIO
-              </span>
-              <Badge variant="default" className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0">
-                2.0 PRO
-              </Badge>
-            </div>
-            <p className="text-[11px] text-slate-400 font-medium">Automated Hollywood-Grade Cinema Pipeline</p>
+    <header className="sticky top-0 z-40 bg-[#080A0F]/90 backdrop-blur-md border-b border-white/[0.08] px-4 sm:px-6 py-2.5 transition-all">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        {/* Brand Logo & Workstation Badge */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#141824] border border-white/[0.1] flex items-center justify-center text-amber-400 shadow-sm">
+            <Clapperboard className="w-4 h-4" />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold tracking-tight text-white font-sans">
+              AI FILM STUDIO
+            </span>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 bg-white/[0.04] border border-white/[0.08] px-1.5 py-0.5 rounded">
+              Workstation
+            </span>
           </div>
         </div>
 
-        {/* Status Badges & Quick Action Buttons */}
-        <div className="flex items-center gap-3">
+        {/* Central Workstation Navigation Deck */}
+        <nav className="hidden md:flex items-center p-1 rounded-xl bg-[#10131C] border border-white/[0.06] text-xs font-medium text-slate-400">
+          <button
+            type="button"
+            onClick={() => scrollTo('director-inspector')}
+            className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+          >
+            Đạo diễn & Kịch bản
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollTo('storyboard-section')}
+            className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+          >
+            Bảng phân cảnh
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollTo('timeline-section')}
+            className="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer"
+          >
+            Dòng thời gian
+          </button>
+        </nav>
+
+        {/* Status & Studio Action Controls */}
+        <div className="flex items-center gap-2.5">
           {getStatusBadge()}
 
           {status?.status === 'completed' && status?.final_video && (
@@ -103,7 +113,7 @@ export default function Navbar({ status, onClean, isCleaning, onWatchMovie, onOp
               variant="default"
               size="sm"
               onClick={onWatchMovie}
-              className="gap-1.5 text-xs shadow-emerald-500/20 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950"
+              className="gap-1.5 text-xs h-8 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-sm cursor-pointer"
             >
               <MonitorPlay className="w-3.5 h-3.5 fill-current" />
               <span>Xem Phim</span>
@@ -114,23 +124,22 @@ export default function Navbar({ status, onClean, isCleaning, onWatchMovie, onOp
             variant="outline"
             size="sm"
             onClick={onOpenLibrary}
-            className="gap-1.5 text-xs hover:border-indigo-500/40 hover:text-indigo-300 hover:bg-indigo-500/10 text-slate-300 cursor-pointer"
-            title="Xem thư viện các bộ phim đã sản xuất"
+            className="gap-1.5 text-xs h-8 cursor-pointer"
+            title="Thư viện phim đã sản xuất"
           >
-            <Film className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Thư viện</span>
+            <Film className="w-3.5 h-3.5 text-slate-400" />
+            <span className="hidden sm:inline">Thư viện</span>
           </Button>
 
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={onClean}
             disabled={status?.status === 'running' || isCleaning}
-            className="gap-1.5 text-xs hover:border-rose-500/40 hover:text-rose-400 hover:bg-rose-500/10 text-slate-400"
-            title="Dọn dẹp thư mục outputs để bắt đầu dự án mới"
+            className="h-8 text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+            title="Làm mới dự án"
           >
             <Trash2 className="w-3.5 h-3.5" />
-            <span>{isCleaning ? 'Đang dọn...' : 'Xóa Output'}</span>
           </Button>
         </div>
       </div>

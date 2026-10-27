@@ -91,15 +91,15 @@ export default function TimelineScrubber({
   const playheadPositionPx = (currentTime / totalDuration) * timelineWidth
 
   return (
-    <div className="rounded-2xl bg-[#070A12] border border-slate-800/80 p-4 shadow-xl space-y-3">
+    <div className="rounded-xl bg-cinema-card border border-cinema-border p-4 shadow-xl space-y-3">
       {/* Top Scrubber Control Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cinema-border">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => setIsPlaying(!isPlaying)}
-              className="w-8 h-8 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center font-bold transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+              className="w-8 h-8 rounded-lg bg-cinema-amber hover:bg-amber-400 text-zinc-950 flex items-center justify-center font-bold transition-colors cursor-pointer"
               title={isPlaying ? 'Tạm dừng timeline' : 'Phát timeline thử nghiệm'}
             >
               {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
@@ -111,38 +111,38 @@ export default function TimelineScrubber({
                 setIsPlaying(false)
                 setCurrentTime(0)
               }}
-              className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center transition-colors cursor-pointer border border-zinc-700"
               title="Quay lại đầu phim"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          <div className="font-mono text-xs text-slate-300 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800">
-            <span className="text-amber-400 font-bold">{formatTime(currentTime)}</span>
-            <span className="text-slate-600">/</span>
-            <span className="text-slate-400">{formatTime(totalDuration)}</span>
+          <div className="font-mono text-xs text-zinc-300 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cinema-canvas border border-cinema-border">
+            <span className="text-cinema-amber font-bold">{formatTime(currentTime)}</span>
+            <span className="text-zinc-600">/</span>
+            <span className="text-zinc-400">{formatTime(totalDuration)}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider hidden sm:inline">
+          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider hidden sm:inline">
             Multi-track Scrubber
           </span>
-          <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+          <div className="flex items-center gap-1 bg-cinema-canvas border border-cinema-border rounded-lg p-0.5">
             <button
               type="button"
               onClick={() => setZoomScale((z) => Math.max(0.6, z - 0.2))}
-              className="p-1 rounded text-slate-400 hover:text-white cursor-pointer"
+              className="p-1 rounded text-zinc-400 hover:text-white cursor-pointer"
               title="Thu nhỏ timeline"
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[10px] font-mono text-slate-300 px-1">{Math.round(zoomScale * 100)}%</span>
+            <span className="text-[10px] font-mono text-zinc-300 px-1">{Math.round(zoomScale * 100)}%</span>
             <button
               type="button"
               onClick={() => setZoomScale((z) => Math.min(2.5, z + 0.2))}
-              className="p-1 rounded text-slate-400 hover:text-white cursor-pointer"
+              className="p-1 rounded text-zinc-400 hover:text-white cursor-pointer"
               title="Phóng to timeline"
             >
               <ZoomIn className="w-3.5 h-3.5" />
@@ -155,7 +155,7 @@ export default function TimelineScrubber({
       <div className="overflow-x-auto pb-2 relative select-none">
         <div style={{ width: `${timelineWidth}px` }} className="relative space-y-2 pt-5">
           {/* Timeline Time Ruler */}
-          <div className="absolute top-0 left-0 right-0 h-4 border-b border-slate-800 flex items-end text-[9px] font-mono text-slate-500">
+          <div className="absolute top-0 left-0 right-0 h-4 border-b border-cinema-border flex items-end text-[9px] font-mono text-zinc-500">
             {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }).map((_, idx) => {
               const sec = idx * 5
               const pos = (sec / totalDuration) * timelineWidth
@@ -166,7 +166,7 @@ export default function TimelineScrubber({
                   className="absolute bottom-0 flex flex-col items-center"
                 >
                   <span className="text-[8px] -mb-0.5">{sec}s</span>
-                  <div className="w-[1px] h-1.5 bg-slate-700" />
+                  <div className="w-[1px] h-1.5 bg-zinc-700" />
                 </div>
               )
             })}
@@ -177,13 +177,13 @@ export default function TimelineScrubber({
             style={{ transform: `translateX(${playheadPositionPx}px)` }}
             className="absolute top-0 bottom-0 w-[2px] bg-rose-500 z-30 pointer-events-none transition-transform duration-75"
           >
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 -ml-[4px] -mt-[1px] shadow-sm shadow-rose-500" />
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 -ml-[4px] -mt-[1px] shadow-sm shadow-rose-500/50" />
           </div>
 
           {/* Track 1: Video Shots Track */}
           <div className="space-y-1">
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-              <Film className="w-3 h-3 text-amber-400" />
+            <div className="text-[9px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1">
+              <Film className="w-3 h-3 text-cinema-amber" />
               <span>Track 1: Video Clips & Angles</span>
             </div>
             <div className="h-14 flex items-stretch gap-1">
@@ -196,24 +196,24 @@ export default function TimelineScrubber({
                     key={shot.id}
                     onClick={() => onSelectShot?.(shot.id)}
                     style={{ width: `${widthPx}px` }}
-                    className={`rounded-xl border overflow-hidden p-1.5 flex flex-col justify-between transition-all cursor-pointer group shrink-0 ${
+                    className={`rounded-lg border overflow-hidden p-1.5 flex flex-col justify-between transition-all cursor-pointer group shrink-0 ${
                       isSelected
-                        ? 'bg-amber-500/20 border-amber-400 shadow-md shadow-amber-500/10'
-                        : 'bg-slate-900/90 border-slate-800 hover:border-slate-700'
+                        ? 'bg-amber-500/15 border-cinema-amber'
+                        : 'bg-cinema-deck border-cinema-border hover:border-cinema-border-hover'
                     }`}
                     title={`Phân cảnh ${index + 1} (${duration}s): ${shot.dialogue || shot.image_prompt}`}
                   >
-                    <div className="flex items-center justify-between text-[9px] font-mono text-slate-300">
-                      <span className="font-bold text-amber-400 truncate">#{index + 1} {shot.id}</span>
-                      <span className="text-[8px] text-slate-500">{duration.toFixed(1)}s</span>
+                    <div className="flex items-center justify-between text-[9px] font-mono text-zinc-300">
+                      <span className="font-semibold text-cinema-amber truncate">#{index + 1} {shot.id}</span>
+                      <span className="text-[8px] text-zinc-500">{duration.toFixed(1)}s</span>
                     </div>
 
                     <div className="flex items-center gap-1">
-                      <Badge variant="secondary" className="text-[8px] px-1 py-0 font-mono uppercase bg-slate-800 text-slate-300 truncate">
+                      <Badge variant="secondary" className="text-[8px] px-1 py-0 font-mono uppercase bg-zinc-800 text-zinc-300 truncate border-none">
                         {String(shot.motion || 'zoom_in')}
                       </Badge>
                       {shot.act && (
-                        <span className="text-[8px] px-1 rounded bg-indigo-500/30 text-indigo-300 font-bold">
+                        <span className="text-[8px] px-1 rounded bg-zinc-800 text-zinc-300 font-mono border border-zinc-700">
                           H{String(shot.act)}
                         </span>
                       )}
@@ -226,7 +226,7 @@ export default function TimelineScrubber({
 
           {/* Track 2: Dialogue & Voiceover Track */}
           <div className="space-y-1 pt-1">
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <div className="text-[9px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1">
               <Mic className="w-3 h-3 text-cyan-400" />
               <span>Track 2: Voiceover & Dialogue</span>
             </div>
@@ -239,19 +239,19 @@ export default function TimelineScrubber({
                   <div
                     key={shot.id}
                     style={{ width: `${widthPx}px` }}
-                    className={`rounded-lg border px-2 py-1 flex items-center justify-between gap-1 overflow-hidden shrink-0 ${
+                    className={`rounded-md border px-2 py-1 flex items-center justify-between gap-1 overflow-hidden shrink-0 ${
                       hasDialogue
-                        ? 'bg-cyan-950/40 border-cyan-800/60 text-cyan-200'
-                        : 'bg-slate-950/40 border-dashed border-slate-800/80 text-slate-600'
+                        ? 'bg-cyan-950/30 border-cyan-800/40 text-cyan-200'
+                        : 'bg-cinema-canvas/50 border-dashed border-cinema-border text-zinc-600'
                     }`}
                   >
                     {hasDialogue ? (
                       <>
-                        <span className="text-[9px] truncate font-medium">"{String(shot.dialogue)}"</span>
+                        <span className="text-[9px] truncate font-normal">"{String(shot.dialogue)}"</span>
                         <Volume2 className="w-3 h-3 text-cyan-400 shrink-0 opacity-70" />
                       </>
                     ) : (
-                      <span className="text-[8px] italic text-slate-600 truncate">(Tĩnh)</span>
+                      <span className="text-[8px] italic text-zinc-600 truncate">(Tĩnh)</span>
                     )}
                   </div>
                 )
@@ -261,7 +261,7 @@ export default function TimelineScrubber({
 
           {/* Track 3: Foley SFX Track */}
           <div className="space-y-1 pt-1">
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <div className="text-[9px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-emerald-400" />
               <span>Track 3: Foley & SFX Audio</span>
             </div>
@@ -276,11 +276,18 @@ export default function TimelineScrubber({
                     style={{ width: `${widthPx}px` }}
                     className={`rounded-md border px-1.5 py-0.5 flex items-center justify-center shrink-0 ${
                       hasSfx
-                        ? 'bg-emerald-950/40 border-emerald-700/60 text-emerald-300 font-mono text-[9px] font-bold'
-                        : 'bg-slate-950/20 border-slate-800/40 text-slate-700'
+                        ? 'bg-emerald-950/30 border-emerald-700/40 text-emerald-300 font-mono text-[9px] font-medium'
+                        : 'bg-cinema-canvas/30 border-cinema-border text-zinc-700'
                     }`}
                   >
-                    {hasSfx ? <span>🔊 {String(shot.sfx)}</span> : <span className="text-[8px] opacity-40">-</span>}
+                    {hasSfx ? (
+                      <span className="flex items-center gap-1 truncate">
+                        <Volume2 className="w-2.5 h-2.5" />
+                        <span>{String(shot.sfx)}</span>
+                      </span>
+                    ) : (
+                      <span className="text-[8px] opacity-40">-</span>
+                    )}
                   </div>
                 )
               })}
@@ -289,7 +296,7 @@ export default function TimelineScrubber({
 
           {/* Track 4: BGM Mood Track */}
           <div className="space-y-1 pt-1">
-            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            <div className="text-[9px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1">
               <Music className="w-3 h-3 text-purple-400" />
               <span>Track 4: Dynamic Mood BGM</span>
             </div>
@@ -302,9 +309,12 @@ export default function TimelineScrubber({
                   <div
                     key={shot.id}
                     style={{ width: `${widthPx}px` }}
-                    className="rounded-md border border-purple-800/40 bg-purple-950/30 px-1.5 py-0.5 flex items-center justify-center text-purple-300 font-mono text-[9px] shrink-0 font-semibold"
+                    className="rounded-md border border-purple-800/30 bg-purple-950/20 px-1.5 py-0.5 flex items-center justify-center text-purple-300 font-mono text-[9px] shrink-0 font-medium"
                   >
-                    <span>🎵 {mood}</span>
+                    <span className="flex items-center gap-1 truncate">
+                      <Music className="w-2.5 h-2.5" />
+                      <span>{mood}</span>
+                    </span>
                   </div>
                 )
               })}

@@ -4,22 +4,33 @@
 
 @layer base {
   body {
-    @apply bg-[#080B11] text-gray-100;
+    @apply bg-[#080A0F] text-slate-100 antialiased selection:bg-amber-500/20 selection:text-amber-300;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Custom modern scrollbar */
+/* Custom Cinema Workstation Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #090B10;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #1F2535;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #333C52;
+}
+
+/* Studio subtle animations */
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-subtle-pulse {
+  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

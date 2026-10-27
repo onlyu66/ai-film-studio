@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Sparkles, Play, Settings2, Languages, Clock, Palette, Wand2, Bot, Film, Mic, FileEdit, Clapperboard, X, Send, Check, Loader2, Key, Eye, EyeOff, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Sparkles, Play, Settings2, Languages, Clock, Palette, Bot, Film, Mic, MicOff, Camera, Video, Cpu, Server, Clapperboard, X, Send, Check, Loader2, Key, Eye, EyeOff, RefreshCw, AlertCircle, CheckCircle2, FileEdit, Smartphone, Monitor } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
@@ -8,67 +8,66 @@ import { useTestWebhook, useFetchLlmModels } from '../api/queries'
 import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem } from '../types'
 
 const LANG_OPTIONS: SelectOption[] = [
-  { value: 'vi', label: 'Tiếng Việt', subtext: 'Nam/Nữ AI mượt mà', icon: '🇻🇳' },
-  { value: 'en', label: 'English (US)', subtext: 'Natural American voice', icon: '🇺🇸' },
-  { value: 'ja', label: 'Japanese', subtext: 'Anime & Studio style', icon: '🇯🇵' },
-  { value: 'fr', label: 'French', subtext: 'Studio narration', icon: '🇫🇷' },
+  { value: 'vi', label: 'Tiếng Việt', subtext: 'Giọng AI tự nhiên, truyền cảm', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">VI</span> },
+  { value: 'en', label: 'English (US)', subtext: 'Natural American cinematic narration', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">EN</span> },
+  { value: 'ja', label: 'Japanese', subtext: 'Studio narration & anime style', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">JA</span> },
+  { value: 'fr', label: 'French', subtext: 'Classic European cinema tone', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">FR</span> },
 ]
 
 const LLM_OPTIONS: SelectOption[] = [
-  { value: 'gemini', label: 'Google Gemini', subtext: 'Khuyên dùng - Siêu tốc, 0% CPU', icon: '⚡' },
-  { value: 'groq', label: 'Groq Cloud', subtext: 'Llama 3.3 70B & Mixtral', icon: '🚀' },
-  { value: 'ollama', label: 'Ollama Local', subtext: '100% Offline, bảo mật', icon: '💻' },
-  { value: 'openai', label: 'OpenAI ChatGPT', subtext: 'GPT-4o & tương thích', icon: '🤖' },
+  { value: 'gemini', label: 'Google Gemini', subtext: 'Khuyên dùng — Siêu tốc, ổn định', icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" /> },
+  { value: 'groq', label: 'Groq Cloud', subtext: 'Llama 3.3 70B & Mixtral', icon: <Cpu className="w-3.5 h-3.5 text-sky-400" /> },
+  { value: 'ollama', label: 'Ollama Local', subtext: '100% Offline trên máy chủ', icon: <Server className="w-3.5 h-3.5 text-emerald-400" /> },
+  { value: 'openai', label: 'OpenAI ChatGPT', subtext: 'GPT-4o & tương thích', icon: <Bot className="w-3.5 h-3.5 text-purple-400" /> },
 ]
 
 const MOTION_OPTIONS: SelectOption[] = [
-  { value: 'vfx', label: 'Cinematic VFX', subtext: 'Khuyên dùng - Góc tối, film look (Free)', icon: '🌟' },
-  { value: 'kenburns', label: 'Ken Burns 2.5D', subtext: 'Zoom/Pan cổ điển (Free)', icon: '🎥' },
-  { value: 'replicate', label: 'Replicate AI Video', subtext: 'Image-to-Video Cloud động', icon: '🎬' },
+  { value: 'vfx', label: 'Cinematic 2.5D VFX', subtext: 'Ken Burns & Dynamic Lighting', icon: <Camera className="w-3.5 h-3.5 text-amber-400" /> },
+  { value: 'kenburns', label: 'Ken Burns Classic', subtext: 'Zoom & Pan camera mượt mà', icon: <Film className="w-3.5 h-3.5 text-slate-400" /> },
+  { value: 'replicate', label: 'Replicate AI Video', subtext: 'Image-to-Video Cloud động', icon: <Video className="w-3.5 h-3.5 text-indigo-400" /> },
 ]
 
 const LIPSYNC_OPTIONS: SelectOption[] = [
-  { value: 'none', label: 'Tắt nhép môi', subtext: 'Render nhanh, máy nhẹ', icon: '🚫' },
-  { value: 'cloud', label: 'Cloud Lip-Sync', subtext: 'SadTalker khớp khẩu hình', icon: '👄' },
+  { value: 'none', label: 'Tắt nhép môi', subtext: 'Render nhanh, máy nhẹ', icon: <MicOff className="w-3.5 h-3.5 text-slate-400" /> },
+  { value: 'cloud', label: 'SadTalker Lip-Sync', subtext: 'Khớp khẩu hình nhân vật', icon: <Mic className="w-3.5 h-3.5 text-indigo-400" /> },
 ]
 
-const ASPECT_RATIO_OPTIONS: SelectOption[] = [
-  { value: '16:9', label: '16:9 Ngang', subtext: 'YouTube, TV, Máy tính', icon: '🖥️' },
-  { value: '9:16', label: '9:16 Dọc', subtext: 'TikTok, Shorts, Reels', icon: '📱' },
-]
-
-const PRESET_IDEAS: PresetIdea[] = [
+const PRESET_IDEAS: (PresetIdea & { tag: string })[] = [
   {
     title: "Bí ẩn Atlantis",
     topic: "Bí ẩn thành phố Atlantis chìm sâu dưới đáy đại dương và đoàn thám hiểm cổ vật",
     style: "cinematic",
-    emoji: "🌊"
+    emoji: "",
+    tag: "Sci-Fi"
   },
   {
     title: "Cyberpunk Tokyo 2088",
     topic: "Một thám tử tư có mắt điều khiển học điều tra đường dây trí tuệ nhân tạo mất tích tại Tokyo",
     style: "noir",
-    emoji: "🌃"
+    emoji: "",
+    tag: "Cyberpunk"
   },
   {
     title: "Chiến binh Cuối cùng",
     topic: "Robot vệ binh cổ đại tỉnh dậy giữa sa mạc cát đỏ để hoàn thành mệnh lệnh cuối cùng bảo vệ mầm cây sự sống",
     style: "anime",
-    emoji: "🤖"
+    emoji: "",
+    tag: "Anime"
   },
   {
     title: "Đế chế La Mã",
     topic: "Sự trỗi dậy của các quân đoàn La Mã cổ đại và cuộc vây hãm thành cổ",
     style: "documentary",
-    emoji: "🏛️"
+    emoji: "",
+    tag: "History"
   }
 ]
 
-const STYLES: StyleOption[] = [
-  { id: 'cinematic', label: 'Cinematic', desc: 'Điện ảnh 35mm, ánh sáng kịch tính', emoji: '🎬', gradient: 'from-amber-500/20 to-orange-500/10' },
-  { id: 'anime', label: 'Anime', desc: 'Phong cách Makoto Shinkai rực rỡ', emoji: '🌸', gradient: 'from-pink-500/20 to-purple-500/10' },
-  { id: 'noir', label: 'Film Noir', desc: 'Độ tương phản cao, bóng tối cổ điển', emoji: '🕵️', gradient: 'from-slate-700/30 to-slate-900/40' },
-  { id: 'documentary', label: 'Documentary', desc: 'Ảnh tư liệu National Geographic 8K', emoji: '🌍', gradient: 'from-emerald-500/20 to-teal-500/10' },
+const STYLES: (StyleOption & { tag: string })[] = [
+  { id: 'cinematic', label: 'Cinematic 35mm', desc: 'Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp', emoji: '', gradient: '', tag: '35mm Film' },
+  { id: 'anime', label: 'Anime Studio', desc: 'Màu sắc Makoto Shinkai rực rỡ, chi tiết', emoji: '', gradient: '', tag: 'Animation' },
+  { id: 'noir', label: 'Film Noir', desc: 'Độ tương phản cao, bóng đổ bí ẩn kinh điển', emoji: '', gradient: '', tag: 'Classic Noir' },
+  { id: 'documentary', label: 'Documentary 8K', desc: 'Ảnh tư liệu thực tế National Geographic', emoji: '', gradient: '', tag: 'Photoreal' },
 ]
 
 export interface ProductionFormProps {
@@ -207,47 +206,42 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   }
 
   return (
-    <Card className="border-slate-800/80 bg-gradient-to-b from-[#0F1628]/95 to-[#090D18]/95 shadow-2xl">
-      <CardHeader className="pb-4 border-b border-slate-800/80">
+    <Card id="director-inspector" className="border-white/[0.08] bg-[#0E1119] shadow-xl">
+      <CardHeader className="pb-3.5 border-b border-white/[0.06]">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-rose-500 flex items-center justify-center text-slate-950 shadow-md shadow-amber-500/20 font-bold">
-              <Wand2 className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#141824] border border-white/[0.1] flex items-center justify-center text-amber-400 shrink-0 shadow-sm">
+              <Clapperboard className="w-4 h-4" />
             </div>
             <div>
-              <CardTitle className="text-base font-extrabold text-white flex items-center gap-2">
-                <span>Khởi tạo Dự án Phim</span>
+              <CardTitle className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
+                <span>DIRECTOR INSPECTOR</span>
               </CardTitle>
-              <CardDescription className="text-xs text-slate-400">
-                Studio tự động viết kịch bản, vẽ hình, lồng tiếng và làm chuyển động
+              <CardDescription className="text-[11px] text-slate-400">
+                Thiết lập kịch bản, phong cách điện ảnh & động cơ AI
               </CardDescription>
             </div>
           </div>
-          <Badge variant="default" className="text-[10px] uppercase font-bold tracking-wider">
-            AI Engine
+          <Badge variant="outline" className="text-[10px] font-mono border-white/[0.08] text-slate-400">
+            {aspectRatio} • {duration}M
           </Badge>
         </div>
       </CardHeader>
 
-      <CardContent className="pt-5 space-y-6">
+      <CardContent className="pt-4 space-y-5">
         {/* Series Continuation Alert Banner if active */}
         {parentProjectId && (
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-indigo-950/40 to-amber-500/10 border border-amber-500/50 flex items-center justify-between gap-3 shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-black shadow-md shadow-amber-500/30 shrink-0">
-                <Clapperboard className="w-5 h-5" />
+          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0">
+                EP{episode}
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase text-amber-300">
-                    Chế độ Phim Bộ (Series Mode)
-                  </span>
-                  <Badge variant="default" className="text-[10px] bg-amber-400 text-slate-950 font-black">
-                    TẬP {episode}
-                  </Badge>
-                </div>
-                <p className="text-xs text-slate-200 mt-0.5">
-                  Đang sản xuất tiếp nối từ: <strong className="text-white">{seriesTitle || 'Tập trước'}</strong>. Studio sẽ tự động kế thừa nhân vật, giọng đọc và hạt giống AI từ tập trước.
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold uppercase text-amber-400 block tracking-wider">
+                  Chế độ Phim Bộ (Series Mode)
+                </span>
+                <p className="text-xs text-slate-200 truncate">
+                  Tiếp nối: <strong className="text-white">{seriesTitle || 'Tập trước'}</strong> (Kế thừa nhân vật & style)
                 </p>
               </div>
             </div>
@@ -260,8 +254,8 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                 setEpisode(1)
                 onResetSeries?.()
               }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
-              title="Hủy liên kết tập phim để tạo phim độc lập"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
+              title="Hủy liên kết tập phim"
             >
               <X className="w-4 h-4" />
             </button>
@@ -271,25 +265,22 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
         {/* Preset chips */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Gợi ý ý tưởng bom tấn</span>
+            <label className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Sparkles className="w-3 h-3 text-amber-400" />
+              <span>Gợi ý kịch bản mẫu</span>
             </label>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="flex flex-wrap gap-1.5">
             {PRESET_IDEAS.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleApplyPreset(p)}
                 disabled={isRunning}
-                className="p-3 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 hover:border-amber-500/40 text-left transition-all hover:scale-[1.01] active:scale-[0.99] disabled:opacity-40 cursor-pointer flex items-start gap-2.5"
+                className="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1A2030] border border-white/[0.07] hover:border-amber-500/40 text-left transition-colors cursor-pointer flex items-center gap-2"
               >
-                <span className="text-lg flex-shrink-0 mt-0.5">{p.emoji}</span>
-                <div className="min-w-0">
-                  <span className="text-xs font-bold text-slate-200 block leading-snug">{p.title}</span>
-                  <span className="text-[11px] text-slate-400 block mt-0.5 leading-snug line-clamp-1">{p.topic}</span>
-                </div>
+                <span className="text-[10px] font-mono uppercase px-1 py-0.2 rounded bg-white/[0.05] text-amber-400/90 font-bold border border-white/[0.06]">{p.tag}</span>
+                <span className="text-xs font-medium text-slate-200">{p.title}</span>
               </button>
             ))}
           </div>
@@ -297,8 +288,8 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
 
         {/* Topic Input */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-            Nội dung / Cốt truyện của bộ phim
+          <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5">
+            Ý tưởng cốt truyện / Đề tài bộ phim
           </label>
           <div className="relative">
             <textarea
@@ -306,19 +297,19 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               onChange={(e) => setTopic(e.target.value)}
               disabled={isRunning}
               rows={3}
-              placeholder="Nhập đề tài hoặc tiền đề bộ phim muốn tạo..."
-              className="w-full px-4 py-3 rounded-xl bg-slate-950/80 border border-slate-800 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/80 transition-all resize-none disabled:opacity-50 font-normal leading-relaxed shadow-inner"
+              placeholder="Nhập đề tài hoặc tiền đề bộ phim muốn sản xuất..."
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#080A10] border border-white/[0.08] text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-amber-500/80 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
             />
           </div>
         </div>
 
         {/* Visual Style Selection */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <Palette className="w-3.5 h-3.5 text-rose-400" />
-            <span>Phong cách hình ảnh nghệ thuật (Flux DNA)</span>
+          <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Palette className="w-3.5 h-3.5 text-amber-400" />
+            <span>Phong cách hình ảnh điện ảnh</span>
           </label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {STYLES.map((st) => {
               const isSelected = style === st.id
               return (
@@ -327,19 +318,18 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   type="button"
                   onClick={() => setStyle(st.id)}
                   disabled={isRunning}
-                  className={`p-3 rounded-xl border text-left transition-all relative overflow-hidden hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${
+                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-gradient-to-r from-amber-500/15 to-rose-500/15 border-amber-500/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/50'
-                      : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                      ? 'bg-[#181D2A] border-amber-500/80 shadow-sm'
+                      : 'bg-[#10131B] border-white/[0.06] hover:border-white/[0.14]'
                   }`}
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{st.emoji}</span>
-                    <span className={`text-xs font-bold ${isSelected ? 'text-amber-300' : 'text-slate-200'}`}>
-                      {st.label}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 leading-snug">{st.desc}</p>
+                  <span className={`text-xs font-bold block mb-0.5 ${isSelected ? 'text-amber-400' : 'text-slate-200'}`}>
+                    {st.label}
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tight block">
+                    {st.tag}
+                  </span>
                 </button>
               )
             })}
@@ -347,10 +337,10 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
         </div>
 
         {/* Language, Aspect Ratio & Duration */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Languages className="w-3.5 h-3.5 text-indigo-400" />
+            <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <Languages className="w-3.5 h-3.5 text-slate-400" />
               <span>Ngôn ngữ thoại</span>
             </label>
             <CustomSelect
@@ -362,34 +352,56 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Film className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Tỉ lệ khung hình</span>
+            <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <Film className="w-3.5 h-3.5 text-slate-400" />
+              <span>Khung hình</span>
             </label>
-            <CustomSelect
-              value={aspectRatio}
-              onChange={setAspectRatio}
-              options={ASPECT_RATIO_OPTIONS}
-              disabled={isRunning}
-            />
+            <div className="grid grid-cols-2 gap-1.5 bg-[#080A10] p-1 rounded-xl border border-white/[0.08]">
+              <button
+                type="button"
+                onClick={() => setAspectRatio('16:9')}
+                disabled={isRunning}
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  aspectRatio === '16:9'
+                    ? 'bg-[#181D2A] text-amber-400 font-bold border border-white/[0.08]'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span>16:9</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAspectRatio('9:16')}
+                disabled={isRunning}
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  aspectRatio === '9:16'
+                    ? 'bg-[#181D2A] text-amber-400 font-bold border border-white/[0.08]'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>9:16</span>
+              </button>
+            </div>
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
               <span>Thời lượng phim</span>
             </label>
-            <div className="grid grid-cols-4 gap-1.5">
+            <div className="grid grid-cols-4 gap-1 bg-[#080A10] p-1 rounded-xl border border-white/[0.08]">
               {[1, 3, 5, 30].map((d) => (
                 <button
                   key={d}
                   type="button"
                   onClick={() => setDuration(d)}
                   disabled={isRunning}
-                  className={`py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                  className={`py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
                     duration === d
-                      ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20'
-                      : 'bg-slate-900/80 border-slate-800 text-slate-300 hover:bg-slate-800'
+                      ? 'bg-amber-500 text-slate-950 shadow-sm'
+                      : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
                   }`}
                 >
                   {d}m
@@ -404,10 +416,10 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+            className="flex items-center gap-2 text-xs font-mono font-semibold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
           >
             <Settings2 className="w-3.5 h-3.5" />
-            <span>{showAdvanced ? 'Thu gọn cài đặt động cơ' : 'Tùy chỉnh động cơ LLM, Motion & Lip-Sync'}</span>
+            <span>{showAdvanced ? 'Thu gọn cài đặt động cơ [-]' : 'Cài đặt Động cơ AI (LLM, Motion, SadTalker) [+]'}</span>
           </button>
 
           {showAdvanced && (
@@ -701,28 +713,28 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
         {/* Pause for Review Switch */}
         <div
           onClick={() => setPauseAfterScript(!pauseAfterScript)}
-          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+          className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
             pauseAfterScript
-              ? 'bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/10'
-              : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'
+              ? 'bg-[#161B28] border-amber-500/60'
+              : 'bg-[#10131B] border-white/[0.06] hover:border-white/[0.12]'
           }`}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <div
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
                 pauseAfterScript
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-md shadow-amber-500/30'
-                  : 'bg-slate-800 text-slate-400'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'bg-white/[0.06] text-slate-400'
               }`}
             >
-              <FileEdit className="w-4 h-4" />
+              <FileEdit className="w-3.5 h-3.5" />
             </div>
             <div>
-              <span className={`text-xs font-bold block ${pauseAfterScript ? 'text-amber-300' : 'text-slate-200'}`}>
-                Duyệt & Sửa Kịch Bản Trước Khi Quay
+              <span className={`text-xs font-semibold block ${pauseAfterScript ? 'text-amber-400' : 'text-slate-200'}`}>
+                Duyệt & Chỉnh Sửa Kịch Bản Trước Khi Render
               </span>
               <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
-                Studio sẽ tạm dừng sau Giai đoạn 1 để bạn xem, sửa lời thoại, đổi giọng trước khi render phim
+                Tạm dừng sau Hồi 1 để bạn duyệt phân cảnh, sửa lời thoại & đổi giọng
               </span>
             </div>
           </div>
@@ -737,28 +749,28 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
         {/* Hardsub Burn-in Switch */}
         <div
           onClick={() => setHardsub(!hardsub)}
-          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
+          className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
             hardsub
-              ? 'bg-cyan-500/10 border-cyan-500/50 shadow-md shadow-cyan-500/10'
-              : 'bg-slate-900/60 border-slate-800/80 hover:border-slate-700'
+              ? 'bg-[#161B28] border-amber-500/60'
+              : 'bg-[#10131B] border-white/[0.06] hover:border-white/[0.12]'
           }`}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <div
-              className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
                 hardsub
-                  ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/30'
-                  : 'bg-slate-800 text-slate-400'
+                  ? 'bg-amber-500 text-slate-950 font-bold'
+                  : 'bg-white/[0.06] text-slate-400'
               }`}
             >
-              <Film className="w-4 h-4" />
+              <Film className="w-3.5 h-3.5" />
             </div>
             <div>
-              <span className={`text-xs font-bold block ${hardsub ? 'text-cyan-300' : 'text-slate-200'}`}>
-                In phụ đề trực tiếp vào video (Hardsub TikTok / Shorts)
+              <span className={`text-xs font-semibold block ${hardsub ? 'text-amber-400' : 'text-slate-200'}`}>
+                In phụ đề trực tiếp vào video (Hardsub)
               </span>
               <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
-                Chữ vàng viền đen dày chạy trực tiếp trên từng khung hình, tối ưu cho video ngắn
+                Khắc phụ đề điện ảnh / karaoke viền đen sắc nét trực tiếp vào video
               </span>
             </div>
           </div>
@@ -766,21 +778,20 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
             type="checkbox"
             checked={hardsub}
             onChange={(e) => setHardsub(e.target.checked)}
-            className="w-4 h-4 rounded text-cyan-500 focus:ring-cyan-400 bg-slate-950 border-slate-700 cursor-pointer"
+            className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-700 cursor-pointer"
           />
         </div>
 
         {/* Submit Button */}
-        <div className="pt-1">
+        <div className="pt-2">
           <Button
             type="submit"
             onClick={handleSubmit}
-            variant="gradient"
             size="lg"
             disabled={isRunning || !topic.trim()}
-            className="w-full py-6 text-sm tracking-wide gap-3 uppercase font-extrabold shadow-amber-500/25"
+            className="w-full py-4 text-xs sm:text-sm tracking-wider gap-2.5 font-bold uppercase bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-400/40 shadow-sm cursor-pointer"
           >
-            <Play className="w-5 h-5 fill-current" />
+            <Play className="w-4 h-4 fill-current" />
             <span>
               {isRunning
                 ? pauseAfterScript

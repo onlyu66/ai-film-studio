@@ -83,18 +83,18 @@ export function CustomSelect({
         disabled={disabled}
         onClick={handleToggle}
         className={cn(
-          "w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left text-xs font-medium transition-all duration-200 select-none cursor-pointer",
-          "bg-slate-950/80 border border-slate-800 hover:border-slate-700 hover:bg-slate-900/90 text-slate-100",
-          isOpen && "ring-2 ring-amber-500/40 border-amber-500/80 bg-slate-900",
-          disabled && "opacity-50 cursor-not-allowed hover:border-slate-800"
+          "w-full flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs font-medium transition-all duration-150 select-none cursor-pointer",
+          "bg-[#121622] border border-white/[0.08] hover:border-white/[0.16] hover:bg-[#161B28] text-slate-100",
+          isOpen && "border-amber-500/70 bg-[#161B28]",
+          disabled && "opacity-50 cursor-not-allowed hover:border-white/[0.08]"
         )}
       >
         <div className="flex items-center gap-2.5 min-w-0 pr-2">
           {selectedOption?.icon && (
-            <span className="text-base flex-shrink-0">{selectedOption.icon}</span>
+            <span className="text-sm flex-shrink-0 text-slate-300">{selectedOption.icon}</span>
           )}
           <div className="flex flex-col min-w-0">
-            <span className="font-semibold text-slate-200 text-xs truncate">
+            <span className="font-semibold text-slate-100 text-xs truncate">
               {selectedOption ? selectedOption.label : placeholder}
             </span>
             {selectedOption?.subtext && (
@@ -107,7 +107,7 @@ export function CustomSelect({
 
         <ChevronDown
           className={cn(
-            "w-4 h-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ml-1.5",
+            "w-3.5 h-3.5 text-slate-400 transition-transform duration-200 flex-shrink-0 ml-1.5",
             isOpen && (openUpward ? "-rotate-180 text-amber-400" : "rotate-180 text-amber-400")
           )}
         />
@@ -117,8 +117,8 @@ export function CustomSelect({
       {isOpen && (
         <div
           className={cn(
-            "absolute z-[100] min-w-full w-max max-w-[calc(100vw-2rem)] sm:max-w-md p-1.5 rounded-2xl bg-[#090D18]/95 backdrop-blur-2xl border border-slate-700/80 shadow-2xl shadow-black/95 max-h-64 overflow-y-auto animate-fadeIn space-y-1",
-            openUpward ? "bottom-full mb-2" : "top-full mt-2",
+            "absolute z-[100] min-w-full w-max max-w-[calc(100vw-2rem)] sm:max-w-md p-1.5 rounded-xl bg-[#0F121A] border border-white/[0.12] shadow-2xl shadow-black/90 max-h-64 overflow-y-auto animate-fadeIn space-y-1",
+            openUpward ? "bottom-full mb-1.5" : "top-full mt-1.5",
             alignRight ? "right-0" : "left-0"
           )}
         >

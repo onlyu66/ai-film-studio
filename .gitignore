@@ -7,4 +7,5 @@ outputs/
 .env
 web/node_modules/
 *.tsbuildinfo
+.agent/
 

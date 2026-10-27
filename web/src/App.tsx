@@ -201,7 +201,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#06080F] text-slate-100 flex flex-col font-sans selection:bg-amber-500/30 selection:text-amber-300">
+    <div className="min-h-screen bg-cinema-canvas text-zinc-100 flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-300">
       <Navbar
         status={status}
         onClean={handleClean}
@@ -218,40 +218,40 @@ export default function App() {
               initial={{ opacity: 0, y: -20, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-950/90 via-[#0B1322] to-indigo-950/90 border border-emerald-500/50 shadow-2xl shadow-emerald-500/10 flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
+              className="p-5 sm:p-6 rounded-2xl bg-cinema-deck border border-emerald-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shadow-inner">
-                  <CheckCircle2 className="w-8 h-8" />
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                  <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Master Production Finished</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/20 text-emerald-300">100% COMPLETE</span>
+                    <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-emerald-400">Master Production Finished</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">100% COMPLETE</span>
                   </div>
-                  <h3 className="text-lg font-black text-white mt-0.5">Bộ phim của bạn đã sẵn sàng trình chiếu!</h3>
-                  <p className="text-xs text-slate-300 mt-1">Đã hoàn tất quy trình 5 giai đoạn: Kịch bản, Audio, Hình ảnh Flux, Chuyển động & Hậu kỳ.</p>
+                  <h3 className="text-base font-bold text-zinc-100 mt-0.5">Bộ phim của bạn đã sẵn sàng trình chiếu!</h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">Đã hoàn tất quy trình 5 giai đoạn: Kịch bản, Audio, Hình ảnh Flux, Chuyển động & Hậu kỳ.</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
                 <Button
                   variant="secondary"
-                  size="lg"
+                  size="default"
                   onClick={handleOpenCurrentMovieSeo}
-                  className="gap-2 font-bold text-xs border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 cursor-pointer"
+                  className="gap-2 font-medium text-xs border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 cursor-pointer"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Share2 className="w-3.5 h-3.5" />
                   <span>Xuất Bản & SEO</span>
                 </Button>
 
                 <Button
                   variant="default"
-                  size="lg"
+                  size="default"
                   onClick={handlePlayCurrentMovie}
-                  className="gap-2.5 font-black text-sm bg-gradient-to-r from-emerald-400 to-teal-400 hover:from-emerald-300 hover:to-teal-300 text-slate-950 shadow-lg shadow-emerald-500/30 cursor-pointer"
+                  className="gap-2 font-bold text-xs bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-md shadow-emerald-500/20 cursor-pointer"
                 >
-                  <MonitorPlay className="w-5 h-5 fill-current" />
+                  <MonitorPlay className="w-4 h-4 fill-current" />
                   <span>Xem Phim Ngay</span>
                 </Button>
               </div>
@@ -266,54 +266,54 @@ export default function App() {
               initial={{ opacity: 0, y: -20, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-amber-950/90 via-[#181206] to-amber-950/90 border border-amber-500/50 shadow-2xl shadow-amber-500/10 flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
+              className="p-5 sm:p-6 rounded-2xl bg-cinema-deck border border-amber-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-inner shrink-0">
-                  <FileEdit className="w-7 h-7" />
+                <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-cinema-amber shrink-0">
+                  <FileEdit className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Review & Edit Screenplay Mode</span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300">STAGE 1 HOÀN TẤT</span>
+                    <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-cinema-amber">Review & Edit Screenplay Mode</span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">STAGE 1 COMPLETE</span>
                   </div>
-                  <h3 className="text-lg font-black text-white mt-0.5">Kịch bản & Phân cảnh đã sẵn sàng để bạn duyệt!</h3>
-                  <p className="text-xs text-slate-300 mt-1">
+                  <h3 className="text-base font-bold text-zinc-100 mt-0.5">Kịch bản & Phân cảnh đã sẵn sàng để bạn duyệt!</h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">
                     Hãy kiểm tra và chỉnh sửa lời thoại, visual prompt, góc máy hoặc đổi giọng nhân vật ở bảng phân cảnh bên dưới. Khi đã ưng ý, bấm nút tiếp tục để bắt đầu quay phim.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                 <Button
                   variant="secondary"
-                  size="lg"
+                  size="default"
                   onClick={() => {
                     const el = document.getElementById('storyboard-section')
                     el?.scrollIntoView({ behavior: 'smooth' })
                   }}
-                  className="gap-2 font-bold text-xs border-amber-500/50 text-amber-300 hover:bg-amber-500/20 cursor-pointer shadow-md"
+                  className="gap-2 font-medium text-xs border-amber-500/40 text-amber-300 hover:bg-amber-500/10 cursor-pointer"
                 >
-                  <FileEdit className="w-4 h-4" />
+                  <FileEdit className="w-3.5 h-3.5" />
                   <span>Sửa kịch bản ({storyboard?.shots?.length || status.shots_count || 0} cảnh) ↓</span>
                 </Button>
 
                 <Button
                   variant="default"
-                  size="lg"
+                  size="default"
                   onClick={handleContinue}
                   disabled={continueMutation.isPending}
-                  className="gap-2.5 font-black text-sm bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 text-slate-950 shadow-lg shadow-amber-500/30 shrink-0 cursor-pointer"
+                  className="gap-2 font-bold text-xs bg-cinema-amber hover:bg-amber-400 text-zinc-950 shadow-md shadow-amber-500/20 shrink-0 cursor-pointer"
                 >
                   {continueMutation.isPending ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Đang kích hoạt...</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-5 h-5 fill-current" />
-                      <span>TIẾP TỤC SẢN XUẤT (STAGES 2 - 5)</span>
+                      <Play className="w-4 h-4 fill-current" />
+                      <span>Tiếp tục sản xuất (Stages 2 - 5)</span>
                     </>
                   )}
                 </Button>
@@ -389,8 +389,8 @@ export default function App() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-900/90 py-6 text-center text-xs text-slate-600 font-medium">
-        AI Film Studio &copy; 2026 — Built with React, TypeScript, TanStack Query, Axios, Vite & Tailwind CSS
+      <footer className="border-t border-cinema-border py-6 text-center text-xs text-zinc-600 font-mono">
+        AI FILM STUDIO PRO &copy; 2026 — Cinema Workstation Edition
       </footer>
     </div>
   )

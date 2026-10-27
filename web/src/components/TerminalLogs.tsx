@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Terminal, Copy, Check, ArrowDownCircle } from 'lucide-react'
+import { Terminal, Copy, Check, ArrowDownCircle, Clock } from 'lucide-react'
 import { Badge } from './ui/badge'
 import { cn } from '../lib/utils'
 
@@ -27,31 +27,29 @@ export default function TerminalLogs({ logs, className }: TerminalLogsProps) {
   }
 
   return (
-    <div className={cn("bg-[#06080F] border border-slate-800/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full min-h-[420px]", className)}>
+    <div className={cn("bg-cinema-deck border border-cinema-border rounded-xl overflow-hidden shadow-xl flex flex-col h-full min-h-[420px]", className)}>
       {/* Console Header */}
-      <div className="px-4 py-3 bg-[#0A0E18] border-b border-slate-800 flex items-center justify-between flex-shrink-0">
+      <div className="px-4 py-3 bg-cinema-card border-b border-cinema-border flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-400">
+          <div className="w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center text-cinema-amber">
             <Terminal className="w-3.5 h-3.5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-slate-200">Studio Execution Console</span>
-              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-mono">
-                {logs?.length || 0} events
-              </Badge>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-semibold text-zinc-200">Execution Console</span>
+            <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-mono bg-cinema-deck border-cinema-border text-zinc-400">
+              {logs?.length || 0} events
+            </Badge>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => setAutoScroll(!autoScroll)}
             className={`text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${
               autoScroll
                 ? 'bg-amber-500/10 text-amber-300 border-amber-500/30'
-                : 'bg-slate-800 text-slate-400 border-slate-700'
+                : 'bg-zinc-800 text-zinc-400 border-zinc-700'
             }`}
             title="Tự động cuộn theo log mới nhất"
           >
@@ -63,7 +61,7 @@ export default function TerminalLogs({ logs, className }: TerminalLogsProps) {
             type="button"
             onClick={handleCopy}
             disabled={!logs?.length}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors disabled:opacity-30 cursor-pointer"
+            className="p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30 cursor-pointer"
             title="Sao chép toàn bộ nhật ký"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -74,12 +72,12 @@ export default function TerminalLogs({ logs, className }: TerminalLogsProps) {
       {/* Logs Output Body */}
       <div
         ref={scrollRef}
-        className="p-4 flex-1 overflow-y-auto font-mono text-[11px] sm:text-xs space-y-1.5 text-slate-300 select-text leading-relaxed bg-[#05070D]"
+        className="p-4 flex-1 overflow-y-auto font-mono text-[11px] sm:text-xs space-y-1.5 text-zinc-300 select-text leading-relaxed bg-cinema-canvas"
       >
         {(!logs || logs.length === 0) ? (
-          <div className="text-slate-600 italic py-12 text-center flex flex-col items-center justify-center gap-2">
-            <span className="text-2xl">⏳</span>
-            <span>[Studio Idle] Hệ thống đang ở trạng thái chờ lệnh sản xuất phim...</span>
+          <div className="text-zinc-600 italic py-16 text-center flex flex-col items-center justify-center gap-2">
+            <Clock className="w-6 h-6 text-zinc-700 stroke-[1.5]" />
+            <span className="text-xs">[Studio Idle] Hệ thống đang ở trạng thái chờ lệnh sản xuất phim...</span>
           </div>
         ) : (
           logs.map((log, index) => {
@@ -92,12 +90,12 @@ export default function TerminalLogs({ logs, className }: TerminalLogsProps) {
                 key={index}
                 className={`font-mono transition-colors break-words ${
                   isError
-                    ? 'text-rose-400 bg-rose-500/5 px-2 py-0.5 rounded border-l-2 border-rose-500'
+                    ? 'text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border-l-2 border-rose-500'
                     : isSuccess
-                    ? 'text-emerald-400 font-semibold'
+                    ? 'text-emerald-400 font-medium'
                     : isStage
-                    ? 'text-amber-300 font-bold bg-amber-500/5 px-2 py-0.5 rounded border-l-2 border-amber-400'
-                    : 'text-slate-400'
+                    ? 'text-cinema-amber font-semibold bg-amber-500/[0.08] px-2 py-0.5 rounded border-l-2 border-cinema-amber'
+                    : 'text-zinc-400'
                 }`}
               >
                 {log}
