@@ -497,6 +497,9 @@ class UpdateShotRequest(BaseModel):
     dialogue: Optional[str] = None
     image_prompt: Optional[str] = None
     motion: Optional[str] = None
+    character_id: Optional[str] = None
+    sfx: Optional[str] = None
+    mood: Optional[str] = None
 
 @app.post("/api/storyboard/update-shot")
 def update_shot(req: UpdateShotRequest):
@@ -524,6 +527,15 @@ def update_shot(req: UpdateShotRequest):
             if audio_file.exists():
                 audio_file.unlink(missing_ok=True)
 
+        if req.character_id is not None:
+            old_char = target_shot.get("character_id")
+            new_char = req.character_id if req.character_id else None
+            target_shot["character_id"] = new_char
+            if old_char != new_char:
+                audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
+                if audio_file.exists():
+                    audio_file.unlink(missing_ok=True)
+
         if req.image_prompt is not None:
             target_shot["image_prompt"] = req.image_prompt
             image_file = Path(f"outputs/images/{req.shot_id}.png")
@@ -532,6 +544,12 @@ def update_shot(req: UpdateShotRequest):
 
         if req.motion is not None:
             target_shot["motion"] = req.motion
+
+        if req.sfx is not None:
+            target_shot["sfx"] = req.sfx if req.sfx else None
+
+        if req.mood is not None:
+            target_shot["mood"] = req.mood if req.mood else None
 
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)

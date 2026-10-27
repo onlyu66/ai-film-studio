@@ -221,7 +221,7 @@ export default function ProjectLibraryModal({
                             <button
                               type="button"
                               onClick={() => p.video_url && onPlayMovie(p.video_url, p.srt_url)}
-                              className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 cursor-pointer border border-zinc-700"
+                              className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-studio-input text-zinc-300 hover:bg-studio-card cursor-pointer border border-studio-border"
                               title="Bản gốc"
                             >
                               Gốc ({p.lang.toUpperCase()})
@@ -246,7 +246,7 @@ export default function ProjectLibraryModal({
                               <button
                                 type="button"
                                 onClick={() => onPlayMovie(p.video_url!, p.srt_url)}
-                                className="flex-1 py-1.5 rounded-lg bg-cinema-amber hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                                className="flex-1 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm"
                               >
                                 <Play className="w-3.5 h-3.5 fill-current" />
                                 <span>Xem</span>
@@ -256,7 +256,7 @@ export default function ProjectLibraryModal({
                             <button
                               type="button"
                               onClick={() => setDubbingProject(p)}
-                              className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer"
                               title="Lồng tiếng đa quốc gia 1-Click (Auto-Dub)"
                             >
                               <Globe className="w-3.5 h-3.5" />
@@ -266,7 +266,7 @@ export default function ProjectLibraryModal({
                               <button
                                 type="button"
                                 onClick={() => onOpenSeo(p.id)}
-                                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer"
                                 title="Mở trung tâm xuất bản & tối ưu SEO"
                               >
                                 <Share2 className="w-3.5 h-3.5" />
@@ -288,7 +288,7 @@ export default function ProjectLibraryModal({
                               <a
                                 href={p.video_url}
                                 download
-                                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer flex items-center justify-center"
                                 title="Tải file video MP4"
                               >
                                 <Download className="w-3.5 h-3.5" />
@@ -299,7 +299,7 @@ export default function ProjectLibraryModal({
                               type="button"
                               onClick={() => handleDelete(p)}
                               disabled={deleteProjectMutation.isPending}
-                              className="p-1.5 rounded-lg bg-zinc-800 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-zinc-700 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg bg-studio-input hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-studio-border hover:border-rose-500/30 transition-colors cursor-pointer"
                               title="Xóa bộ phim khỏi thư viện"
                             >
                               <Trash2 className="w-3.5 h-3.5" />

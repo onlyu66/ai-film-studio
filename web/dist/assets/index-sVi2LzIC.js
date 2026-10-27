@@ -30026,7 +30026,7 @@ const VOICE_OPTIONS_BY_LANG = {
   ]
 };
 function StoryboardView({ storyboard, isScriptReady, onContinue }) {
-  var _a2, _b2;
+  var _a2;
   const [activeTab, setActiveTab] = reactExports.useState("shots");
   const [searchQuery, setSearchQuery] = reactExports.useState("");
   const [lightboxImage, setLightboxImage] = reactExports.useState(null);
@@ -30036,6 +30036,8 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
   const [editDialogue, setEditDialogue] = reactExports.useState("");
   const [editPrompt, setEditPrompt] = reactExports.useState("");
   const [editMotion, setEditMotion] = reactExports.useState("zoom_in");
+  const [editCharacterId, setEditCharacterId] = reactExports.useState("");
+  const [editSfx, setEditSfx] = reactExports.useState("");
   const [playingVoice, setPlayingVoice] = reactExports.useState(null);
   const [rerollingShotId, setRerollingShotId] = reactExports.useState(null);
   const [uploadingShotId, setUploadingShotId] = reactExports.useState(null);
@@ -30227,11 +30229,21 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
       }
     );
   };
+  const characterOptions = [
+    { value: "", label: "Cảnh quay chung / Thuyết minh", subtext: "Không gán nhân vật cụ thể" },
+    ...Object.entries(characters).map(([id2, char]) => ({
+      value: id2,
+      label: char.name || id2,
+      subtext: `ID: ${id2}${char.voice ? ` • Giọng: ${char.voice}` : ""}`
+    }))
+  ];
   const handleOpenEditShot = (shot) => {
     setEditingShot(shot);
     setEditDialogue(shot.dialogue || "");
     setEditPrompt(shot.image_prompt || "");
     setEditMotion(shot.motion || "zoom_in");
+    setEditCharacterId(shot.character_id || "");
+    setEditSfx(shot.sfx || "");
   };
   const handleSaveShot = (e) => {
     e.preventDefault();
@@ -30241,14 +30253,16 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
         shot_id: editingShot.id,
         dialogue: editDialogue,
         image_prompt: editPrompt,
-        motion: editMotion
+        motion: editMotion,
+        character_id: editCharacterId || void 0,
+        sfx: editSfx || void 0
       },
       {
         onSuccess: () => {
           setEditingShot(null);
         },
         onError: (err) => {
-          alert(err.message || "Lỗi khi cập nhật phân cảnh");
+          alert((err == null ? void 0 : err.message) || "Lỗi khi cập nhật phân cảnh");
         }
       }
     );
@@ -30370,22 +30384,22 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
           {
             whileHover: { y: -2 },
             transition: { duration: 0.15 },
-            className: "p-4 rounded-xl bg-cinema-card border border-cinema-border hover:border-cinema-border-hover transition-all flex flex-col justify-between",
+            className: "p-4 sm:p-5 rounded-2xl bg-studio-card border border-studio-border hover:border-studio-border-hover shadow-studio-sm hover:shadow-studio-md transition-all flex flex-col justify-between",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-3", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-3.5", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 h-12 rounded-xl bg-zinc-800 border border-cinema-border flex items-center justify-center shadow-inner overflow-hidden relative group shrink-0", children: char.headshot_url ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 h-12 rounded-xl bg-studio-input border border-studio-border flex items-center justify-center shadow-inner overflow-hidden relative group shrink-0", children: char.headshot_url ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "img",
                       {
                         src: char.headshot_url,
                         alt: char.name,
                         className: "w-full h-full object-cover"
                       }
-                    ) : /* @__PURE__ */ jsxRuntimeExports.jsx(User, { className: "w-6 h-6 text-zinc-400 stroke-[1.5]" }) }),
+                    ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-500/10 to-transparent", children: /* @__PURE__ */ jsxRuntimeExports.jsx(User, { className: "w-6 h-6 text-zinc-400 stroke-[1.5]" }) }) }),
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-sm font-bold text-zinc-100", children: char.name }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-mono text-cinema-amber", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-mono text-amber-400 font-semibold", children: [
                         "ID: ",
                         id2
                       ] })
@@ -30396,27 +30410,27 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                     String(char.seed ?? "")
                   ] })
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-3 rounded-lg bg-cinema-deck border border-cinema-border mb-3", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-3 rounded-xl bg-studio-input border border-studio-border/70 mb-3.5", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-semibold uppercase tracking-wider text-zinc-400 block mb-1", children: "Visual DNA Anchor:" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-zinc-300 leading-relaxed font-normal", children: typeof char.visual_anchor === "string" ? char.visual_anchor : JSON.stringify(char.visual_anchor) })
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 mb-3", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 mb-3.5", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs(
                     "button",
                     {
                       type: "button",
                       onClick: () => handleGenerateHeadshot(id2, char),
                       disabled: generatingCharId === id2,
-                      className: "flex-1 py-1 px-2 rounded-md bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer",
+                      className: "flex-1 py-1.5 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer",
                       children: [
-                        generatingCharId === id2 ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3 h-3 animate-spin text-amber-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3 h-3 text-amber-400" }),
+                        generatingCharId === id2 ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-amber-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3.5 h-3.5 text-amber-400" }),
                         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Tạo Headshot AI" })
                       ]
                     }
                   ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "flex-1 py-1 px-2 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer border border-zinc-700", children: [
-                    uploadingCharId === id2 ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3 h-3 animate-spin text-zinc-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Camera, { className: "w-3 h-3 text-zinc-400" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Tải Ảnh Chân Dung" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "flex-1 py-1.5 px-2.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-studio-border", children: [
+                    uploadingCharId === id2 ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-zinc-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Camera, { className: "w-3.5 h-3.5 text-zinc-400" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Tải Chân Dung" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "input",
                       {
@@ -30430,13 +30444,13 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                   ] })
                 ] })
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-3 border-t border-cinema-border space-y-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-3 border-t border-studio-border space-y-2", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between text-[11px]", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[10px] font-semibold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5", children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(Volume2, { className: "w-3.5 h-3.5 text-zinc-400" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Giọng lồng tiếng (Voice)" })
                   ] }),
-                  savingCharId === id2 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-cinema-amber flex items-center gap-1 font-mono font-medium", children: [
+                  savingCharId === id2 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-amber-400 flex items-center gap-1 font-mono font-medium", children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3 h-3 animate-spin" }),
                     " Đang lưu..."
                   ] }) : savedCharId === id2 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] text-emerald-400 flex items-center gap-1 font-mono font-medium", children: [
@@ -30460,7 +30474,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                       type: "button",
                       onClick: () => handlePlayVoice(currentVoice),
                       disabled: playingVoice === currentVoice || previewVoiceMutation.isPending,
-                      className: "p-2.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 text-xs font-medium transition-colors flex items-center justify-center cursor-pointer shrink-0",
+                      className: "p-2.5 rounded-xl bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border text-xs font-medium transition-colors flex items-center justify-center cursor-pointer shrink-0",
                       title: "Nghe thử giọng này",
                       children: playingVoice === currentVoice ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 animate-spin text-zinc-300" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-4 h-4 text-zinc-300" })
                     }
@@ -30552,17 +30566,17 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                     ] })
                   ] })
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2.5 border-t border-studio-border flex items-center justify-between gap-1", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-0.5", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2.5 border-t border-studio-border flex items-center justify-between gap-1.5", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "button",
                       {
                         type: "button",
                         onClick: () => handleMoveShot(index, "up"),
                         disabled: index === 0,
-                        className: "p-1 rounded-md bg-studio-input hover:bg-studio-elevated text-zinc-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer",
+                        className: "p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none border border-studio-border transition-colors cursor-pointer",
                         title: "Đưa lên trước",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowUp, { className: "w-3 h-3" })
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowUp, { className: "w-3.5 h-3.5" })
                       }
                     ),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30571,35 +30585,31 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                         type: "button",
                         onClick: () => handleMoveShot(index, "down"),
                         disabled: index === shots.length - 1,
-                        className: "p-1 rounded-md bg-studio-input hover:bg-studio-elevated text-zinc-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none transition-colors cursor-pointer",
+                        className: "p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none border border-studio-border transition-colors cursor-pointer",
                         title: "Đưa xuống sau",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowDown, { className: "w-3 h-3" })
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(ArrowDown, { className: "w-3.5 h-3.5" })
                       }
                     )
                   ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "button",
                       {
                         type: "button",
                         onClick: () => handleRerollShot(shot.id),
                         disabled: rerollingShotId === shot.id,
-                        className: "p-1.5 rounded-md bg-studio-input hover:bg-studio-elevated text-zinc-300 border border-studio-border transition-colors cursor-pointer flex items-center gap-1 text-[10px]",
-                        title: "Tạo lại ảnh mới bằng AI",
-                        children: [
-                          rerollingShotId === shot.id ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-amber-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3.5 h-3.5 text-amber-400" }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden xl:inline", children: "Vẽ lại" })
-                        ]
+                        className: "p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-amber-400 border border-studio-border hover:border-amber-400/40 transition-colors cursor-pointer flex items-center justify-center shrink-0",
+                        title: "Tạo lại ảnh mới bằng AI (Reroll)",
+                        children: rerollingShotId === shot.id ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-amber-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3.5 h-3.5 text-amber-400" })
                       }
                     ),
                     /* @__PURE__ */ jsxRuntimeExports.jsxs(
                       "label",
                       {
-                        className: "p-1.5 rounded-md bg-studio-input hover:bg-studio-elevated text-zinc-300 border border-studio-border transition-colors cursor-pointer flex items-center gap-1 text-[10px]",
-                        title: "Tải ảnh tùy chỉnh cho cảnh này",
+                        className: "p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border hover:border-studio-border-hover transition-colors cursor-pointer flex items-center justify-center shrink-0",
+                        title: "Tải ảnh tùy chỉnh từ máy tính",
                         children: [
                           /* @__PURE__ */ jsxRuntimeExports.jsx(Upload, { className: "w-3.5 h-3.5 text-zinc-400" }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden xl:inline", children: "Tải ảnh" }),
                           /* @__PURE__ */ jsxRuntimeExports.jsx(
                             "input",
                             {
@@ -30620,10 +30630,10 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                       {
                         type: "button",
                         onClick: () => handleOpenEditShot(shot),
-                        className: "px-2.5 py-1 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-sm",
-                        title: "Sửa lời thoại, visual prompt hoặc góc máy",
+                        className: "px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap",
+                        title: "Sửa lời thoại, nhân vật, visual prompt và góc máy",
                         children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(PenLine, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(PenLine, { className: "w-3.5 h-3.5 text-amber-400" }),
                           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Sửa" })
                         ]
                       }
@@ -30633,7 +30643,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                       {
                         type: "button",
                         onClick: () => handleDeleteShot(shot.id),
-                        className: "p-1.5 rounded-md text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer",
+                        className: "p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-colors cursor-pointer shrink-0",
                         title: "Xóa phân cảnh",
                         children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" })
                       }
@@ -30686,7 +30696,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
         animate: { opacity: 1 },
         exit: { opacity: 0 },
         onClick: () => !updateShotMutation.isPending && setEditingShot(null),
-        className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm cursor-pointer",
+        className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer",
         children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
           motion.div,
           {
@@ -30694,17 +30704,30 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
             animate: { scale: 1, opacity: 1, y: 0 },
             exit: { scale: 0.98, opacity: 0, y: 10 },
             onClick: (e) => e.stopPropagation(),
-            className: "relative w-full max-w-xl rounded-xl bg-cinema-deck border border-cinema-border p-6 shadow-2xl text-left cursor-default overflow-hidden",
+            className: "relative w-full max-w-xl max-h-[92vh] flex flex-col rounded-2xl bg-studio-deck border border-studio-border p-5 sm:p-6 shadow-2xl text-left cursor-default overflow-hidden",
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between pb-4 border-b border-cinema-border", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-mono text-xs font-bold border border-amber-500/20", children: editingShot.id }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between pb-4 border-b border-studio-border shrink-0", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative w-16 h-10 rounded-lg overflow-hidden bg-studio-input border border-studio-border shrink-0", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "img",
+                      {
+                        src: `/api/outputs/images/${editingShot.id}.png?t=${cacheBuster[editingShot.id] || ""}`,
+                        alt: editingShot.id,
+                        onError: (e) => {
+                          e.currentTarget.style.display = "none";
+                        },
+                        className: "w-full h-full object-cover"
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center text-[8px] font-mono text-zinc-600 bg-studio-input -z-10", children: "SHOT" })
+                  ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-bold text-zinc-100", children: "Chỉnh sửa phân cảnh" }),
-                    editingShot.character_id && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[11px] text-zinc-400", children: [
-                      "Nhân vật: ",
-                      /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { className: "text-cinema-amber", children: ((_b2 = characters[editingShot.character_id]) == null ? void 0 : _b2.name) || editingShot.character_id })
-                    ] })
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-mono text-xs font-bold border border-amber-500/20", children: editingShot.id }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-bold text-zinc-100", children: "Chỉnh sửa phân cảnh" })
+                    ] }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-zinc-400 mt-0.5 block", children: "Tùy chỉnh lời thoại, nhân vật phát ngôn và mô tả hình ảnh AI" })
                   ] })
                 ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30713,12 +30736,12 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                     type: "button",
                     disabled: updateShotMutation.isPending,
                     onClick: () => setEditingShot(null),
-                    className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer",
+                    className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer",
                     children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-5 h-5" })
                   }
                 )
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleSaveShot, className: "mt-4 space-y-4", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleSaveShot, className: "mt-4 space-y-4 overflow-y-auto pr-1 flex-1", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Lời thoại nhân vật (Dialogue):" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30728,10 +30751,10 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                       onChange: (e) => setEditDialogue(e.target.value),
                       rows: 3,
                       placeholder: "Nhập lời thoại của nhân vật trong phân cảnh này...",
-                      className: "w-full rounded-lg bg-cinema-canvas border border-cinema-border p-3 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cinema-amber transition-colors font-sans leading-relaxed"
+                      className: "w-full rounded-xl bg-studio-input border border-studio-border p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 transition-colors font-sans leading-relaxed"
                     }
                   ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-zinc-500 mt-1", children: "* Khi thay đổi lời thoại, hệ thống sẽ tự động tổng hợp lại giọng nói TTS cho phân cảnh này." })
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-zinc-400 mt-1", children: "* Khi thay đổi lời thoại, hệ thống sẽ tự động tổng hợp lại giọng nói TTS cho phân cảnh này." })
                 ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Mô tả hình ảnh điện ảnh (Flux Prompt):" }),
@@ -30742,30 +30765,56 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                       onChange: (e) => setEditPrompt(e.target.value),
                       rows: 3,
                       placeholder: "Prompt tạo hình ảnh (tiếng Anh hoặc tiếng Việt)...",
-                      className: "w-full rounded-lg bg-cinema-canvas border border-cinema-border p-3 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cinema-amber transition-colors font-mono leading-relaxed"
+                      className: "w-full rounded-xl bg-studio-input border border-studio-border p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 transition-colors font-mono leading-relaxed"
                     }
                   ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-zinc-500 mt-1", children: "* Khi thay đổi prompt, hình ảnh của phân cảnh này sẽ tự động được vẽ lại bằng Flux." })
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-zinc-400 mt-1", children: "* Khi thay đổi prompt, hình ảnh của phân cảnh này sẽ tự động được vẽ lại bằng Flux." })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3.5", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Nhân vật phát ngôn:" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      CustomSelect,
+                      {
+                        value: editCharacterId,
+                        onChange: setEditCharacterId,
+                        options: characterOptions
+                      }
+                    )
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Góc máy & Chuyển động:" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      CustomSelect,
+                      {
+                        value: editMotion,
+                        onChange: setEditMotion,
+                        options: MOTION_OPTIONS
+                      }
+                    )
+                  ] })
                 ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Góc máy & Chuyển động (Camera Motion):" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Âm thanh môi trường (SFX):" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    CustomSelect,
+                    "input",
                     {
-                      value: editMotion,
-                      onChange: setEditMotion,
-                      options: MOTION_OPTIONS
+                      type: "text",
+                      value: editSfx,
+                      onChange: (e) => setEditSfx(e.target.value),
+                      placeholder: "e.g. rain, thunder, wind, waves...",
+                      className: "w-full rounded-xl bg-studio-input border border-studio-border p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                     }
                   )
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-end gap-2.5 pt-3 border-t border-cinema-border", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-end gap-2.5 pt-4 border-t border-studio-border", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "button",
                     {
                       type: "button",
                       disabled: updateShotMutation.isPending,
                       onClick: () => setEditingShot(null),
-                      className: "px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer",
+                      className: "px-3.5 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer",
                       children: "Hủy bỏ"
                     }
                   ),
@@ -30774,7 +30823,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                     {
                       type: "submit",
                       disabled: updateShotMutation.isPending,
-                      className: "px-4 py-1.5 rounded-lg text-xs font-bold bg-cinema-amber hover:bg-amber-400 text-zinc-950 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors",
+                      className: "px-5 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-zinc-950 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors shadow-md shadow-amber-500/20 active:scale-[0.98]",
                       children: updateShotMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                         /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin" }),
                         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Đang lưu..." })
@@ -30798,7 +30847,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
         animate: { opacity: 1 },
         exit: { opacity: 0 },
         onClick: () => !addShotMutation.isPending && setIsAddingShot(false),
-        className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm cursor-pointer",
+        className: "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer",
         children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
           motion.div,
           {
@@ -30806,11 +30855,11 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
             animate: { scale: 1, opacity: 1, y: 0 },
             exit: { scale: 0.98, opacity: 0, y: 10 },
             onClick: (e) => e.stopPropagation(),
-            className: "relative w-full max-w-xl rounded-xl bg-cinema-deck border border-cinema-border p-6 shadow-2xl text-left cursor-default overflow-hidden",
+            className: "relative w-full max-w-xl max-h-[92vh] flex flex-col rounded-2xl bg-studio-deck border border-studio-border p-5 sm:p-6 shadow-2xl text-left cursor-default overflow-hidden",
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between pb-4 border-b border-cinema-border", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-1.5 rounded-lg bg-amber-500/10 text-amber-300 font-mono text-xs font-bold border border-amber-500/20", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "w-4 h-4" }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between pb-4 border-b border-studio-border shrink-0", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "p-2 rounded-xl bg-amber-500/10 text-amber-300 font-mono text-xs font-bold border border-amber-500/20", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Plus, { className: "w-4 h-4" }) }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-bold text-zinc-100", children: "Chèn thêm phân cảnh mới" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-zinc-400", children: "Tạo một shot quay tùy chỉnh bổ sung vào kịch bản" })
@@ -30822,12 +30871,12 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                     type: "button",
                     disabled: addShotMutation.isPending,
                     onClick: () => setIsAddingShot(false),
-                    className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer",
+                    className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer",
                     children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-5 h-5" })
                   }
                 )
               ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleCreateShot, className: "mt-4 space-y-4", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleCreateShot, className: "mt-4 space-y-4 overflow-y-auto pr-1 flex-1", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Lời thoại / Giọng đọc thuyết minh:" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30837,7 +30886,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                       onChange: (e) => setNewShotDialogue(e.target.value),
                       rows: 2,
                       placeholder: "Nhập lời thoại hoặc lời thuyết minh...",
-                      className: "w-full rounded-lg bg-cinema-canvas border border-cinema-border p-3 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cinema-amber font-sans"
+                      className: "w-full rounded-xl bg-studio-input border border-studio-border p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-sans leading-relaxed"
                     }
                   )
                 ] }),
@@ -30850,11 +30899,22 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                       onChange: (e) => setNewShotPrompt(e.target.value),
                       rows: 2,
                       placeholder: "Ví dụ: cinematic establishing shot of ancient underwater temple, volumetric light...",
-                      className: "w-full rounded-lg bg-cinema-canvas border border-cinema-border p-3 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cinema-amber font-mono"
+                      className: "w-full rounded-xl bg-studio-input border border-studio-border p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono leading-relaxed"
                     }
                   )
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-3", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3.5", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Nhân vật phát ngôn:" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      CustomSelect,
+                      {
+                        value: newShotChar,
+                        onChange: setNewShotChar,
+                        options: characterOptions
+                      }
+                    )
+                  ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Góc máy chuyển động:" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30865,29 +30925,29 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                         options: MOTION_OPTIONS
                       }
                     )
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Âm thanh môi trường (SFX):" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "input",
-                      {
-                        type: "text",
-                        value: newShotSfx,
-                        onChange: (e) => setNewShotSfx(e.target.value),
-                        placeholder: "e.g. rain, thunder, wind, waves...",
-                        className: "w-full rounded-lg bg-cinema-canvas border border-cinema-border p-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-cinema-amber"
-                      }
-                    )
                   ] })
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-end gap-2.5 pt-3 border-t border-cinema-border", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5", children: "Âm thanh môi trường (SFX):" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "input",
+                    {
+                      type: "text",
+                      value: newShotSfx,
+                      onChange: (e) => setNewShotSfx(e.target.value),
+                      placeholder: "e.g. rain, thunder, wind, waves...",
+                      className: "w-full rounded-xl bg-studio-input border border-studio-border p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
+                    }
+                  )
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-end gap-2.5 pt-4 border-t border-studio-border", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "button",
                     {
                       type: "button",
                       disabled: addShotMutation.isPending,
                       onClick: () => setIsAddingShot(false),
-                      className: "px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer",
+                      className: "px-3.5 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer",
                       children: "Hủy bỏ"
                     }
                   ),
@@ -30896,7 +30956,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                     {
                       type: "submit",
                       disabled: addShotMutation.isPending,
-                      className: "px-4 py-1.5 rounded-lg text-xs font-bold bg-cinema-amber hover:bg-amber-400 text-zinc-950 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors",
+                      className: "px-5 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-zinc-950 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors shadow-md shadow-amber-500/20 active:scale-[0.98]",
                       children: addShotMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                         /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin" }),
                         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Đang thêm..." })
@@ -31171,7 +31231,7 @@ function ProjectLibraryModal({
                               {
                                 type: "button",
                                 onClick: () => p.video_url && onPlayMovie(p.video_url, p.srt_url),
-                                className: "px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 cursor-pointer border border-zinc-700",
+                                className: "px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-studio-input text-zinc-300 hover:bg-studio-card cursor-pointer border border-studio-border",
                                 title: "Bản gốc",
                                 children: [
                                   "Gốc (",
@@ -31201,7 +31261,7 @@ function ProjectLibraryModal({
                               {
                                 type: "button",
                                 onClick: () => onPlayMovie(p.video_url, p.srt_url),
-                                className: "flex-1 py-1.5 rounded-lg bg-cinema-amber hover:bg-amber-400 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors",
+                                className: "flex-1 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm",
                                 children: [
                                   /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-3.5 h-3.5 fill-current" }),
                                   /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Xem" })
@@ -31213,7 +31273,7 @@ function ProjectLibraryModal({
                               {
                                 type: "button",
                                 onClick: () => setDubbingProject(p),
-                                className: "p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors cursor-pointer",
+                                className: "p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer",
                                 title: "Lồng tiếng đa quốc gia 1-Click (Auto-Dub)",
                                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(Globe, { className: "w-3.5 h-3.5" })
                               }
@@ -31223,7 +31283,7 @@ function ProjectLibraryModal({
                               {
                                 type: "button",
                                 onClick: () => onOpenSeo(p.id),
-                                className: "p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors cursor-pointer",
+                                className: "p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer",
                                 title: "Mở trung tâm xuất bản & tối ưu SEO",
                                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(Share2, { className: "w-3.5 h-3.5" })
                               }
@@ -31243,7 +31303,7 @@ function ProjectLibraryModal({
                               {
                                 href: p.video_url,
                                 download: true,
-                                className: "p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 transition-colors cursor-pointer",
+                                className: "p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer flex items-center justify-center",
                                 title: "Tải file video MP4",
                                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(Download, { className: "w-3.5 h-3.5" })
                               }
@@ -31254,7 +31314,7 @@ function ProjectLibraryModal({
                                 type: "button",
                                 onClick: () => handleDelete(p),
                                 disabled: deleteProjectMutation.isPending,
-                                className: "p-1.5 rounded-lg bg-zinc-800 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-zinc-700 transition-colors cursor-pointer",
+                                className: "p-1.5 rounded-lg bg-studio-input hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-studio-border hover:border-rose-500/30 transition-colors cursor-pointer",
                                 title: "Xóa bộ phim khỏi thư viện",
                                 children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" })
                               }
@@ -31519,7 +31579,7 @@ function SeoPublishModal({ projectId, isOpen, onClose }) {
                     "button",
                     {
                       onClick: () => handleCopyTitle(title, idx),
-                      className: "px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer border border-zinc-700",
+                      className: "px-2.5 py-1 rounded-md text-[11px] font-medium bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer border border-studio-border",
                       children: copiedTitleIndex === idx ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                         /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-3.5 h-3.5 text-emerald-400" }),
                         /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-emerald-400", children: "Đã sao chép" })
@@ -31544,7 +31604,7 @@ function SeoPublishModal({ projectId, isOpen, onClose }) {
                 "button",
                 {
                   onClick: handleCopyDesc,
-                  className: "px-3 py-1 rounded-md text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5 transition-colors cursor-pointer border border-zinc-700",
+                  className: "px-3 py-1 rounded-md text-xs font-medium bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer border border-studio-border",
                   children: copiedDesc ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-3.5 h-3.5 text-emerald-400" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-emerald-400", children: "Đã sao chép" })
@@ -31587,7 +31647,7 @@ function SeoPublishModal({ projectId, isOpen, onClose }) {
                 "button",
                 {
                   onClick: handleCopyHashtags,
-                  className: "px-3 py-1 rounded-md text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5 transition-colors cursor-pointer border border-zinc-700",
+                  className: "px-3 py-1 rounded-md text-xs font-medium bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer border border-studio-border",
                   children: copiedHashtags ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-3.5 h-3.5 text-emerald-400" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-emerald-400", children: "Đã sao chép" })

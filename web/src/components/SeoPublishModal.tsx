@@ -207,7 +207,7 @@ export default function SeoPublishModal({ projectId, isOpen, onClose }: SeoPubli
                         </div>
                         <button
                           onClick={() => handleCopyTitle(title, idx)}
-                          className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer border border-zinc-700"
+                          className="px-2.5 py-1 rounded-md text-[11px] font-medium bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer border border-studio-border"
                         >
                           {copiedTitleIndex === idx ? (
                             <>
@@ -238,7 +238,7 @@ export default function SeoPublishModal({ projectId, isOpen, onClose }: SeoPubli
 
                     <button
                       onClick={handleCopyDesc}
-                      className="px-3 py-1 rounded-md text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5 transition-colors cursor-pointer border border-zinc-700"
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer border border-studio-border"
                     >
                       {copiedDesc ? (
                         <>
@@ -290,7 +290,7 @@ export default function SeoPublishModal({ projectId, isOpen, onClose }: SeoPubli
 
                     <button
                       onClick={handleCopyHashtags}
-                      className="px-3 py-1 rounded-md text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5 transition-colors cursor-pointer border border-zinc-700"
+                      className="px-3 py-1 rounded-md text-xs font-medium bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer border border-studio-border"
                     >
                       {copiedHashtags ? (
                         <>

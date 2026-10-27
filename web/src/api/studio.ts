@@ -42,6 +42,9 @@ export interface UpdateShotParams {
   dialogue?: string
   image_prompt?: string
   motion?: string
+  character_id?: string
+  sfx?: string
+  mood?: string
 }
 
 export async function updateShot(params: UpdateShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
