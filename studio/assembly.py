@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Callable
 import shutil
 import subprocess
 import time
@@ -24,15 +24,29 @@ def resolve_bgm_path(custom_bgm: Optional[Path], style: str = "cinematic") -> Op
         return Path(custom_bgm)
 
     style_clean = (style or "cinematic").lower().strip()
-    candidates = [
+    if style_clean == "none":
+        return None
+
+    # 1. Check style-specific candidates
+    style_candidates = [
         Path(f"assets/bgm/{style_clean}.mp3"),
         Path(f"assets/bgm/{style_clean}.wav"),
-        Path("assets/bgm/default.mp3"),
-        Path("assets/bgm/default.wav"),
     ]
-    for p in candidates:
-        if p.exists():
+    for p in style_candidates:
+        if p.exists() and p.stat().st_size > 1000:
             return p
+
+    # 2. Check default fallback if style is standard or empty
+    if style_clean in ("default", "cinematic", ""):
+        default_candidates = [
+            Path("assets/bgm/default.mp3"),
+            Path("assets/bgm/default.wav"),
+            Path("assets/bgm/cinematic.mp3"),
+        ]
+        for p in default_candidates:
+            if p.exists() and p.stat().st_size > 1000:
+                return p
+
     return None
 
 def resolve_mood_bgm(mood: Optional[str]) -> Optional[Path]:
@@ -45,9 +59,68 @@ def resolve_mood_bgm(mood: Optional[str]) -> Optional[Path]:
         Path(f"assets/bgm/{mood_clean}.wav"),
     ]
     for p in candidates:
-        if p.exists():
+        if p.exists() and p.stat().st_size > 1000:
             return p
+
+    try:
+        from studio.audio_assets import ensure_audio_assets
+        ensure_audio_assets()
+        for p in candidates:
+            if p.exists() and p.stat().st_size > 1000:
+                return p
+    except Exception:
+        pass
+
     return None
+
+def resolve_sfx_path(sfx_str: Optional[str]) -> Optional[Path]:
+    """Resolve sound effect name or keyword to local CC0 asset file with alias mapping."""
+    if not sfx_str:
+        return None
+    clean = str(sfx_str).lower().strip().replace(" ", "_")
+
+    # 1. Direct match on local asset files
+    candidates = [
+        Path(f"assets/sfx/{clean}.mp3"),
+        Path(f"assets/sfx/{clean}.wav"),
+    ]
+    for c in candidates:
+        if c.exists() and c.stat().st_size > 1000:
+            return c
+
+    # 2. Keyword aliases (English & Vietnamese)
+    alias_map = {
+        "rain": ["rain", "mưa", "drizzle", "storm_rain"],
+        "wind": ["wind", "gió", "breeze", "howling", "bão"],
+        "thunder": ["thunder", "sấm", "sét", "lightning"],
+        "city": ["city", "đô_thị", "phố", "street", "urban", "crowd"],
+        "traffic": ["traffic", "kẹt_xe", "giao_thông", "xe_cộ"],
+        "waves": ["waves", "sóng", "biển", "ocean", "sea"],
+        "campfire": ["campfire", "lửa", "fire", "cháy", "đốt_lửa"],
+        "birds": ["birds", "chim", "hót"],
+        "cyberpunk": ["cyber", "sci-fi", "alien", "space", "không_gian", "vũ_trụ"],
+    }
+    for standard_name, keywords in alias_map.items():
+        if any(kw in clean for kw in keywords):
+            cand = Path(f"assets/sfx/{standard_name}.mp3")
+            if cand.exists() and cand.stat().st_size > 1000:
+                return cand
+            try:
+                from studio.audio_assets import get_or_download_sfx
+                downloaded = get_or_download_sfx(standard_name)
+                if downloaded and downloaded.exists():
+                    return downloaded
+            except Exception:
+                pass
+
+    return None
+
+def match_target_amplitude(sound: AudioSegment, target_dBFS: float = -20.0) -> AudioSegment:
+    """Normalize audio segment volume accurately to target dBFS."""
+    if sound.dBFS == float("-inf") or len(sound) == 0:
+        return sound
+    gain = target_dBFS - sound.dBFS
+    return sound.apply_gain(gain)
 
 def build_master_audio(
     storyboard: Storyboard,
@@ -55,23 +128,32 @@ def build_master_audio(
     durations: Dict[str, float],
     output_audio_path: Path,
     bgm_path: Optional[Path] = None,
-    ducking_db: float = -14.0,
+    ducking_db: float = -6.0,
     style: str = "cinematic"
 ) -> Path:
-    """Concatenate narration clips, overlay dynamic mood/looped background music with ducking, and apply smooth fades."""
+    """Concatenate narration clips, overlay environmental SFX, layer dynamic BGM with smart speech ducking, and apply smooth fades."""
     output_audio_path = Path(output_audio_path)
     output_audio_path.parent.mkdir(parents=True, exist_ok=True)
 
+    try:
+        from studio.audio_assets import ensure_audio_assets
+        ensure_audio_assets()
+    except Exception:
+        pass
+
     master = AudioSegment.silent(duration=0)
 
+    # 1. Build narration + SFX track shot by shot
     for shot in storyboard.shots:
         shot_dur = durations.get(shot.id, shot.duration or 5.0)
         shot_dur_ms = int(round(shot_dur * 1000))
 
+        has_speech = False
         audio_file = audio_dir / f"{shot.id}.mp3"
         if audio_file.exists() and shot.dialogue and shot.dialogue.strip():
             segment = AudioSegment.from_file(str(audio_file))
-            # Match duration
+            has_speech = True
+            # Pad or trim narration to match shot duration
             if len(segment) < shot_dur_ms:
                 silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
                 segment = segment + silence_gap
@@ -80,30 +162,27 @@ def build_master_audio(
         else:
             segment = AudioSegment.silent(duration=shot_dur_ms)
 
-        # Mix environmental SFX if specified and audio file exists in assets/sfx/
-        if getattr(shot, "sfx", None):
-            sfx_name = str(shot.sfx).lower().strip().replace(" ", "_")
-            sfx_candidates = [
-                Path(f"assets/sfx/{sfx_name}.mp3"),
-                Path(f"assets/sfx/{sfx_name}.wav"),
-            ]
-            for sfx_cand in sfx_candidates:
-                if sfx_cand.exists():
-                    try:
-                        sfx_seg = AudioSegment.from_file(str(sfx_cand)) - 16.0
-                        if len(sfx_seg) < shot_dur_ms:
-                            loops = (shot_dur_ms // len(sfx_seg)) + 1
-                            sfx_seg = (sfx_seg * loops)[:shot_dur_ms]
-                        else:
-                            sfx_seg = sfx_seg[:shot_dur_ms]
-                        segment = segment.overlay(sfx_seg)
-                        break
-                    except Exception:
-                        pass
+        # Mix environmental SFX if specified
+        sfx_file = resolve_sfx_path(getattr(shot, "sfx", None))
+        if sfx_file and sfx_file.exists():
+            try:
+                sfx_seg = AudioSegment.from_file(str(sfx_file))
+                # Target SFX volume: -22 dBFS during speech (subtle backdrop), -17 dBFS when no speech
+                target_sfx_dbfs = -22.0 if has_speech else -17.0
+                sfx_seg = match_target_amplitude(sfx_seg, target_dBFS=target_sfx_dbfs)
+
+                if len(sfx_seg) < shot_dur_ms:
+                    loops = (shot_dur_ms // len(sfx_seg)) + 1
+                    sfx_seg = (sfx_seg * loops)[:shot_dur_ms]
+                else:
+                    sfx_seg = sfx_seg[:shot_dur_ms]
+                segment = segment.overlay(sfx_seg)
+            except Exception:
+                pass
 
         master += segment
 
-    # Mix BGM (dynamic mood-based crossfade or style-based fallback)
+    # 2. Mix BGM (dynamic mood-based crossfade or style-based fallback)
     effective_default_bgm = resolve_bgm_path(bgm_path, style)
     has_custom_mood_bgm = any(
         resolve_mood_bgm(getattr(s, "mood", None)) is not None
@@ -112,48 +191,39 @@ def build_master_audio(
 
     if (effective_default_bgm and effective_default_bgm.exists()) or has_custom_mood_bgm:
         bgm_timeline = AudioSegment.silent(duration=0)
-        sections = []
-        current_bgm_path = None
-        current_section_dur = 0
 
         for shot in storyboard.shots:
             shot_dur = durations.get(shot.id, shot.duration or 5.0)
             shot_dur_ms = int(round(shot_dur * 1000))
             shot_bgm = resolve_mood_bgm(getattr(shot, "mood", None)) or effective_default_bgm
 
-            if shot_bgm == current_bgm_path:
-                current_section_dur += shot_dur_ms
-            else:
-                if current_bgm_path is not None and current_section_dur > 0:
-                    sections.append((current_bgm_path, current_section_dur))
-                current_bgm_path = shot_bgm
-                current_section_dur = shot_dur_ms
+            if shot_bgm and Path(shot_bgm).exists():
+                raw_bgm = AudioSegment.from_file(str(shot_bgm))
+                # Target BGM level: -25 dBFS during speech (gentle ducking), -19 dBFS when idle
+                has_dialogue = bool(shot.dialogue and shot.dialogue.strip())
+                target_bgm_dbfs = -25.0 if has_dialogue else -19.0
+                shot_bgm_seg = match_target_amplitude(raw_bgm, target_dBFS=target_bgm_dbfs)
 
-        if current_bgm_path is not None and current_section_dur > 0:
-            sections.append((current_bgm_path, current_section_dur))
-
-        for bgm_file, dur_ms in sections:
-            if bgm_file and Path(bgm_file).exists():
-                bgm_seg = AudioSegment.from_file(str(bgm_file)) + ducking_db
-                loops = (dur_ms // len(bgm_seg)) + 1
-                sec_audio = (bgm_seg * loops)[:dur_ms]
+                loops = (shot_dur_ms // len(shot_bgm_seg)) + 1
+                shot_bgm_seg = (shot_bgm_seg * loops)[:shot_dur_ms]
             else:
-                sec_audio = AudioSegment.silent(duration=dur_ms)
+                shot_bgm_seg = AudioSegment.silent(duration=shot_dur_ms)
 
             if len(bgm_timeline) == 0:
-                bgm_timeline = sec_audio
+                bgm_timeline = shot_bgm_seg
             else:
-                fade_len = min(600, len(bgm_timeline), len(sec_audio))
-                if fade_len > 100:
-                    bgm_timeline = bgm_timeline.append(sec_audio, crossfade=fade_len)
+                fade_len = min(400, len(bgm_timeline), len(shot_bgm_seg))
+                if fade_len > 80:
+                    bgm_timeline = bgm_timeline.append(shot_bgm_seg, crossfade=fade_len)
                 else:
-                    bgm_timeline = bgm_timeline + sec_audio
+                    bgm_timeline = bgm_timeline + shot_bgm_seg
 
         if len(bgm_timeline) > 0 and len(master) > 0:
             if len(bgm_timeline) < len(master):
                 bgm_timeline = bgm_timeline + AudioSegment.silent(duration=len(master) - len(bgm_timeline))
             else:
                 bgm_timeline = bgm_timeline[:len(master)]
+            master = master.overlay(bgm_timeline)
             master = master.overlay(bgm_timeline)
 
     # Smooth audio fade in (800ms) and fade out (1000ms)
@@ -176,11 +246,18 @@ def run_assembly_stage(
     storyboard: Storyboard,
     config: StudioConfig,
     state: StateManager,
-    durations: Optional[Dict[str, float]] = None
+    durations: Optional[Dict[str, float]] = None,
+    progress_callback: Optional[Callable[[int, str, int, str], None]] = None,
 ) -> Path:
     """Assemble all video clips, narration audio, BGM, and subtitles into master movie."""
     if not shutil.which("ffmpeg"):
         raise RuntimeError("FFmpeg executable not found.")
+
+    try:
+        from studio.audio_assets import ensure_audio_assets
+        ensure_audio_assets()
+    except Exception:
+        pass
 
     durations = durations or {}
     vid_dir = config.output_dir / "videos"
@@ -203,6 +280,8 @@ def run_assembly_stage(
     create_concat_file(video_paths, concat_list_file)
 
     # 1. Concat video clips
+    if progress_callback:
+        progress_callback(5, "Đang ghép nối các video clips bằng FFmpeg...", 88, "[Assembly] Đang ghép nối các phân cảnh video...")
     raw_video = final_dir / f"raw_video_{timestamp}.mp4"
     cmd_concat = [
         "ffmpeg", "-y",
@@ -215,6 +294,8 @@ def run_assembly_stage(
     subprocess.run(cmd_concat, check=True)
 
     # 2. Build master audio track
+    if progress_callback:
+        progress_callback(5, "Đang hòa âm master audio & background music...", 92, "[Assembly] Đang hòa âm narration & nhạc nền BGM...")
     master_audio = final_dir / f"master_audio_{timestamp}.mp3"
     build_master_audio(
         storyboard=storyboard,
@@ -230,6 +311,8 @@ def run_assembly_stage(
     generate_srt(storyboard, durations, master_srt)
 
     # 4. Mux final video with audio (with optional Burn-in Hardsub)
+    if progress_callback:
+        progress_callback(5, "Đang xuất bản video hoàn thiện...", 96, "[Assembly] Đang mux video, audio và phụ đề hoàn chỉnh...")
     final_movie = final_dir / f"movie_{timestamp}.mp4"
     if getattr(config, "hardsub", False):
         sub_filter = build_hardsub_filter(master_srt, getattr(config, "aspect_ratio", "16:9"))
@@ -238,9 +321,12 @@ def run_assembly_stage(
             "-i", str(raw_video),
             "-i", str(master_audio),
             "-vf", sub_filter,
+            "-map", "0:v:0",
+            "-map", "1:a:0",
             "-c:v", "libx264",
             "-pix_fmt", "yuv420p",
             "-c:a", "aac",
+            "-b:a", "192k",
             "-shortest",
             str(final_movie)
         ]
@@ -249,8 +335,11 @@ def run_assembly_stage(
             "ffmpeg", "-y",
             "-i", str(raw_video),
             "-i", str(master_audio),
+            "-map", "0:v:0",
+            "-map", "1:a:0",
             "-c:v", "copy",
             "-c:a", "aac",
+            "-b:a", "192k",
             "-shortest",
             str(final_movie)
         ]

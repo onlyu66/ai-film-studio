@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional, Callable, Dict, Any
 import json
 import shutil
 from rich.console import Console
@@ -15,8 +16,22 @@ from studio.assembly import run_assembly_stage
 
 console = Console()
 
-def run_pipeline(config: StudioConfig, stop_after_stage: int | None = None) -> Path:
-    """Execute the end-to-end automated film production pipeline."""
+ProgressCallback = Optional[Callable[[int, str, int, str], None]]
+
+def run_pipeline(
+    config: StudioConfig,
+    stop_after_stage: Optional[int] = None,
+    force_new: bool = False,
+    progress_callback: ProgressCallback = None,
+) -> Path:
+    """Execute the end-to-end automated film production pipeline with optional progress reporting."""
+    def notify(stage: int, stage_name: str, progress: int, msg: str):
+        if progress_callback:
+            try:
+                progress_callback(stage, stage_name, progress, msg)
+            except Exception:
+                pass
+
     # Step 0: Pre-flight requirement checks
     if not shutil.which("ffmpeg"):
         raise RuntimeError("FFmpeg is required but not installed or found on PATH.")
@@ -36,6 +51,11 @@ def run_pipeline(config: StudioConfig, stop_after_stage: int | None = None) -> P
 
     # Stage 1: Storyboard Generation
     console.print("\n[bold yellow][Stage 1/5] Writing Script & Storyboard...[/bold yellow]")
+    notify(1, "Đang soạn kịch bản & phân cảnh...", 5, f"Bắt đầu soạn kịch bản: {config.topic}")
+
+    if force_new and storyboard_file.exists():
+        storyboard_file.unlink()
+
     if storyboard_file.exists():
         console.print(f"  [dim]Found existing storyboard at {storyboard_file}, resuming...[/dim]")
         with open(storyboard_file, "r", encoding="utf-8") as f:
@@ -46,6 +66,8 @@ def run_pipeline(config: StudioConfig, stop_after_stage: int | None = None) -> P
         with open(storyboard_file, "w", encoding="utf-8") as f:
             json.dump(storyboard.to_dict(), f, indent=2, ensure_ascii=False)
         console.print(f"  [green]✓ Storyboard created with {len(storyboard.shots)} shots.[/green]")
+
+    notify(1, "Kịch bản đã sẵn sàng", 20, f"Đã có kịch bản với {len(storyboard.shots)} phân cảnh")
 
     if stop_after_stage == 1:
         console.print(Panel.fit(
@@ -58,22 +80,30 @@ def run_pipeline(config: StudioConfig, stop_after_stage: int | None = None) -> P
 
     # Stage 2: Voice & Audio (TTS)
     console.print("\n[bold yellow][Stage 2/5] Synthesizing Voiceover (TTS)...[/bold yellow]")
-    durations = run_tts_stage(storyboard, config, state)
+    notify(2, "Đang tổng hợp giọng nói AI (TTS)...", 20, "Bắt đầu tổng hợp giọng đọc...")
+    durations = run_tts_stage(storyboard, config, state, progress_callback=notify)
     console.print(f"  [green]✓ Voice audio synthesized for {len(durations)} shots.[/green]")
+    notify(2, "Hoàn tất giọng nói", 40, f"Đã tổng hợp âm thanh cho {len(durations)} phân cảnh")
 
     # Stage 3: Image Generation
     console.print("\n[bold yellow][Stage 3/5] Generating Visuals & Characters...[/bold yellow]")
-    images = run_image_stage(storyboard, config, state)
+    notify(3, "Đang vẽ hình ảnh điện ảnh Flux...", 40, "Bắt đầu vẽ hình ảnh...")
+    images = run_image_stage(storyboard, config, state, progress_callback=notify)
     console.print(f"  [green]✓ Visuals rendered for {len(images)} shots.[/green]")
+    notify(3, "Hoàn tất hình ảnh", 65, f"Đã vẽ hình ảnh cho {len(images)} phân cảnh")
 
     # Stage 4: Motion & Cinematics (Ken Burns)
     console.print("\n[bold yellow][Stage 4/5] Rendering Dynamic Camera Motion...[/bold yellow]")
-    video_clips = run_motion_stage(storyboard, config, state, durations)
+    notify(4, "Đang render chuyển động máy quay 2.5D...", 65, "Bắt đầu render chuyển động...")
+    video_clips = run_motion_stage(storyboard, config, state, durations, progress_callback=notify)
     console.print(f"  [green]✓ Motion clips rendered for {len(video_clips)} shots.[/green]")
+    notify(4, "Hoàn tất chuyển động", 85, f"Đã render chuyển động cho {len(video_clips)} phân cảnh")
 
     # Stage 5: Assembly & Mastering
     console.print("\n[bold yellow][Stage 5/5] Assembling Master Video, BGM & Subtitles...[/bold yellow]")
-    final_video = run_assembly_stage(storyboard, config, state, durations)
+    notify(5, "Đang ghép nối, hòa âm BGM và làm phụ đề...", 85, "Bắt đầu hậu kỳ xuất bản...")
+    final_video = run_assembly_stage(storyboard, config, state, durations, progress_callback=notify)
+    notify(5, "Sản xuất hoàn tất!", 100, f"Video hoàn thành: {final_video.name}")
 
     console.print(Panel.fit(
         f"[bold green]✨ Film Production Complete![/bold green]\n"

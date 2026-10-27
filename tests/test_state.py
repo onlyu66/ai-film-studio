@@ -26,3 +26,25 @@ def test_checkpoint_resume_skips_completed(tmp_path):
     sm2.load()
     assert sm2.is_stage_complete("shot_001_080", "image") is True
     assert sm2.is_stage_complete("shot_001_081", "image") is False
+
+def test_reset_and_remove_shot(tmp_path):
+    path = tmp_path / "state.json"
+    sm = StateManager(path)
+    sm.mark_complete("s1", "audio")
+    sm.mark_complete("s1", "video")
+    assert sm.is_stage_complete("s1", "audio") is True
+    assert sm.is_stage_complete("s1", "video") is True
+
+    # Reset single stage
+    sm.reset_shot("s1", "audio")
+    assert sm.is_stage_complete("s1", "audio") is False
+    assert sm.is_stage_complete("s1", "video") is True
+
+    # Reset all stages
+    sm.reset_shot("s1")
+    assert sm.is_stage_complete("s1", "video") is False
+
+    # Remove shot
+    sm.mark_complete("s2", "audio")
+    sm.remove_shot("s2")
+    assert sm.is_stage_complete("s2", "audio") is False

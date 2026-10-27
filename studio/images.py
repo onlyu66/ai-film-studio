@@ -1,7 +1,10 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Callable
 import urllib.parse
 import time
+import os
+import shutil
+import subprocess
 import requests
 
 from studio.storyboard import Storyboard, Shot, Character
@@ -35,23 +38,42 @@ def build_full_prompt(shot: Shot, characters: Dict[str, Character], style: str =
 
     return ", ".join(parts)
 
+def _is_valid_image_bytes(content: bytes) -> bool:
+    """Validate that downloaded payload is genuine binary image and not error JSON or HTML."""
+    if not content or len(content) < 4000:
+        return False
+    # Check magic bytes for PNG, JPEG, or WEBP
+    if content.startswith(b"\x89PNG") or content.startswith(b"\xff\xd8"):
+        return True
+    if len(content) > 12 and content[:4] == b"RIFF" and content[8:12] == b"WEBP":
+        return True
+    # Discard JSON error responses or HTML error pages
+    prefix = content[:100].lstrip()
+    if prefix.startswith(b"{") or prefix.startswith(b"<"):
+        return False
+    return True
+
 def generate_image_for_shot(
     shot: Shot,
     characters: Dict[str, Character],
     style: str,
     output_dir: Path,
     retries: int = 3,
-    timeout: int = 30,
+    timeout: int = 25,
     aspect_ratio: str = "16:9",
-    seed_override: Optional[int] = None
+    seed_override: Optional[int] = None,
+    engine: Optional[str] = None,
+    prompt_override: Optional[str] = None,
 ) -> Optional[Path]:
-    """Generate image via Pollinations API with exponential backoff retry. Returns file path or None."""
+    """Generate image via Pollinations API with automatic key support and robust fallback. Returns file path or None."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     out_file = output_dir / f"{shot.id}.png"
 
-    prompt = build_full_prompt(shot, characters, style)
-    encoded_prompt = urllib.parse.quote(prompt)
+    raw_prompt = prompt_override or build_full_prompt(shot, characters, style)
+    # Sanitize prompt and limit length to avoid URI Too Long (414)
+    clean_prompt = " ".join(raw_prompt.split())[:600]
+    encoded_prompt = urllib.parse.quote(clean_prompt)
 
     seed = seed_override or 42
     if seed_override is None and shot.character_id and shot.character_id in characters:
@@ -59,21 +81,57 @@ def generate_image_for_shot(
 
     if aspect_ratio == "9:16":
         w, h = 720, 1280
+    elif aspect_ratio == "1:1":
+        w, h = 1024, 1024
     else:
         w, h = 1280, 720
 
-    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?model=flux&width={w}&height={h}&seed={seed}&nologo=true"
+    pollen_key = os.environ.get("POLLINATIONS_API_KEY") or os.environ.get("POLLEN_API_KEY")
 
-    for attempt in range(retries):
-        try:
-            resp = requests.get(url, timeout=timeout)
-            if resp.status_code == 200 and resp.content:
-                with open(out_file, "wb") as f:
-                    f.write(resp.content)
-                return out_file
-        except (requests.RequestException, Exception):
-            if attempt < retries - 1:
-                time.sleep(2 ** attempt)
+    # Build prioritized list of candidate URLs
+    candidate_urls = []
+    if pollen_key:
+        candidate_urls.append(
+            f"https://gen.pollinations.ai/image/{encoded_prompt}?key={pollen_key}&width={w}&height={h}&nologo=true"
+        )
+        candidate_urls.append(
+            f"https://image.pollinations.ai/prompt/{encoded_prompt}?key={pollen_key}&width={w}&height={h}&seed={seed}&nologo=true"
+        )
+    else:
+        # Without key, turbo and flux-realism are significantly more reliable than base flux
+        candidate_urls.append(
+            f"https://image.pollinations.ai/prompt/{encoded_prompt}?model=turbo&width={w}&height={h}&seed={seed}&nologo=true"
+        )
+        candidate_urls.append(
+            f"https://image.pollinations.ai/prompt/{encoded_prompt}?model=flux-realism&width={w}&height={h}&seed={seed}&nologo=true"
+        )
+
+    # Secondary reliable photographic fallback if AI API is rate-limited or unavailable
+    candidate_urls.append(
+        f"https://picsum.photos/seed/{shot.id}_{seed}/{w}/{h}"
+    )
+
+    headers = {
+        "User-Agent": "AIFilmStudio/1.0",
+        "Accept": "image/*",
+    }
+    if pollen_key:
+        headers["Authorization"] = f"Bearer {pollen_key}"
+
+    for url in candidate_urls:
+        for attempt in range(max(1, retries)):
+            try:
+                resp = requests.get(url, headers=headers, timeout=timeout)
+                if resp.status_code == 200 and _is_valid_image_bytes(resp.content):
+                    with open(out_file, "wb") as f:
+                        f.write(resp.content)
+                    return out_file
+                # If rate-limited (402 or 429), break immediately to next candidate
+                if resp.status_code in (402, 429):
+                    break
+            except (requests.RequestException, Exception):
+                if attempt < retries - 1:
+                    time.sleep(1.0)
 
     return None
 
@@ -82,22 +140,30 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 def run_image_stage(
     storyboard: Storyboard,
     config: StudioConfig,
-    state: StateManager
+    state: StateManager,
+    progress_callback: Optional[Callable[[int, str, int, str], None]] = None,
 ) -> Dict[str, Path]:
-    """Run image generation for all shots in storyboard in parallel. Returns mapping of shot_id -> image_path."""
+    """Run image generation for all shots in storyboard in parallel with robust fallback. Returns mapping of shot_id -> image_path."""
     img_dir = config.output_dir / "images"
     img_dir.mkdir(parents=True, exist_ok=True)
     images: Dict[str, Path] = {}
 
+    aspect_ratio = getattr(config, "aspect_ratio", "16:9")
+    w, h = (720, 1280) if aspect_ratio == "9:16" else (1280, 720)
+
     pending_shots = []
     for shot in storyboard.shots:
         out_file = img_dir / f"{shot.id}.png"
-        if state.is_stage_complete(shot.id, "image") and out_file.exists():
+        # Require file to exist and be > 5000 bytes to avoid stale 1x1 black pixel glitches
+        if state.is_stage_complete(shot.id, "image") and out_file.exists() and out_file.stat().st_size > 5000:
             images[shot.id] = out_file
         else:
             pending_shots.append(shot)
 
     if pending_shots:
+        total_shots = len(storyboard.shots)
+        done_count = len(images)
+
         def process_shot_image(shot: Shot):
             out_file = img_dir / f"{shot.id}.png"
             result = generate_image_for_shot(
@@ -105,15 +171,18 @@ def run_image_stage(
                 characters=storyboard.characters,
                 style=config.style,
                 output_dir=img_dir,
-                aspect_ratio=getattr(config, "aspect_ratio", "16:9"),
+                aspect_ratio=aspect_ratio,
             )
-            if result and result.exists():
+            if result and result.exists() and result.stat().st_size > 5000:
                 return shot.id, result
             else:
-                _create_fallback_image(out_file)
+                _create_fallback_image(out_file, width=w, height=h, label=shot.image_prompt or shot.id)
                 return shot.id, out_file
 
-        max_workers = min(5, len(pending_shots))
+        # Use 2 workers when unauthenticated to avoid 402 concurrent rate limits
+        has_key = bool(os.environ.get("POLLINATIONS_API_KEY") or os.environ.get("POLLEN_API_KEY"))
+        max_workers = min(4 if has_key else 2, len(pending_shots))
+
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(process_shot_image, s) for s in pending_shots]
             for future in as_completed(futures):
@@ -121,16 +190,60 @@ def run_image_stage(
                 images[shot_id] = img_path
                 state.mark_complete(shot_id, "image")
                 state.save()
+                done_count += 1
+                if progress_callback:
+                    pct = 40 + int(25 * (done_count / max(1, total_shots)))
+                    progress_callback(3, "Đang vẽ hình ảnh điện ảnh Flux...", min(pct, 65), f"[Visuals] Đã tạo ảnh cho phân cảnh '{shot_id}'")
 
     return images
 
-def _create_fallback_image(path: Path) -> None:
-    """Create a minimal solid color PNG fallback if image generation fails."""
-    # 1x1 black PNG binary
-    png_1x1 = (
-        b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01'
-        b'\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\x0cIDATx\x9cc`\x00\x00'
-        b'\x00\x02\x00\x01H\xaf\xa4q\x00\x00\x00\x00IEND\xaeB`\x82'
-    )
-    with open(path, "wb") as f:
-        f.write(png_1x1)
+def _write_solid_bmp(path: Path, width: int, height: int, r: int = 18, g: int = 21, b: int = 31) -> None:
+    """Write an uncompressed valid full-size 24-bit BMP image in pure Python."""
+    row_padded = (width * 3 + 3) & (~3)
+    image_size = row_padded * height
+    file_size = 54 + image_size
+    header = bytearray(54)
+    header[0:2] = b'BM'
+    header[2:6] = file_size.to_bytes(4, 'little')
+    header[10:14] = (54).to_bytes(4, 'little')
+    header[14:18] = (40).to_bytes(4, 'little')
+    header[18:22] = width.to_bytes(4, 'little')
+    header[22:26] = height.to_bytes(4, 'little')
+    header[26:28] = (1).to_bytes(2, 'little')
+    header[28:30] = (24).to_bytes(2, 'little')
+    header[34:38] = image_size.to_bytes(4, 'little')
+    row = bytearray(row_padded)
+    for x in range(width):
+        row[x*3] = b
+        row[x*3+1] = g
+        row[x*3+2] = r
+    with open(path, 'wb') as f:
+        f.write(header)
+        for _ in range(height):
+            f.write(row)
+
+def _create_fallback_image(path: Path, width: int = 1280, height: int = 720, label: str = "") -> None:
+    """Create a high-resolution valid cinematic fallback image so FFmpeg motion rendering never fails."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    if shutil.which("ffmpeg"):
+        safe_label = (label or "CINEMATIC SCENE").replace("'", "").replace(":", "-")[:60]
+        cmd = [
+            "ffmpeg", "-y",
+            "-f", "lavfi",
+            "-i", f"color=c=0x12151f:s={width}x{height}:d=1",
+            "-vf", f"vignette=PI/4,drawbox=y=ih*0.65:color=black@0.65:width=iw:height=ih*0.35:t=fill,drawtext=text='{safe_label}':fontcolor=white@0.8:fontsize=32:x=(w-text_w)/2:y=h*0.78",
+            "-vframes", "1",
+            str(path)
+        ]
+        try:
+            subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+            if path.exists() and path.stat().st_size > 1000:
+                return
+        except Exception:
+            pass
+
+    # Pure Python fallback
+    _write_solid_bmp(path, width, height, r=18, g=21, b=31)
+

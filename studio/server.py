@@ -275,6 +275,22 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
     broadcast_ws("status", get_status())
 
     try:
+        if not resume_only:
+            # Clean intermediate workspace for brand new production, strictly keeping outputs/projects intact!
+            out_base = Path("outputs")
+            if out_base.exists():
+                for sub in ["audio", "images", "videos", "final"]:
+                    d = out_base / sub
+                    if d.exists() and d.is_dir():
+                        shutil.rmtree(d, ignore_errors=True)
+                for f in ["storyboard.json", "state.json"]:
+                    sf = out_base / f
+                    if sf.exists():
+                        try:
+                            sf.unlink()
+                        except Exception:
+                            pass
+
         cfg = StudioConfig(
             topic=req.topic,
             lang=req.lang,
@@ -294,14 +310,22 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             webhook_url=req.webhook_url,
         )
 
+        def _on_progress(stage: int, stage_name: str, progress: int, log_msg: str):
+            pipeline_state["stage"] = stage
+            pipeline_state["stage_name"] = stage_name
+            pipeline_state["progress"] = progress
+            if log_msg:
+                log_message(log_msg)
+            broadcast_ws("status", get_status())
+
         if not resume_only and req.pause_after_script:
             pipeline_state["stage"] = 1
             pipeline_state["stage_name"] = "Đang soạn kịch bản & phân cảnh..."
-            pipeline_state["progress"] = 20
+            pipeline_state["progress"] = 5
             broadcast_ws("status", get_status())
             log_message(f"Soạn kịch bản: {req.topic} ({req.lang}, {req.duration}m, {req.style})")
 
-            run_pipeline(cfg, stop_after_stage=1)
+            run_pipeline(cfg, stop_after_stage=1, force_new=True, progress_callback=_on_progress)
 
             pipeline_state["status"] = "script_ready"
             pipeline_state["stage"] = 1
@@ -311,13 +335,18 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             log_message("Kịch bản và phân cảnh đã được tạo xong! Bạn có thể chỉnh sửa lời thoại, nhân vật và giọng đọc trước khi bấm 'Tiếp tục sản xuất phim'.")
             return
 
-        pipeline_state["stage"] = 2
-        pipeline_state["stage_name"] = "Đang sản xuất phim (Stages 2 - 5)..."
-        pipeline_state["progress"] = 40
+        pipeline_state["stage"] = 2 if resume_only else 1
+        pipeline_state["stage_name"] = "Đang sản xuất phim..."
+        pipeline_state["progress"] = 20 if resume_only else 5
         broadcast_ws("status", get_status())
-        log_message("Đang thực hiện quy trình sản xuất (Audio, Visuals, Motion & Assembly)...")
+        log_message("Đang thực hiện quy trình sản xuất phim...")
 
-        final_video_path = run_pipeline(cfg)
+        final_video_path = run_pipeline(
+            cfg,
+            stop_after_stage=None,
+            force_new=(not resume_only),
+            progress_callback=_on_progress
+        )
 
         pipeline_state["status"] = "completed"
         pipeline_state["stage"] = 5
@@ -439,7 +468,18 @@ def get_storyboard():
         return {"title": "", "language": "vi", "characters": {}, "shots": []}
     try:
         with open(sb_file, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+
+        img_dir = Path("outputs/images")
+        audio_dir = Path("outputs/audio")
+        vid_dir = Path("outputs/videos")
+        for s in data.get("shots", []):
+            sid = s.get("id")
+            s["has_image"] = bool(sid and (img_dir / f"{sid}.png").is_file() and (img_dir / f"{sid}.png").stat().st_size > 0)
+            s["has_audio"] = bool(sid and (audio_dir / f"{sid}.mp3").is_file() and (audio_dir / f"{sid}.mp3").stat().st_size > 0)
+            s["has_video"] = bool(sid and (vid_dir / f"{sid}.mp4").is_file() and (vid_dir / f"{sid}.mp4").stat().st_size > 0)
+
+        return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -468,15 +508,32 @@ def update_character_voice(req: UpdateVoiceRequest):
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
-        # Invalidate existing audio files for this character so TTS will regenerate if rerun
+        # Invalidate existing audio and motion files for this character, and reset checkpoint state
         audio_dir = Path("outputs/audio")
-        if audio_dir.exists():
-            for shot in data.get("shots", []):
-                if shot.get("character_id") == req.character_id:
-                    shot_id = shot.get("id")
-                    audio_file = audio_dir / f"{shot_id}.mp3"
-                    if audio_file.exists():
-                        audio_file.unlink(missing_ok=True)
+        vid_dir = Path("outputs/videos")
+        state_file = Path("outputs/state.json")
+        state = None
+        if state_file.exists():
+            try:
+                from studio.state import StateManager
+                state = StateManager(state_file)
+            except Exception:
+                state = None
+
+        for shot in data.get("shots", []):
+            if shot.get("character_id") == req.character_id:
+                shot_id = shot.get("id")
+                audio_file = audio_dir / f"{shot_id}.mp3"
+                if audio_file.exists():
+                    audio_file.unlink(missing_ok=True)
+                vid_file = vid_dir / f"{shot_id}.mp4"
+                if vid_file.exists():
+                    vid_file.unlink(missing_ok=True)
+                if state:
+                    state.reset_shot(shot_id, "audio")
+                    state.reset_shot(shot_id, "video")
+        if state:
+            state.save()
 
         char_name = characters[req.character_id].get("name", req.character_id)
         log_message(f"Đã cập nhật giọng cho nhân vật '{char_name}': {old_voice} -> {req.voice}")
@@ -521,11 +578,24 @@ def update_shot(req: UpdateShotRequest):
         if not target_shot:
             raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
 
+        state_file = Path("outputs/state.json")
+        state = None
+        if state_file.exists():
+            try:
+                from studio.state import StateManager
+                state = StateManager(state_file)
+            except Exception:
+                state = None
+
         if req.dialogue is not None:
             target_shot["dialogue"] = req.dialogue
             audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
-            if audio_file.exists():
-                audio_file.unlink(missing_ok=True)
+            audio_file.unlink(missing_ok=True)
+            vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
+            vid_file.unlink(missing_ok=True)
+            if state:
+                state.reset_shot(req.shot_id, "audio")
+                state.reset_shot(req.shot_id, "video")
 
         if req.character_id is not None:
             old_char = target_shot.get("character_id")
@@ -533,23 +603,38 @@ def update_shot(req: UpdateShotRequest):
             target_shot["character_id"] = new_char
             if old_char != new_char:
                 audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
-                if audio_file.exists():
-                    audio_file.unlink(missing_ok=True)
+                audio_file.unlink(missing_ok=True)
+                vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
+                vid_file.unlink(missing_ok=True)
+                if state:
+                    state.reset_shot(req.shot_id, "audio")
+                    state.reset_shot(req.shot_id, "video")
 
         if req.image_prompt is not None:
             target_shot["image_prompt"] = req.image_prompt
             image_file = Path(f"outputs/images/{req.shot_id}.png")
-            if image_file.exists():
-                image_file.unlink(missing_ok=True)
+            image_file.unlink(missing_ok=True)
+            vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
+            vid_file.unlink(missing_ok=True)
+            if state:
+                state.reset_shot(req.shot_id, "image")
+                state.reset_shot(req.shot_id, "video")
 
         if req.motion is not None:
             target_shot["motion"] = req.motion
+            vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
+            vid_file.unlink(missing_ok=True)
+            if state:
+                state.reset_shot(req.shot_id, "video")
 
         if req.sfx is not None:
             target_shot["sfx"] = req.sfx if req.sfx else None
 
         if req.mood is not None:
             target_shot["mood"] = req.mood if req.mood else None
+
+        if state:
+            state.save()
 
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -639,6 +724,16 @@ def delete_shot(req: DeleteShotRequest):
         Path(f"outputs/audio/{req.shot_id}.mp3").unlink(missing_ok=True)
         Path(f"outputs/images/{req.shot_id}.png").unlink(missing_ok=True)
         Path(f"outputs/videos/{req.shot_id}.mp4").unlink(missing_ok=True)
+
+        state_file = Path("outputs/state.json")
+        if state_file.exists():
+            try:
+                from studio.state import StateManager
+                state = StateManager(state_file)
+                state.remove_shot(req.shot_id)
+                state.save()
+            except Exception:
+                pass
 
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
@@ -898,6 +993,8 @@ def clean_outputs():
     out_dir = Path("outputs")
     if out_dir.exists():
         for item in out_dir.iterdir():
+            if item.name == "projects":
+                continue
             if item.is_dir():
                 shutil.rmtree(item, ignore_errors=True)
             else:
@@ -1385,8 +1482,19 @@ def delete_project(project_id: str):
 def serve_output_file(file_path: str):
     full_path = Path("outputs") / file_path
     if not full_path.exists() or not full_path.is_file():
-        raise HTTPException(status_code=404, detail="File không tồn tại")
-    return FileResponse(str(full_path))
+        raise HTTPException(
+            status_code=404,
+            detail="File không tồn tại",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+        )
+    return FileResponse(
+        str(full_path),
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        }
+    )
 
 # Mount frontend dist static files if built
 dist_dir = Path("web/dist")

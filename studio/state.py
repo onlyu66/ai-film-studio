@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import json
 import os
 import threading
@@ -28,6 +28,20 @@ class StateManager:
             if shot_id not in self._state:
                 self._state[shot_id] = {}
             self._state[shot_id][stage] = True
+
+    def reset_shot(self, shot_id: str, stage: Optional[str] = None) -> None:
+        """Reset completion status for a shot. If stage is None, reset all stages."""
+        with self._lock:
+            if shot_id in self._state:
+                if stage:
+                    self._state[shot_id][stage] = False
+                else:
+                    self._state[shot_id] = {s: False for s in self.STAGES}
+
+    def remove_shot(self, shot_id: str) -> None:
+        """Remove a shot entirely from state tracking."""
+        with self._lock:
+            self._state.pop(shot_id, None)
 
     def is_stage_complete(self, shot_id: str, stage: str) -> bool:
         """Check if a specific stage is completed for a shot."""

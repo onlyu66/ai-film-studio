@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Callable
 import shutil
 import subprocess
 
@@ -145,7 +145,8 @@ def run_motion_stage(
     storyboard: Storyboard,
     config: StudioConfig,
     state: StateManager,
-    durations: Optional[Dict[str, float]] = None
+    durations: Optional[Dict[str, float]] = None,
+    progress_callback: Optional[Callable[[int, str, int, str], None]] = None,
 ) -> Dict[str, Path]:
     """Run motion video clip generation for all shots in parallel with optional Lip-Sync and VFX."""
     img_dir = config.output_dir / "images"
@@ -159,14 +160,20 @@ def run_motion_stage(
     pending_shots = []
     for shot in storyboard.shots:
         out_file = vid_dir / f"{shot.id}.mp4"
-        if state.is_stage_complete(shot.id, "video") and out_file.exists():
+        if state.is_stage_complete(shot.id, "video") and out_file.exists() and out_file.stat().st_size > 0:
             video_clips[shot.id] = out_file
         else:
             img_file = img_dir / f"{shot.id}.png"
-            if img_file.exists():
-                pending_shots.append(shot)
+            if not img_file.exists() or img_file.stat().st_size < 1000:
+                from studio.images import _create_fallback_image
+                w, h = (720, 1280) if getattr(config, "aspect_ratio", "16:9") == "9:16" else (1280, 720)
+                _create_fallback_image(img_file, width=w, height=h, label=shot.image_prompt or shot.id)
+            pending_shots.append(shot)
 
     if pending_shots:
+        total_shots = len(storyboard.shots)
+        done_count = len(video_clips)
+
         def process_shot_motion(shot: Shot):
             out_file = vid_dir / f"{shot.id}.mp4"
             img_file = img_dir / f"{shot.id}.png"
@@ -205,5 +212,9 @@ def run_motion_stage(
                 video_clips[shot_id] = out_path
                 state.mark_complete(shot_id, "video")
                 state.save()
+                done_count += 1
+                if progress_callback:
+                    pct = 65 + int(20 * (done_count / max(1, total_shots)))
+                    progress_callback(4, "Đang render chuyển động máy quay 2.5D...", min(pct, 85), f"[Motion] Đã render clip cho phân cảnh '{shot_id}'")
 
     return video_clips

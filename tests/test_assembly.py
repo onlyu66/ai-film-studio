@@ -51,3 +51,16 @@ def test_resolve_mood_bgm(tmp_path, monkeypatch):
     from studio.assembly import resolve_mood_bgm
     assert resolve_mood_bgm(None) is None
     assert resolve_mood_bgm("nonexistent_mood_123") is None
+
+def test_resolve_sfx_path():
+    from studio.assembly import resolve_sfx_path
+    assert resolve_sfx_path(None) is None
+    assert resolve_sfx_path("") is None
+    # Alias testing (mưa -> rain)
+    rain_path = resolve_sfx_path("tiếng mưa rơi")
+    if rain_path:
+        assert "rain" in str(rain_path).lower()
+
+    wind_path = resolve_sfx_path("tiếng gió rít")
+    if wind_path:
+        assert "wind" in str(wind_path).lower()

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Callable
 import asyncio
 import edge_tts
 from pydub import AudioSegment
@@ -168,7 +168,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 def run_tts_stage(
     storyboard: Storyboard,
     config: StudioConfig,
-    state: StateManager
+    state: StateManager,
+    progress_callback: Optional[Callable[[int, str, int, str], None]] = None,
 ) -> Dict[str, float]:
     """
     Run TTS generation for all shots in storyboard in parallel.
@@ -180,19 +181,18 @@ def run_tts_stage(
 
     pending_shots = []
     for shot in storyboard.shots:
-        if state.is_stage_complete(shot.id, "audio"):
-            audio_file = audio_dir / f"{shot.id}.mp3"
-            if audio_file.exists():
-                dur = get_audio_duration(audio_file)
-                durations[shot.id] = dur
-                shot.duration = dur
-            else:
-                durations[shot.id] = 5.0
-                shot.duration = 5.0
+        audio_file = audio_dir / f"{shot.id}.mp3"
+        if state.is_stage_complete(shot.id, "audio") and audio_file.exists() and audio_file.stat().st_size > 0:
+            dur = get_audio_duration(audio_file)
+            durations[shot.id] = dur
+            shot.duration = dur
         else:
             pending_shots.append(shot)
 
     if pending_shots:
+        total_shots = len(storyboard.shots)
+        done_count = len(durations)
+
         def process_shot(shot: Shot):
             audio_path = generate_audio_for_shot(
                 shot=shot,
@@ -218,5 +218,9 @@ def run_tts_stage(
                         break
                 state.mark_complete(shot_id, "audio")
                 state.save()
+                done_count += 1
+                if progress_callback:
+                    pct = 20 + int(20 * (done_count / max(1, total_shots)))
+                    progress_callback(2, "Đang tổng hợp giọng nói AI (TTS)...", min(pct, 40), f"[TTS] Đã tạo giọng nói cho phân cảnh '{shot_id}' ({dur:.1f}s)")
 
     return durations

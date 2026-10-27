@@ -24,3 +24,11 @@ def test_image_provider_timeout(monkeypatch, tmp_path):
     shot = Shot(id="s1", chapter=1, character_id=None, dialogue="", image_prompt="test", motion="zoom_in", duration=None)
     result = generate_image_for_shot(shot, {}, "cinematic", tmp_path)
     assert result is None
+
+def test_create_fallback_image_is_valid_resolution(tmp_path):
+    from studio.images import _create_fallback_image
+    p = tmp_path / "fallback.png"
+    _create_fallback_image(p, width=1280, height=720, label="Test Scene")
+    assert p.exists()
+    assert p.stat().st_size > 5000  # Must be a full resolution image, never a 1x1 67-byte black pixel!
+

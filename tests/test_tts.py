@@ -48,3 +48,38 @@ def test_resolve_emotion_params():
     assert p_sad["pitch"] == "-6Hz"
     assert p_calm["rate"] == "-5%"
 
+def test_run_tts_stage_resynthesizes_when_file_deleted(tmp_path, monkeypatch):
+    from studio.tts import run_tts_stage
+    from studio.storyboard import Storyboard, Shot
+    from studio.config import StudioConfig
+    from studio.state import StateManager
+
+    sb = Storyboard(
+        title="Test",
+        language="vi",
+        characters={},
+        shots=[Shot(id="s1", chapter=1, character_id=None, dialogue="Hello world", image_prompt="p")]
+    )
+    cfg = StudioConfig(topic="T", output_dir=tmp_path)
+    state = StateManager(tmp_path / "state.json")
+    # Mark state as complete
+    state.mark_complete("s1", "audio")
+
+    # Mock generate_audio_for_shot to return a dummy file
+    calls = []
+    dummy_audio = tmp_path / "audio" / "s1.mp3"
+    def mock_gen(shot, characters, output_dir, lang="en"):
+        calls.append(shot.id)
+        dummy_audio.parent.mkdir(parents=True, exist_ok=True)
+        dummy_audio.write_text("fake audio")
+        return dummy_audio
+
+    monkeypatch.setattr("studio.tts.generate_audio_for_shot", mock_gen)
+    monkeypatch.setattr("studio.tts.get_audio_duration", lambda p: 3.5)
+
+    # When audio file does NOT exist on disk, run_tts_stage must call generate_audio_for_shot
+    durations = run_tts_stage(sb, cfg, state)
+    assert "s1" in calls
+    assert durations["s1"] == 3.5
+
+

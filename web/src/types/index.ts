@@ -93,6 +93,9 @@ export interface Shot {
   image_url?: string
   audio_url?: string
   video_url?: string
+  has_image?: boolean
+  has_audio?: boolean
+  has_video?: boolean
   sfx?: string
   act?: number
   mood?: string

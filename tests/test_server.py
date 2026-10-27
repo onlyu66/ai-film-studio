@@ -189,3 +189,92 @@ def test_api_character_headshot_upload(tmp_path, monkeypatch):
     assert resp.status_code == 200
     assert resp.json()["success"] is True
     assert "hero_char" in resp.json()["headshot_url"]
+
+def test_clean_outputs_preserves_projects(tmp_path, monkeypatch):
+    from pathlib import Path
+    import json
+
+    out_dir = tmp_path / "outputs"
+    (out_dir / "images").mkdir(parents=True, exist_ok=True)
+    (out_dir / "images" / "test.png").write_text("dummy", encoding="utf-8")
+    (out_dir / "storyboard.json").write_text("{}", encoding="utf-8")
+
+    proj_dir = out_dir / "projects" / "proj_keep"
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    (proj_dir / "metadata.json").write_text(json.dumps({"id": "proj_keep"}), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        if str(arg) == "outputs":
+            return out_dir
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    resp = client.post("/api/clean")
+    assert resp.status_code == 200
+
+    # Ensure projects directory and its contents are strictly preserved!
+    assert (proj_dir / "metadata.json").exists()
+    # Ensure temporary images and storyboard were wiped
+    assert not (out_dir / "images" / "test.png").exists()
+    assert not (out_dir / "storyboard.json").exists()
+
+def test_update_shot_resets_checkpoints(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+    from studio.state import StateManager
+
+    out_dir = tmp_path / "outputs"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "audio").mkdir(parents=True, exist_ok=True)
+    (out_dir / "videos").mkdir(parents=True, exist_ok=True)
+
+    sb_file = out_dir / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Test",
+        "characters": {},
+        "shots": [{"id": "s1", "dialogue": "Original", "character_id": None}]
+    }), encoding="utf-8")
+
+    state_file = out_dir / "state.json"
+    state = StateManager(state_file)
+    state.mark_complete("s1", "audio")
+    state.mark_complete("s1", "video")
+    state.save()
+
+    audio_file = out_dir / "audio" / "s1.mp3"
+    audio_file.write_text("audio content", encoding="utf-8")
+    video_file = out_dir / "videos" / "s1.mp4"
+    video_file.write_text("video content", encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        s = str(arg)
+        if s == "outputs/storyboard.json":
+            return sb_file
+        if s == "outputs/state.json":
+            return state_file
+        if s == "outputs/audio/s1.mp3":
+            return audio_file
+        if s == "outputs/videos/s1.mp4":
+            return video_file
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    resp = client.post("/api/storyboard/update-shot", json={
+        "shot_id": "s1",
+        "dialogue": "Updated Dialogue"
+    })
+    assert resp.status_code == 200
+
+    # Audio and video files should be unlinked
+    assert not audio_file.exists()
+    assert not video_file.exists()
+
+    # State checkpoint for s1 audio and video should be reset
+    state_reloaded = StateManager(state_file)
+    assert not state_reloaded.is_stage_complete("s1", "audio")
+    assert not state_reloaded.is_stage_complete("s1", "video")
+

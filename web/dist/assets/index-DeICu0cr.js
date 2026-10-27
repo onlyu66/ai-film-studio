@@ -20406,11 +20406,22 @@ const createLucideIcon = (iconName, iconNode) => {
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$U = [
+const __iconNode$V = [
   ["path", { d: "M12 5v14", key: "s699le" }],
   ["path", { d: "m19 12-7 7-7-7", key: "1idqje" }]
 ];
-const ArrowDown = createLucideIcon("ArrowDown", __iconNode$U);
+const ArrowDown = createLucideIcon("ArrowDown", __iconNode$V);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$U = [
+  ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
+  ["path", { d: "M12 19V5", key: "x0mq9r" }]
+];
+const ArrowUp = createLucideIcon("ArrowUp", __iconNode$U);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20418,17 +20429,6 @@ const ArrowDown = createLucideIcon("ArrowDown", __iconNode$U);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$T = [
-  ["path", { d: "m5 12 7-7 7 7", key: "hav0vg" }],
-  ["path", { d: "M12 19V5", key: "x0mq9r" }]
-];
-const ArrowUp = createLucideIcon("ArrowUp", __iconNode$T);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$S = [
   ["path", { d: "M12 8V4H8", key: "hb8ula" }],
   ["rect", { width: "16", height: "12", x: "4", y: "8", rx: "2", key: "enze0r" }],
   ["path", { d: "M2 14h2", key: "vft8re" }],
@@ -20436,7 +20436,20 @@ const __iconNode$S = [
   ["path", { d: "M15 13v2", key: "1xurst" }],
   ["path", { d: "M9 13v2", key: "rq6x2g" }]
 ];
-const Bot = createLucideIcon("Bot", __iconNode$S);
+const Bot = createLucideIcon("Bot", __iconNode$T);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$S = [
+  ["path", { d: "M8 2v4", key: "1cmpym" }],
+  ["path", { d: "M16 2v4", key: "4m81vk" }],
+  ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
+  ["path", { d: "M3 10h18", key: "8toen8" }]
+];
+const Calendar = createLucideIcon("Calendar", __iconNode$S);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20444,19 +20457,6 @@ const Bot = createLucideIcon("Bot", __iconNode$S);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$R = [
-  ["path", { d: "M8 2v4", key: "1cmpym" }],
-  ["path", { d: "M16 2v4", key: "4m81vk" }],
-  ["rect", { width: "18", height: "18", x: "3", y: "4", rx: "2", key: "1hopcy" }],
-  ["path", { d: "M3 10h18", key: "8toen8" }]
-];
-const Calendar = createLucideIcon("Calendar", __iconNode$R);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$Q = [
   [
     "path",
     {
@@ -20466,23 +20466,35 @@ const __iconNode$Q = [
   ],
   ["circle", { cx: "12", cy: "13", r: "3", key: "1vg3eu" }]
 ];
-const Camera = createLucideIcon("Camera", __iconNode$Q);
+const Camera = createLucideIcon("Camera", __iconNode$R);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$P = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
-const Check = createLucideIcon("Check", __iconNode$P);
+const __iconNode$Q = [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]];
+const Check = createLucideIcon("Check", __iconNode$Q);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$O = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
-const ChevronDown = createLucideIcon("ChevronDown", __iconNode$O);
+const __iconNode$P = [["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]];
+const ChevronDown = createLucideIcon("ChevronDown", __iconNode$P);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$O = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
+  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+];
+const CircleAlert = createLucideIcon("CircleAlert", __iconNode$O);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20491,10 +20503,10 @@ const ChevronDown = createLucideIcon("ChevronDown", __iconNode$O);
  */
 const __iconNode$N = [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["line", { x1: "12", x2: "12", y1: "8", y2: "12", key: "1pkeuh" }],
-  ["line", { x1: "12", x2: "12.01", y1: "16", y2: "16", key: "4dfq90" }]
+  ["path", { d: "M12 8v8", key: "napkw2" }],
+  ["path", { d: "m8 12 4 4 4-4", key: "k98ssh" }]
 ];
-const CircleAlert = createLucideIcon("CircleAlert", __iconNode$N);
+const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$N);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20503,10 +20515,9 @@ const CircleAlert = createLucideIcon("CircleAlert", __iconNode$N);
  */
 const __iconNode$M = [
   ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "M12 8v8", key: "napkw2" }],
-  ["path", { d: "m8 12 4 4 4-4", key: "k98ssh" }]
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
 ];
-const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$M);
+const CircleCheck = createLucideIcon("CircleCheck", __iconNode$M);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20514,17 +20525,6 @@ const CircleArrowDown = createLucideIcon("CircleArrowDown", __iconNode$M);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$L = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
-];
-const CircleCheck = createLucideIcon("CircleCheck", __iconNode$L);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$K = [
   [
     "path",
     { d: "M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z", key: "1tn4o7" }
@@ -20533,7 +20533,18 @@ const __iconNode$K = [
   ["path", { d: "m12.4 3.4 3.1 4", key: "6hsd6n" }],
   ["path", { d: "M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z", key: "ltgou9" }]
 ];
-const Clapperboard = createLucideIcon("Clapperboard", __iconNode$K);
+const Clapperboard = createLucideIcon("Clapperboard", __iconNode$L);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$K = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["polyline", { points: "12 6 12 12 16 14", key: "68esgv" }]
+];
+const Clock = createLucideIcon("Clock", __iconNode$K);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20541,10 +20552,10 @@ const Clapperboard = createLucideIcon("Clapperboard", __iconNode$K);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$J = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["polyline", { points: "12 6 12 12 16 14", key: "68esgv" }]
+  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
 ];
-const Clock = createLucideIcon("Clock", __iconNode$J);
+const Copy = createLucideIcon("Copy", __iconNode$J);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20552,17 +20563,6 @@ const Clock = createLucideIcon("Clock", __iconNode$J);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$I = [
-  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
-  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
-];
-const Copy = createLucideIcon("Copy", __iconNode$I);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$H = [
   ["rect", { width: "16", height: "16", x: "4", y: "4", rx: "2", key: "14l7u7" }],
   ["rect", { width: "6", height: "6", x: "9", y: "9", rx: "1", key: "5aljv4" }],
   ["path", { d: "M15 2v2", key: "13l42r" }],
@@ -20574,7 +20574,19 @@ const __iconNode$H = [
   ["path", { d: "M9 2v2", key: "165o2o" }],
   ["path", { d: "M9 20v2", key: "i2bqo8" }]
 ];
-const Cpu = createLucideIcon("Cpu", __iconNode$H);
+const Cpu = createLucideIcon("Cpu", __iconNode$I);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$H = [
+  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
+  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
+  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
+];
+const Download = createLucideIcon("Download", __iconNode$H);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20582,18 +20594,6 @@ const Cpu = createLucideIcon("Cpu", __iconNode$H);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$G = [
-  ["path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", key: "ih7n3h" }],
-  ["polyline", { points: "7 10 12 15 17 10", key: "2ggqvy" }],
-  ["line", { x1: "12", x2: "12", y1: "15", y2: "3", key: "1vk2je" }]
-];
-const Download = createLucideIcon("Download", __iconNode$G);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$F = [
   [
     "path",
     {
@@ -20611,14 +20611,14 @@ const __iconNode$F = [
   ],
   ["path", { d: "m2 2 20 20", key: "1ooewy" }]
 ];
-const EyeOff = createLucideIcon("EyeOff", __iconNode$F);
+const EyeOff = createLucideIcon("EyeOff", __iconNode$G);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$E = [
+const __iconNode$F = [
   [
     "path",
     {
@@ -20628,14 +20628,14 @@ const __iconNode$E = [
   ],
   ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
 ];
-const Eye = createLucideIcon("Eye", __iconNode$E);
+const Eye = createLucideIcon("Eye", __iconNode$F);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$D = [
+const __iconNode$E = [
   ["path", { d: "M12.5 22H18a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v9.5", key: "1couwa" }],
   ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
   [
@@ -20646,7 +20646,21 @@ const __iconNode$D = [
     }
   ]
 ];
-const FilePen = createLucideIcon("FilePen", __iconNode$D);
+const FilePen = createLucideIcon("FilePen", __iconNode$E);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$D = [
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M10 9H8", key: "b1mrlr" }],
+  ["path", { d: "M16 13H8", key: "t4e002" }],
+  ["path", { d: "M16 17H8", key: "z1uh3a" }]
+];
+const FileText = createLucideIcon("FileText", __iconNode$D);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20654,20 +20668,6 @@ const FilePen = createLucideIcon("FilePen", __iconNode$D);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$C = [
-  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z", key: "1rqfz7" }],
-  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
-  ["path", { d: "M10 9H8", key: "b1mrlr" }],
-  ["path", { d: "M16 13H8", key: "t4e002" }],
-  ["path", { d: "M16 17H8", key: "z1uh3a" }]
-];
-const FileText = createLucideIcon("FileText", __iconNode$C);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$B = [
   ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }],
   ["path", { d: "M7 3v18", key: "bbkbws" }],
   ["path", { d: "M3 7.5h4", key: "zfgn84" }],
@@ -20677,7 +20677,19 @@ const __iconNode$B = [
   ["path", { d: "M17 7.5h4", key: "myr1c1" }],
   ["path", { d: "M17 16.5h4", key: "go4c1d" }]
 ];
-const Film = createLucideIcon("Film", __iconNode$B);
+const Film = createLucideIcon("Film", __iconNode$C);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$B = [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
+  ["path", { d: "M2 12h20", key: "9i4pu4" }]
+];
+const Globe = createLucideIcon("Globe", __iconNode$B);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20685,11 +20697,12 @@ const Film = createLucideIcon("Film", __iconNode$B);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$A = [
-  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
-  ["path", { d: "M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20", key: "13o1zl" }],
-  ["path", { d: "M2 12h20", key: "9i4pu4" }]
+  ["line", { x1: "4", x2: "20", y1: "9", y2: "9", key: "4lhtct" }],
+  ["line", { x1: "4", x2: "20", y1: "15", y2: "15", key: "vyu0kd" }],
+  ["line", { x1: "10", x2: "8", y1: "3", y2: "21", key: "1ggp8o" }],
+  ["line", { x1: "16", x2: "14", y1: "3", y2: "21", key: "weycgp" }]
 ];
-const Globe = createLucideIcon("Globe", __iconNode$A);
+const Hash = createLucideIcon("Hash", __iconNode$A);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20697,12 +20710,11 @@ const Globe = createLucideIcon("Globe", __iconNode$A);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$z = [
-  ["line", { x1: "4", x2: "20", y1: "9", y2: "9", key: "4lhtct" }],
-  ["line", { x1: "4", x2: "20", y1: "15", y2: "15", key: "vyu0kd" }],
-  ["line", { x1: "10", x2: "8", y1: "3", y2: "21", key: "1ggp8o" }],
-  ["line", { x1: "16", x2: "14", y1: "3", y2: "21", key: "weycgp" }]
+  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
+  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
+  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
 ];
-const Hash = createLucideIcon("Hash", __iconNode$z);
+const Image = createLucideIcon("Image", __iconNode$z);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20710,11 +20722,11 @@ const Hash = createLucideIcon("Hash", __iconNode$z);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$y = [
-  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", ry: "2", key: "1m3agn" }],
-  ["circle", { cx: "9", cy: "9", r: "2", key: "af1f0g" }],
-  ["path", { d: "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21", key: "1xmnt7" }]
+  ["path", { d: "m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4", key: "g0fldk" }],
+  ["path", { d: "m21 2-9.6 9.6", key: "1j0ho8" }],
+  ["circle", { cx: "7.5", cy: "15.5", r: "5.5", key: "yqb3hr" }]
 ];
-const Image = createLucideIcon("Image", __iconNode$y);
+const Key = createLucideIcon("Key", __iconNode$y);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20722,18 +20734,6 @@ const Image = createLucideIcon("Image", __iconNode$y);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$x = [
-  ["path", { d: "m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4", key: "g0fldk" }],
-  ["path", { d: "m21 2-9.6 9.6", key: "1j0ho8" }],
-  ["circle", { cx: "7.5", cy: "15.5", r: "5.5", key: "yqb3hr" }]
-];
-const Key = createLucideIcon("Key", __iconNode$x);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$w = [
   ["path", { d: "m5 8 6 6", key: "1wu5hv" }],
   ["path", { d: "m4 14 6-6 2-3", key: "1k1g8d" }],
   ["path", { d: "M2 5h12", key: "or177f" }],
@@ -20741,15 +20741,28 @@ const __iconNode$w = [
   ["path", { d: "m22 22-5-10-5 10", key: "don7ne" }],
   ["path", { d: "M14 18h6", key: "1m8k6r" }]
 ];
-const Languages = createLucideIcon("Languages", __iconNode$w);
+const Languages = createLucideIcon("Languages", __iconNode$x);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const __iconNode$v = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
-const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$v);
+const __iconNode$w = [["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]];
+const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$w);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$v = [
+  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
+  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
+  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
+  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
+];
+const Maximize2 = createLucideIcon("Maximize2", __iconNode$v);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20757,19 +20770,6 @@ const LoaderCircle = createLucideIcon("LoaderCircle", __iconNode$v);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$u = [
-  ["polyline", { points: "15 3 21 3 21 9", key: "mznyad" }],
-  ["polyline", { points: "9 21 3 21 3 15", key: "1avn1i" }],
-  ["line", { x1: "21", x2: "14", y1: "3", y2: "10", key: "ota7mn" }],
-  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
-];
-const Maximize2 = createLucideIcon("Maximize2", __iconNode$u);
-/**
- * @license lucide-react v0.475.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-const __iconNode$t = [
   ["line", { x1: "2", x2: "22", y1: "2", y2: "22", key: "a6p6uj" }],
   ["path", { d: "M18.89 13.23A7.12 7.12 0 0 0 19 12v-2", key: "80xlxr" }],
   ["path", { d: "M5 10v2a7 7 0 0 0 12 5", key: "p2k8kg" }],
@@ -20777,7 +20777,19 @@ const __iconNode$t = [
   ["path", { d: "M9 9v3a3 3 0 0 0 5.12 2.12", key: "r2i35w" }],
   ["line", { x1: "12", x2: "12", y1: "19", y2: "22", key: "x3vr5v" }]
 ];
-const MicOff = createLucideIcon("MicOff", __iconNode$t);
+const MicOff = createLucideIcon("MicOff", __iconNode$u);
+/**
+ * @license lucide-react v0.475.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+const __iconNode$t = [
+  ["path", { d: "M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z", key: "131961" }],
+  ["path", { d: "M19 10v2a7 7 0 0 1-14 0v-2", key: "1vc78b" }],
+  ["line", { x1: "12", x2: "12", y1: "19", y2: "22", key: "x3vr5v" }]
+];
+const Mic = createLucideIcon("Mic", __iconNode$t);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -20785,11 +20797,12 @@ const MicOff = createLucideIcon("MicOff", __iconNode$t);
  * See the LICENSE file in the root directory of this source tree.
  */
 const __iconNode$s = [
-  ["path", { d: "M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z", key: "131961" }],
-  ["path", { d: "M19 10v2a7 7 0 0 1-14 0v-2", key: "1vc78b" }],
-  ["line", { x1: "12", x2: "12", y1: "19", y2: "22", key: "x3vr5v" }]
+  ["polyline", { points: "4 14 10 14 10 20", key: "11kfnr" }],
+  ["polyline", { points: "20 10 14 10 14 4", key: "rlmsce" }],
+  ["line", { x1: "14", x2: "21", y1: "10", y2: "3", key: "o5lafz" }],
+  ["line", { x1: "3", x2: "10", y1: "21", y2: "14", key: "1atl0r" }]
 ];
-const Mic = createLucideIcon("Mic", __iconNode$s);
+const Minimize2 = createLucideIcon("Minimize2", __iconNode$s);
 /**
  * @license lucide-react v0.475.0 - ISC
  *
@@ -29602,90 +29615,147 @@ function TerminalLogs({ logs, className, onClose }) {
   const scrollRef = reactExports.useRef(null);
   const [copied, setCopied] = reactExports.useState(false);
   const [autoScroll, setAutoScroll] = reactExports.useState(true);
+  const [isExpanded, setIsExpanded] = reactExports.useState(false);
   reactExports.useEffect(() => {
     if (autoScroll && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [logs, autoScroll]);
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 35;
+    if (!isAtBottom && autoScroll) {
+      setAutoScroll(false);
+    } else if (isAtBottom && !autoScroll) {
+      setAutoScroll(true);
+    }
+  };
   const handleCopy = () => {
     if (!(logs == null ? void 0 : logs.length)) return;
     navigator.clipboard.writeText(logs.join("\n"));
     setCopied(true);
     setTimeout(() => setCopied(false), 2e3);
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: cn("glass-panel rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full min-h-[360px] border border-studio-border bg-studio-deck", className), children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-3 bg-studio-deck border-b border-studio-border flex items-center justify-between flex-shrink-0", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-6 h-6 rounded-lg bg-amber-400/10 flex items-center justify-center text-amber-400", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Terminal, { className: "w-3.5 h-3.5" }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-bold text-zinc-200", children: "Execution Console" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] px-2 py-0.5 rounded-full font-mono bg-studio-card border border-studio-border text-zinc-400", children: [
-            (logs == null ? void 0 : logs.length) || 0,
-            " events"
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      className: cn(
+        "glass-panel rounded-2xl overflow-hidden shadow-2xl flex flex-col border border-studio-border bg-studio-deck transition-all duration-300",
+        isExpanded ? "h-[540px] max-h-[80vh]" : "h-[360px] sm:h-[400px] max-h-[50vh]",
+        className
+      ),
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-3 bg-studio-deck border-b border-studio-border flex items-center justify-between flex-shrink-0", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-6 h-6 rounded-lg bg-amber-400/10 flex items-center justify-center text-amber-400", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Terminal, { className: "w-3.5 h-3.5" }) }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-bold text-zinc-200", children: "Execution Console" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] px-2 py-0.5 rounded-full font-mono bg-studio-card border border-studio-border text-zinc-400", children: [
+                (logs == null ? void 0 : logs.length) || 0,
+                " events"
+              ] })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "button",
+              {
+                type: "button",
+                onClick: () => {
+                  const next = !autoScroll;
+                  setAutoScroll(next);
+                  if (next && scrollRef.current) {
+                    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                  }
+                },
+                className: `text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${autoScroll ? "bg-amber-400/15 text-amber-300 border-amber-400/30 font-semibold" : "bg-studio-card text-zinc-400 border-studio-border hover:border-studio-border-hover"}`,
+                title: "Tự động cuộn theo log mới nhất",
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(CircleArrowDown, { className: "w-3 h-3" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Auto-scroll" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => setIsExpanded(!isExpanded),
+                className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer",
+                title: isExpanded ? "Thu nhỏ chiều cao" : "Mở rộng chiều cao",
+                children: isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(Minimize2, { className: "w-3.5 h-3.5 text-amber-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Maximize2, { className: "w-3.5 h-3.5" })
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: handleCopy,
+                disabled: !(logs == null ? void 0 : logs.length),
+                className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors disabled:opacity-30 cursor-pointer",
+                title: "Sao chép toàn bộ nhật ký",
+                children: copied ? /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-3.5 h-3.5 text-emerald-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Copy, { className: "w-3.5 h-3.5" })
+              }
+            ),
+            onClose && /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "button",
+              {
+                type: "button",
+                onClick: onClose,
+                className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer",
+                title: "Thu nhỏ console",
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-3.5 h-3.5" })
+              }
+            )
           ] })
-        ] })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5", children: [
+        ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "button",
+          "div",
           {
-            type: "button",
-            onClick: () => setAutoScroll(!autoScroll),
-            className: `text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${autoScroll ? "bg-amber-400/15 text-amber-300 border-amber-400/30 font-semibold" : "bg-studio-card text-zinc-400 border-studio-border hover:border-studio-border-hover"}`,
-            title: "Tự động cuộn theo log mới nhất",
+            ref: scrollRef,
+            onScroll: handleScroll,
+            className: "relative p-4 flex-1 min-h-0 overflow-y-auto font-mono text-[11px] sm:text-xs space-y-1.5 text-zinc-300 select-text leading-relaxed bg-studio-input",
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(CircleArrowDown, { className: "w-3 h-3" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Auto-scroll" })
+              !logs || logs.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-zinc-600 italic py-16 text-center flex flex-col items-center justify-center gap-2", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Clock, { className: "w-6 h-6 text-zinc-700 stroke-[1.5]" }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs", children: "[Studio Idle] Hệ thống sẵn sàng tiếp nhận lệnh sản xuất phim..." })
+              ] }) : logs.map((log, index) => {
+                const isError = log.includes("Lỗi") || log.includes("failed") || log.includes("Warning");
+                const isSuccess = log.includes("Thành công") || log.includes("✓") || log.includes("hoàn thành");
+                const isStage = log.includes("[Stage") || log.includes("Khởi động") || log.includes("START");
+                return /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "div",
+                  {
+                    className: `font-mono transition-colors break-words ${isError ? "text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border-l-2 border-rose-500" : isSuccess ? "text-emerald-400 font-semibold" : isStage ? "text-amber-300 font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border-l-2 border-amber-400" : "text-zinc-400"}`,
+                    children: log
+                  },
+                  index
+                );
+              }),
+              !autoScroll && logs && logs.length > 8 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "sticky bottom-1 flex justify-end pointer-events-none pt-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                "button",
+                {
+                  type: "button",
+                  onClick: () => {
+                    setAutoScroll(true);
+                    if (scrollRef.current) {
+                      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+                    }
+                  },
+                  className: "pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-mono border border-amber-500/40 backdrop-blur-md shadow-xl transition-all cursor-pointer",
+                  children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(CircleArrowDown, { className: "w-3.5 h-3.5 text-amber-400" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Cuộn xuống mới nhất" })
+                  ]
+                }
+              ) })
             ]
           }
-        ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            type: "button",
-            onClick: handleCopy,
-            disabled: !(logs == null ? void 0 : logs.length),
-            className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors disabled:opacity-30 cursor-pointer",
-            title: "Sao chép toàn bộ nhật ký",
-            children: copied ? /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-3.5 h-3.5 text-emerald-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Copy, { className: "w-3.5 h-3.5" })
-          }
-        ),
-        onClose && /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            type: "button",
-            onClick: onClose,
-            className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer",
-            title: "Thu nhỏ console",
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-3.5 h-3.5" })
-          }
         )
-      ] })
-    ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "div",
-      {
-        ref: scrollRef,
-        className: "p-4 flex-1 overflow-y-auto font-mono text-[11px] sm:text-xs space-y-1.5 text-zinc-300 select-text leading-relaxed bg-studio-input",
-        children: !logs || logs.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-zinc-600 italic py-16 text-center flex flex-col items-center justify-center gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Clock, { className: "w-6 h-6 text-zinc-700 stroke-[1.5]" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs", children: "[Studio Idle] Hệ thống sẵn sàng tiếp nhận lệnh sản xuất phim..." })
-        ] }) : logs.map((log, index) => {
-          const isError = log.includes("Lỗi") || log.includes("failed") || log.includes("Warning");
-          const isSuccess = log.includes("Thành công") || log.includes("✓") || log.includes("hoàn thành");
-          const isStage = log.includes("[Stage") || log.includes("Khởi động") || log.includes("START");
-          return /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "div",
-            {
-              className: `font-mono transition-colors break-words ${isError ? "text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border-l-2 border-rose-500" : isSuccess ? "text-emerald-400 font-semibold" : isStage ? "text-amber-300 font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border-l-2 border-amber-400" : "text-zinc-400"}`,
-              children: log
-            },
-            index
-          );
-        })
-      }
-    )
-  ] });
+      ]
+    }
+  );
 }
 function Card({ className, ...props }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30488,6 +30558,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
       }) }),
       activeTab === "shots" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4", children: filteredShots.map((shot, index) => {
         var _a3;
+        const hasImage = Boolean(shot.has_image || cacheBuster[shot.id]);
         const imgSrc = `/api/outputs/images/${shot.id}.png?t=${cacheBuster[shot.id] || ""}`;
         return /* @__PURE__ */ jsxRuntimeExports.jsxs(
           motion.div,
@@ -30499,14 +30570,14 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
               /* @__PURE__ */ jsxRuntimeExports.jsxs(
                 "div",
                 {
-                  onClick: () => setLightboxImage(imgSrc),
-                  className: "relative aspect-video bg-studio-input flex items-center justify-center overflow-hidden cursor-pointer",
+                  onClick: () => hasImage && setLightboxImage(imgSrc),
+                  className: `relative aspect-video bg-studio-input flex items-center justify-center overflow-hidden ${hasImage ? "cursor-pointer" : "cursor-default"}`,
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-zinc-600 bg-studio-deck", children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-5 h-5 text-zinc-700 stroke-[1.5]" }),
                       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-mono tracking-wider text-zinc-600", children: "CHƯA TẠO ẢNH" })
                     ] }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    hasImage && /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "img",
                       {
                         src: imgSrc,
@@ -30521,7 +30592,7 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-70 group-hover:opacity-40 transition-opacity z-20 pointer-events-none" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-cinema-amber font-bold border border-studio-border z-20", children: shot.id }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute top-2 right-2 px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 text-[10px] font-mono uppercase tracking-wider border border-studio-border z-20", children: shot.motion || "zoom_in" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] z-20", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-medium flex items-center gap-1.5 border border-studio-border-hover", children: [
+                    hasImage && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] z-20", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-medium flex items-center gap-1.5 border border-studio-border-hover", children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx(Maximize2, { className: "w-3.5 h-3.5" }),
                       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Xem ảnh HD" })
                     ] }) })
@@ -30625,17 +30696,14 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
                     )
                   ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(
                       "button",
                       {
                         type: "button",
                         onClick: () => handleOpenEditShot(shot),
-                        className: "px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap",
+                        className: "p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap",
                         title: "Sửa lời thoại, nhân vật, visual prompt và góc máy",
-                        children: [
-                          /* @__PURE__ */ jsxRuntimeExports.jsx(PenLine, { className: "w-3.5 h-3.5 text-amber-400" }),
-                          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Sửa" })
-                        ]
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(PenLine, { className: "w-3.5 h-3.5 text-amber-400" })
                       }
                     ),
                     /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -30708,20 +30776,20 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between pb-4 border-b border-studio-border shrink-0", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative w-16 h-10 rounded-lg overflow-hidden bg-studio-input border border-studio-border shrink-0", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "img",
-                      {
-                        src: `/api/outputs/images/${editingShot.id}.png?t=${cacheBuster[editingShot.id] || ""}`,
-                        alt: editingShot.id,
-                        onError: (e) => {
-                          e.currentTarget.style.display = "none";
-                        },
-                        className: "w-full h-full object-cover"
-                      }
-                    ),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 flex items-center justify-center text-[8px] font-mono text-zinc-600 bg-studio-input -z-10", children: "SHOT" })
-                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative w-16 h-10 rounded-lg overflow-hidden bg-studio-input border border-studio-border shrink-0 flex items-center justify-center", children: editingShot.has_image || cacheBuster[editingShot.id] ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "img",
+                    {
+                      src: `/api/outputs/images/${editingShot.id}.png?t=${cacheBuster[editingShot.id] || ""}`,
+                      alt: editingShot.id,
+                      onError: (e) => {
+                        e.currentTarget.style.display = "none";
+                      },
+                      className: "w-full h-full object-cover"
+                    }
+                  ) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col items-center justify-center gap-0.5 text-zinc-500", children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-zinc-600" }),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[7px] font-mono tracking-wider text-zinc-500", children: "CHƯA ẢNH" })
+                  ] }) }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-mono text-xs font-bold border border-amber-500/20", children: editingShot.id }),

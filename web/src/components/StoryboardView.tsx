@@ -60,6 +60,9 @@ interface ShotData {
   sfx?: string
   act?: number | string
   mood?: string
+  has_image?: boolean
+  has_audio?: boolean
+  has_video?: boolean
   [key: string]: unknown
 }
 
@@ -618,6 +621,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         {activeTab === 'shots' && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredShots.map((shot, index) => {
+              const hasImage = Boolean(shot.has_image || cacheBuster[shot.id])
               const imgSrc = `/api/outputs/images/${shot.id}.png?t=${cacheBuster[shot.id] || ''}`
 
               return (
@@ -629,8 +633,8 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                 >
                   {/* Thumbnail / Lightbox click */}
                   <div
-                    onClick={() => setLightboxImage(imgSrc)}
-                    className="relative aspect-video bg-studio-input flex items-center justify-center overflow-hidden cursor-pointer"
+                    onClick={() => hasImage && setLightboxImage(imgSrc)}
+                    className={`relative aspect-video bg-studio-input flex items-center justify-center overflow-hidden ${hasImage ? 'cursor-pointer' : 'cursor-default'}`}
                   >
                     {/* Fallback background when image doesn't exist */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-zinc-600 bg-studio-deck">
@@ -638,15 +642,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       <span className="text-[9px] font-mono tracking-wider text-zinc-600">CHƯA TẠO ẢNH</span>
                     </div>
 
-                    <img
-                      src={imgSrc}
-                      alt={shot.id}
-                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                        const target = e.currentTarget
-                        target.style.display = 'none'
-                      }}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 z-10"
-                    />
+                    {hasImage && (
+                      <img
+                        src={imgSrc}
+                        alt={shot.id}
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                          const target = e.currentTarget
+                          target.style.display = 'none'
+                        }}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 z-10"
+                      />
+                    )}
 
                     {/* Film overlay & badges */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-70 group-hover:opacity-40 transition-opacity z-20 pointer-events-none" />
@@ -659,12 +665,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       {shot.motion || 'zoom_in'}
                     </div>
 
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] z-20">
-                      <div className="px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-medium flex items-center gap-1.5 border border-studio-border-hover">
-                        <Maximize2 className="w-3.5 h-3.5" />
-                        <span>Xem ảnh HD</span>
+                    {hasImage && (
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] z-20">
+                        <div className="px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-medium flex items-center gap-1.5 border border-studio-border-hover">
+                          <Maximize2 className="w-3.5 h-3.5" />
+                          <span>Xem ảnh HD</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Shot details */}
@@ -787,11 +795,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         <button
                           type="button"
                           onClick={() => handleOpenEditShot(shot)}
-                          className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap"
+                          className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap"
                           title="Sửa lời thoại, nhân vật, visual prompt và góc máy"
                         >
                           <Edit3 className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Sửa</span>
                         </button>
 
                         <button
@@ -861,18 +868,22 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
             >
               <div className="flex items-center justify-between pb-4 border-b border-studio-border shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="relative w-16 h-10 rounded-lg overflow-hidden bg-studio-input border border-studio-border shrink-0">
-                    <img
-                      src={`/api/outputs/images/${editingShot.id}.png?t=${cacheBuster[editingShot.id] || ''}`}
-                      alt={editingShot.id}
-                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                        e.currentTarget.style.display = 'none'
-                      }}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center text-[8px] font-mono text-zinc-600 bg-studio-input -z-10">
-                      SHOT
-                    </div>
+                  <div className="relative w-16 h-10 rounded-lg overflow-hidden bg-studio-input border border-studio-border shrink-0 flex items-center justify-center">
+                    {(editingShot.has_image || cacheBuster[editingShot.id]) ? (
+                      <img
+                        src={`/api/outputs/images/${editingShot.id}.png?t=${cacheBuster[editingShot.id] || ''}`}
+                        alt={editingShot.id}
+                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center gap-0.5 text-zinc-500">
+                        <Film className="w-3.5 h-3.5 text-zinc-600" />
+                        <span className="text-[7px] font-mono tracking-wider text-zinc-500">CHƯA ẢNH</span>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
