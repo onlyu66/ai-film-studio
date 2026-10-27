@@ -58,6 +58,15 @@ export default function App() {
       refetchStoryboard()
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
     }
+
+    // Auto-scroll to Storyboard review area when script is ready
+    if (statusData?.status === 'script_ready') {
+      setShowConsole(false) // Collapse console so user has full view of storyboard
+      setTimeout(() => {
+        const el = document.getElementById('storyboard-section')
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 400)
+    }
   }, [statusData?.status, queryClient, refetchStoryboard])
 
   // WebSocket Live Log & Status Streaming

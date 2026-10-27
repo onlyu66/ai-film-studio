@@ -42,10 +42,14 @@ export default function Navbar({
   const getStatusBadge = () => {
     if (isScriptReady) {
       return (
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium">
+        <div
+          onClick={() => scrollTo('storyboard-section')}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-semibold cursor-pointer hover:bg-amber-500/25 transition-all shadow-sm shadow-amber-500/20 active:scale-95"
+          title="Bấm để cuộn đến bảng duyệt kịch bản & phân cảnh"
+        >
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
           <FileEdit className="w-3.5 h-3.5 text-amber-400" />
-          <span className="hidden sm:inline">Kịch bản chờ duyệt</span>
+          <span className="hidden sm:inline">Kịch bản chờ duyệt ↓</span>
         </div>
       )
     }
