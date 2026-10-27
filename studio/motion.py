@@ -92,6 +92,7 @@ def build_ffmpeg_command(
         "-tune", "stillimage",
         "-threads", "0",
         "-pix_fmt", "yuv420p",
+        "-movflags", "+faststart",
         str(output_path),
     ]
 

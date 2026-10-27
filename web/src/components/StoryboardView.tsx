@@ -22,6 +22,7 @@ import {
   FileEdit,
   User,
   Video,
+  Download,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -195,7 +196,8 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [renderingAudioShotId, setRenderingAudioShotId] = useState<string | null>(null)
   const [renderingVideoShotId, setRenderingVideoShotId] = useState<string | null>(null)
   const [approvingShotId, setApprovingShotId] = useState<string | null>(null)
-  const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string } | null>(null)
+  const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string; shotId?: string } | null>(null)
+  const [videoError, setVideoError] = useState<boolean>(false)
 
   const handleGenerateHeadshot = (charId: string, char: CharacterData) => {
     setGeneratingCharId(charId)
@@ -859,10 +861,30 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   transition={{ duration: 0.15 }}
                   className="group rounded-xl bg-cinema-card border border-cinema-border overflow-hidden hover:border-cinema-border-hover transition-all flex flex-col"
                 >
-                  {/* Thumbnail / Lightbox click */}
+                  {/* Thumbnail / Video / Lightbox click */}
                   <div
-                    onClick={() => hasImage && setLightboxImage(imgSrc)}
-                    className={`relative aspect-video bg-studio-input flex items-center justify-center overflow-hidden ${hasImage ? 'cursor-pointer' : 'cursor-default'}`}
+                    onClick={() => {
+                      if (shot.has_video) {
+                        setVideoError(false)
+                        setPreviewVideo({
+                          url: `/api/outputs/videos/${shot.id}.mp4?t=${cacheBuster[shot.id] || Date.now()}`,
+                          title: `Phân cảnh ${shot.id} ${shot.dialogue ? `• "${shot.dialogue}"` : ''}`,
+                          shotId: shot.id,
+                        })
+                      } else if (hasImage) {
+                        setLightboxImage(imgSrc)
+                      }
+                    }}
+                    className={`relative aspect-video bg-studio-input flex items-center justify-center overflow-hidden ${
+                      shot.has_video || hasImage ? 'cursor-pointer' : 'cursor-default'
+                    }`}
+                    title={
+                      shot.has_video
+                        ? 'Bấm để xem video clip phân cảnh này'
+                        : hasImage
+                        ? 'Bấm để phóng to ảnh phân cảnh'
+                        : ''
+                    }
                   >
                     {/* Fallback background when image doesn't exist */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-zinc-600 bg-studio-deck">
@@ -922,6 +944,15 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       )}
                     </button>
 
+                    {/* Center Video Play Badge if video exists */}
+                    {shot.has_video && (
+                      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                        <div className="w-11 h-11 rounded-full bg-black/60 border border-emerald-400/50 flex items-center justify-center text-white shadow-xl backdrop-blur-sm group-hover:scale-110 group-hover:bg-emerald-600 group-hover:border-emerald-300 transition-all duration-300">
+                          <Play className="w-5 h-5 fill-white text-white ml-0.5" />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Bottom Left: Motion Tag */}
                     <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-zinc-300 text-[9px] font-mono uppercase tracking-wider border border-white/10 z-20">
                       {shot.motion || 'zoom_in'}
@@ -936,29 +967,44 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         </span>
                       )}
                       {shot.has_video && (
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/80 backdrop-blur-sm text-white flex items-center gap-1 text-[9px] font-mono" title="Đã có clip video MP4">
-                          <Video className="w-2.5 h-2.5" />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setVideoError(false)
+                            setPreviewVideo({
+                              url: `/api/outputs/videos/${shot.id}.mp4?t=${cacheBuster[shot.id] || Date.now()}`,
+                              title: `Phân cảnh ${shot.id} ${shot.dialogue ? `• "${shot.dialogue}"` : ''}`,
+                              shotId: shot.id,
+                            })
+                          }}
+                          className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 backdrop-blur-sm text-white flex items-center gap-1 text-[9px] font-mono font-bold border border-emerald-400/40 shadow-sm cursor-pointer transition-all active:scale-95"
+                          title="Bấm để xem video clip phân cảnh này"
+                        >
+                          <Play className="w-2 h-2 fill-white" />
                           <span>CLIP</span>
-                        </span>
+                        </button>
                       )}
                     </div>
 
                     {/* Hover Actions: Preview Clip / Render Clip / Zoom Image */}
-                    <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-[2px] z-25 p-2">
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-[2px] z-30 p-2">
                       {shot.has_video ? (
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation()
+                            setVideoError(false)
                             setPreviewVideo({
-                              url: `/api/outputs/videos/${shot.id}.mp4?t=${cacheBuster[shot.id] || ''}`,
+                              url: `/api/outputs/videos/${shot.id}.mp4?t=${cacheBuster[shot.id] || Date.now()}`,
                               title: `Phân cảnh ${shot.id} ${shot.dialogue ? `• "${shot.dialogue}"` : ''}`,
+                              shotId: shot.id,
                             })
                           }}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg border border-emerald-400/50 transition-all active:scale-95 cursor-pointer"
+                          className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-xl border border-emerald-400/50 transition-all active:scale-95 cursor-pointer"
                           title="Xem trước clip video phân cảnh này"
                         >
-                          <Play className="w-3.5 h-3.5 fill-white" />
+                          <Play className="w-4 h-4 fill-white" />
                           <span>Xem Clip</span>
                         </button>
                       ) : (
@@ -988,10 +1034,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                             e.stopPropagation()
                             setLightboxImage(imgSrc)
                           }}
-                          className="p-1.5 rounded-lg bg-black/80 hover:bg-black text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer"
+                          className="p-2 rounded-xl bg-black/80 hover:bg-black text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer"
                           title="Xem ảnh gốc HD"
                         >
-                          <Maximize2 className="w-3.5 h-3.5" />
+                          <Maximize2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -1123,16 +1169,32 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           )}
                         </button>
 
+                        {/* If shot has video: show direct Play Clip button */}
+                        {shot.has_video && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setVideoError(false)
+                              setPreviewVideo({
+                                url: `/api/outputs/videos/${shot.id}.mp4?t=${cacheBuster[shot.id] || Date.now()}`,
+                                title: `Phân cảnh ${shot.id} ${shot.dialogue ? `• "${shot.dialogue}"` : ''}`,
+                                shotId: shot.id,
+                              })
+                            }}
+                            className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm active:scale-95"
+                            title="Xem trước clip video phân cảnh này"
+                          >
+                            <Play className="w-3.5 h-3.5 fill-current" />
+                          </button>
+                        )}
+
+                        {/* Render / Re-render Video Clip button */}
                         <button
                           type="button"
                           onClick={() => handleRenderVideo(shot.id)}
                           disabled={renderingVideoShotId === shot.id}
-                          className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
-                            shot.has_video
-                              ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
-                              : 'bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-emerald-300 border-studio-border'
-                          }`}
-                          title={shot.has_video ? 'Render lại video clip cho phân cảnh này (Đã có clip)' : 'Render video clip (Ken Burns) cho phân cảnh này'}
+                          className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-emerald-300 border border-studio-border transition-all cursor-pointer flex items-center justify-center shrink-0"
+                          title={shot.has_video ? 'Render lại video clip cho phân cảnh này' : 'Render video clip (Ken Burns) cho phân cảnh này'}
                         >
                           {renderingVideoShotId === shot.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
@@ -1385,7 +1447,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setPreviewVideo(null)}
+            onClick={() => {
+              setPreviewVideo(null)
+              setVideoError(false)
+            }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md cursor-pointer"
           >
             <motion.div
@@ -1407,27 +1472,81 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                 </div>
                 <button
                   type="button"
-                  onClick={() => setPreviewVideo(null)}
+                  onClick={() => {
+                    setPreviewVideo(null)
+                    setVideoError(false)
+                  }}
                   className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
-              <div className="relative aspect-video bg-black flex items-center justify-center">
-                <video
-                  src={previewVideo.url}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-contain"
-                />
+              <div className="relative flex items-center justify-center bg-black min-h-[320px] max-h-[75vh] w-full overflow-hidden p-2">
+                {videoError ? (
+                  <div className="flex flex-col items-center justify-center p-8 text-center space-y-3">
+                    <Video className="w-10 h-10 text-rose-400 opacity-80" />
+                    <p className="text-sm font-semibold text-zinc-200">Không thể phát video clip này</p>
+                    <p className="text-xs text-zinc-400 max-w-sm">File video chưa được tạo xong hoặc định dạng chưa tương thích.</p>
+                    {previewVideo.shotId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleRenderVideo(previewVideo.shotId!)
+                          setPreviewVideo(null)
+                        }}
+                        className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold transition-all cursor-pointer shadow-lg shadow-amber-500/20"
+                      >
+                        Render lại clip này
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <video
+                    key={previewVideo.url}
+                    src={previewVideo.url}
+                    controls
+                    autoPlay
+                    playsInline
+                    onError={() => setVideoError(true)}
+                    className="max-h-[72vh] max-w-full rounded-lg object-contain shadow-2xl"
+                  />
+                )}
               </div>
 
               <div className="px-5 py-3 border-t border-studio-border bg-studio-deck/60 flex items-center justify-between text-xs text-zinc-400">
-                <span>Độ phân giải: 1920x1080 (Full HD 16:9)</span>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={previewVideo.url}
+                    download
+                    className="flex items-center gap-1.5 text-zinc-400 hover:text-amber-400 transition-colors"
+                    title="Tải clip video MP4 về máy tính"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Tải clip MP4</span>
+                  </a>
+                  {previewVideo.shotId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleRenderVideo(previewVideo.shotId!)
+                        setPreviewVideo(null)
+                      }}
+                      className="flex items-center gap-1.5 text-zinc-400 hover:text-emerald-400 transition-colors cursor-pointer"
+                      title="Render lại clip cho phân cảnh này"
+                    >
+                      <Video className="w-3.5 h-3.5" />
+                      <span>Render lại</span>
+                    </button>
+                  )}
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setPreviewVideo(null)}
+                  onClick={() => {
+                    setPreviewVideo(null)
+                    setVideoError(false)
+                  }}
                   className="px-3 py-1 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer font-medium"
                 >
                   Đóng

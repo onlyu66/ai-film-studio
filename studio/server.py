@@ -1225,6 +1225,29 @@ def render_shot_video(req: RenderShotVideoRequest):
             style=style,
         )
 
+        # Mux with audio if available for rich shot preview
+        if audio_path.exists() and audio_path.stat().st_size > 0:
+            temp_vid = vid_dir / f"temp_{target_shot.id}.mp4"
+            try:
+                out_video.rename(temp_vid)
+                mux_cmd = [
+                    "ffmpeg", "-y",
+                    "-i", str(temp_vid),
+                    "-i", str(audio_path),
+                    "-c:v", "copy",
+                    "-c:a", "aac",
+                    "-b:a", "192k",
+                    "-shortest",
+                    "-movflags", "+faststart",
+                    str(out_video)
+                ]
+                subprocess.run(mux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+                temp_vid.unlink(missing_ok=True)
+            except Exception as exc:
+                log_message(f"[Motion Warning] Không thể ghép audio vào clip: {exc}")
+                if temp_vid.exists() and not out_video.exists():
+                    temp_vid.rename(out_video)
+
         invalidate_storyboard_cache()
         log_message(f"[Motion] Hoàn tất clip phân cảnh '{req.shot_id}.mp4'.")
         return {

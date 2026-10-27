@@ -287,7 +287,8 @@ def run_assembly_stage(
         "-f", "concat",
         "-safe", "0",
         "-i", str(concat_list_file),
-        "-c", "copy",
+        "-c:v", "copy",
+        "-an",
         str(raw_video)
     ]
     subprocess.run(cmd_concat, check=True)
