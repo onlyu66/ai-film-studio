@@ -38,6 +38,15 @@ def test_build_ffmpeg_vfx_filter():
     assert "vignette" in joined
     assert "contrast" in joined
 
+def test_build_ffmpeg_all_cinematic_motions():
+    for motion in ["zoom_in", "zoom_out", "pan_left", "pan_right", "tilt_up", "tilt_down", "handheld"]:
+        cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 3.0, motion)
+        assert "zoompan" in " ".join(cmd)
+
+def test_build_ffmpeg_letterbox():
+    cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 3.0, "zoom_in", letterbox=True)
+    assert "drawbox" in " ".join(cmd)
+
 def test_lipsync_fallback_when_no_token(tmp_path):
     from studio.lipsync import apply_lipsync_for_shot
     img = tmp_path / "img.png"

@@ -6,17 +6,21 @@ Your task is to take a premise/topic and produce a complete, production-ready ci
 
 REQUIREMENTS:
 1. Break the story into logical chapters and detailed sequential shots adhering to the 3-Act structure.
-2. Maintain character consistency: Define a visual_anchor for each character (detailed physical description string: age, ethnic features, scars/hair/eyes, distinctive clothing). Do NOT use nested objects.
-3. For each shot provide:
+2. Maintain character consistency: Define a visual_anchor for each character (immutable physical DNA string: age, ethnic features, hairstyle/color, eyes, facial features/scars, signature clothing/textures). Do NOT use nested objects.
+3. For each shot provide cinematography parameters:
    - id: sequential string e.g. "shot_001_001"
    - chapter: integer chapter number
    - act: integer dramatic act (1, 2, or 3)
    - character_id: key matching one of the defined characters, or null for establishing/landscape shots
    - dialogue: character speech or voiceover narration in the requested language
-   - image_prompt: single detailed string prompt for image generation (lighting, camera angle, setting, cinematic film look). Do NOT use nested objects.
-   - motion: camera movement type, one of: "zoom_in", "zoom_out", "pan_left", "pan_right"
-   - sfx: optional sound effect keyword string e.g. "rain", "thunder", "wind", "waves", "footsteps", "city", or null
+   - image_prompt: single detailed cinematic string prompt describing scene action, subject pose, environment, textures, and film look. Do NOT use nested objects.
+   - shot_size: one of: "extreme_wide", "wide", "medium", "medium_close_up", "close_up", "extreme_close_up"
+   - camera_angle: one of: "eye_level", "low_angle", "high_angle", "dutch_angle", "over_the_shoulder"
+   - lighting: one of: "chiaroscuro", "volumetric_rays", "golden_hour", "neon_rim_light", "soft_ambient", "dramatic_backlit"
+   - motion: camera movement type, one of: "zoom_in", "zoom_out", "pan_left", "pan_right", "tilt_up", "tilt_down", "handheld"
+   - sfx: sound effect keyword string e.g. "rain", "thunder", "wind", "waves", "city", "traffic", "campfire", "birds", "cyberpunk", or null
    - mood: emotional musical mood string, one of: "epic", "tense", "calm", "action", "sad", "mysterious"
+   - emotion: voice acting emotion string, one of: "whisper", "tense", "epic", "sad", "mysterious", "calm", "excited"
    - duration: null (will be calculated from audio duration)
 
 OUTPUT FORMAT:
@@ -27,7 +31,7 @@ Return ONLY valid JSON matching this schema, without conversational text:
   "characters": {
     "character_id": {
       "name": "Character Name",
-      "visual_anchor": "detailed immutable physical description string",
+      "visual_anchor": "immutable physical DNA string: age, ethnicity, face, hair, eyes, signature clothing",
       "voice": "valid Edge-TTS voice identifier (e.g. vi-VN-NamMinhNeural or vi-VN-HoaiMyNeural for Vietnamese; en-US-GuyNeural or en-US-JennyNeural for English)",
       "seed": 42
     }
@@ -40,9 +44,13 @@ Return ONLY valid JSON matching this schema, without conversational text:
       "character_id": "character_id",
       "dialogue": "Line of speech or narration",
       "image_prompt": "Cinematic visual prompt string...",
+      "shot_size": "medium_close_up",
+      "camera_angle": "eye_level",
+      "lighting": "neon_rim_light",
       "motion": "zoom_in",
       "sfx": null,
       "mood": "mysterious",
+      "emotion": "tense",
       "duration": null
     }
   ]

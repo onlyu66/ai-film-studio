@@ -45,6 +45,10 @@ export interface UpdateShotParams {
   character_id?: string
   sfx?: string
   mood?: string
+  emotion?: string
+  shot_size?: string
+  camera_angle?: string
+  lighting?: string
 }
 
 export async function updateShot(params: UpdateShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
@@ -94,6 +98,11 @@ export interface AddShotParams {
   character_id?: string
   motion?: string
   sfx?: string
+  mood?: string
+  emotion?: string
+  shot_size?: string
+  camera_angle?: string
+  lighting?: string
 }
 
 export async function addShot(params: AddShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
@@ -116,6 +125,44 @@ export async function reorderShots(shotIds: string[]): Promise<{ success: boolea
   const response = await apiClient.post<{ success: boolean; message: string; shots_count: number }>(
     '/api/storyboard/reorder-shots',
     { shot_ids: shotIds }
+  )
+  return response.data
+}
+
+export async function approveShot(shotId: string, approved: boolean = true): Promise<{ success: boolean; shot_id: string; is_approved: boolean }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; is_approved: boolean }>(
+    '/api/storyboard/approve-shot',
+    { shot_id: shotId, approved }
+  )
+  return response.data
+}
+
+export async function renderShotAudio(shotId: string): Promise<{ success: boolean; shot_id: string; audio_url: string; duration: number }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; audio_url: string; duration: number }>(
+    '/api/storyboard/render-shot-audio',
+    { shot_id: shotId }
+  )
+  return response.data
+}
+
+export async function renderShotVideo(shotId: string): Promise<{ success: boolean; shot_id: string; video_url: string; duration: number }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; video_url: string; duration: number }>(
+    '/api/storyboard/render-shot-video',
+    { shot_id: shotId }
+  )
+  return response.data
+}
+
+export interface AssembleMasterParams {
+  hardsub?: boolean
+  aspect_ratio?: string
+  style?: string
+}
+
+export async function assembleMaster(params: AssembleMasterParams = {}): Promise<{ success: boolean; video_url: string; filename: string }> {
+  const response = await apiClient.post<{ success: boolean; video_url: string; filename: string }>(
+    '/api/storyboard/assemble-master',
+    params
   )
   return response.data
 }

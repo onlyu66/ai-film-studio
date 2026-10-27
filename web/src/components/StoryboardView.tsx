@@ -21,6 +21,7 @@ import {
   Camera,
   FileEdit,
   User,
+  Video,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -37,6 +38,10 @@ import {
   useReorderShots,
   useGenerateHeadshot,
   useUploadHeadshot,
+  useApproveShot,
+  useRenderShotAudio,
+  useRenderShotVideo,
+  useAssembleMaster,
 } from '../api/queries'
 import type { StoryboardData, SelectOption } from '../types'
 
@@ -60,9 +65,14 @@ interface ShotData {
   sfx?: string
   act?: number | string
   mood?: string
+  emotion?: string
+  shot_size?: string
+  camera_angle?: string
+  lighting?: string
   has_image?: boolean
   has_audio?: boolean
   has_video?: boolean
+  is_approved?: boolean
   [key: string]: unknown
 }
 
@@ -73,10 +83,39 @@ export interface StoryboardViewProps {
 }
 
 const MOTION_OPTIONS: SelectOption[] = [
-  { value: 'zoom_in', label: 'Zoom In (Tiến tới)', subtext: 'Camera phóng to dần vào cận cảnh' },
-  { value: 'zoom_out', label: 'Zoom Out (Lùi xa)', subtext: 'Camera lùi dần tạo cảm giác bao quát' },
-  { value: 'pan_left', label: 'Pan Left (Lia trái)', subtext: 'Ống kính lia ngang mượt mà sang trái' },
-  { value: 'pan_right', label: 'Pan Right (Lia phải)', subtext: 'Ống kính lia ngang mượt mà sang phải' },
+  { value: 'zoom_in', label: 'Push In / Zoom In (Tiến tới)', subtext: 'Camera phóng to dần vào cận cảnh (Ease-In-Out)' },
+  { value: 'zoom_out', label: 'Pull Out / Zoom Out (Lùi xa)', subtext: 'Camera lùi dần tạo cảm giác bao quát' },
+  { value: 'pan_left', label: 'Truck Left / Pan Left (Lia trái)', subtext: 'Ống kính trượt ngang mượt mà sang trái' },
+  { value: 'pan_right', label: 'Truck Right / Pan Right (Lia phải)', subtext: 'Ống kính trượt ngang mượt mà sang phải' },
+  { value: 'tilt_up', label: 'Pedestal Tilt Up (Quét lên)', subtext: 'Ống kính quét mượt mà từ dưới lên trên' },
+  { value: 'tilt_down', label: 'Pedestal Tilt Down (Quét xuống)', subtext: 'Ống kính quét mượt mà từ trên xuống dưới' },
+  { value: 'handheld', label: 'Handheld Camera Shake (Rung tay)', subtext: 'Camera cầm tay thở tự nhiên cho cảnh kịch tính' },
+]
+
+const SHOT_SIZE_OPTIONS: SelectOption[] = [
+  { value: 'extreme_wide', label: 'Extreme Wide (Đại cảnh)', subtext: 'Khung cảnh vĩ đại bao quát không gian' },
+  { value: 'wide', label: 'Wide Shot (Toàn cảnh)', subtext: 'Thấy toàn bộ nhân vật và bối cảnh' },
+  { value: 'medium', label: 'Medium Shot (Trung cảnh)', subtext: 'Từ thắt lưng trở lên, phù hợp hội thoại' },
+  { value: 'medium_close_up', label: 'Medium Close-up (Trung cận)', subtext: 'Từ ngực trở lên, tập trung biểu cảm' },
+  { value: 'close_up', label: 'Close-up (Cận cảnh)', subtext: 'Khuôn mặt nhân vật lấp đầy khung hình' },
+  { value: 'extreme_close_up', label: 'Extreme Close-up (Đặc tả)', subtext: 'Chi tiết đôi mắt, bàn tay, kỷ vật' },
+]
+
+const CAMERA_ANGLE_OPTIONS: SelectOption[] = [
+  { value: 'eye_level', label: 'Eye Level (Ngang tầm mắt)', subtext: 'Góc nhìn tự nhiên, chân thực' },
+  { value: 'low_angle', label: 'Low Angle (Góc thấp nhìn lên)', subtext: 'Tạo cảm giác quyền lực, uy nghi' },
+  { value: 'high_angle', label: 'High Angle (Góc cao nhìn xuống)', subtext: 'Tạo cảm giác nhỏ bé, cô độc' },
+  { value: 'dutch_angle', label: 'Dutch Angle (Góc nghiêng)', subtext: 'Tạo cảm giác bất an, hoang mang' },
+  { value: 'over_the_shoulder', label: 'Over the Shoulder (Qua vai)', subtext: 'Góc máy qua vai người đối thoại' },
+]
+
+const LIGHTING_OPTIONS: SelectOption[] = [
+  { value: 'chiaroscuro', label: 'Chiaroscuro (Tương phản mạnh)', subtext: 'Đổ bóng đậm phong cách điện ảnh noir' },
+  { value: 'volumetric_rays', label: 'Volumetric Rays (Tia sáng thể tích)', subtext: 'Tia sáng lung linh xuyên qua bụi hoặc sương' },
+  { value: 'golden_hour', label: 'Golden Hour (Ánh hoàng hôn vàng)', subtext: 'Ánh nắng chiều ấm áp, lãng mạn' },
+  { value: 'neon_rim_light', label: 'Neon Rim Light (Viền Neon)', subtext: 'Ánh sáng viền sắc lạnh phong cách Cyberpunk' },
+  { value: 'soft_ambient', label: 'Soft Ambient (Ánh sáng dịu)', subtext: 'Ánh sáng môi trường tự nhiên, tỏa đều' },
+  { value: 'dramatic_backlit', label: 'Dramatic Backlit (Ngược sáng)', subtext: 'Bóng dáng nổi bật trên nền ánh sáng' },
 ]
 
 const VOICE_OPTIONS_BY_LANG: Record<string, SelectOption[]> = {
@@ -114,6 +153,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [editMotion, setEditMotion] = useState('zoom_in')
   const [editCharacterId, setEditCharacterId] = useState('')
   const [editSfx, setEditSfx] = useState('')
+  const [editShotSize, setEditShotSize] = useState('medium')
+  const [editCameraAngle, setEditCameraAngle] = useState('eye_level')
+  const [editLighting, setEditLighting] = useState('chiaroscuro')
 
   const [playingVoice, setPlayingVoice] = useState<string | null>(null)
   const [rerollingShotId, setRerollingShotId] = useState<string | null>(null)
@@ -127,6 +169,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [newShotMotion, setNewShotMotion] = useState('zoom_in')
   const [newShotSfx, setNewShotSfx] = useState('')
   const [newShotChar, setNewShotChar] = useState('')
+  const [newShotSize, setNewShotSize] = useState('medium')
+  const [newShotAngle, setNewShotAngle] = useState('eye_level')
+  const [newShotLighting, setNewShotLighting] = useState('chiaroscuro')
 
   const updateVoiceMutation = useUpdateCharacterVoice()
   const updateShotMutation = useUpdateShot()
@@ -138,8 +183,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const reorderShotsMutation = useReorderShots()
   const generateHeadshotMutation = useGenerateHeadshot()
   const uploadHeadshotMutation = useUploadHeadshot()
+  const approveShotMutation = useApproveShot()
+  const renderShotAudioMutation = useRenderShotAudio()
+  const renderShotVideoMutation = useRenderShotVideo()
+  const assembleMasterMutation = useAssembleMaster()
+
   const [generatingCharId, setGeneratingCharId] = useState<string | null>(null)
   const [uploadingCharId, setUploadingCharId] = useState<string | null>(null)
+  const [renderingAudioShotId, setRenderingAudioShotId] = useState<string | null>(null)
+  const [renderingVideoShotId, setRenderingVideoShotId] = useState<string | null>(null)
+  const [approvingShotId, setApprovingShotId] = useState<string | null>(null)
+  const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string } | null>(null)
 
   const handleGenerateHeadshot = (charId: string, char: CharacterData) => {
     setGeneratingCharId(charId)
@@ -200,6 +254,52 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     })
   }
 
+  const handleToggleApprove = (shotId: string, currentApproved: boolean) => {
+    setApprovingShotId(shotId)
+    approveShotMutation.mutate(
+      { shotId, approved: !currentApproved },
+      {
+        onSettled: () => setApprovingShotId(null),
+        onError: (err: any) => alert(err?.message || 'Lỗi khi cập nhật trạng thái duyệt'),
+      }
+    )
+  }
+
+  const handleRenderAudio = (shotId: string) => {
+    setRenderingAudioShotId(shotId)
+    renderShotAudioMutation.mutate(shotId, {
+      onSettled: () => {
+        setRenderingAudioShotId(null)
+        setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
+      },
+      onError: (err: any) => alert(err?.message || 'Lỗi khi tạo giọng đọc phân cảnh'),
+    })
+  }
+
+  const handleRenderVideo = (shotId: string) => {
+    setRenderingVideoShotId(shotId)
+    renderShotVideoMutation.mutate(shotId, {
+      onSettled: () => {
+        setRenderingVideoShotId(null)
+        setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
+      },
+      onError: (err: any) => alert(err?.message || 'Lỗi khi render video clip phân cảnh'),
+    })
+  }
+
+  const handleAssembleMaster = () => {
+    assembleMasterMutation.mutate(
+      {},
+      {
+        onSuccess: (data) => {
+          alert(`🎉 Xuất bản video thành công! File: ${data.filename}`)
+          if (onContinue) onContinue()
+        },
+        onError: (err: any) => alert(err?.message || 'Lỗi khi xuất bản video hoàn chỉnh'),
+      }
+    )
+  }
+
   const handleUploadImage = (shotId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -249,6 +349,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         motion: newShotMotion,
         sfx: newShotSfx || undefined,
         character_id: newShotChar || undefined,
+        shot_size: newShotSize || undefined,
+        camera_angle: newShotAngle || undefined,
+        lighting: newShotLighting || undefined,
       },
       {
         onSuccess: () => {
@@ -257,6 +360,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
           setNewShotPrompt('')
           setNewShotSfx('')
           setNewShotChar('')
+          setNewShotSize('medium')
+          setNewShotAngle('eye_level')
+          setNewShotLighting('chiaroscuro')
         },
         onError: (err: any) => alert(err.message || 'Lỗi khi thêm phân cảnh'),
       }
@@ -318,6 +424,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     )
   })
 
+  const totalShots = shots.length
+  const readyImages = shots.filter((s) => s.has_image || cacheBuster[s.id]).length
+  const readyAudios = shots.filter((s) => s.has_audio).length
+  const readyClips = shots.filter((s) => s.has_video).length
+  const approvedShots = shots.filter((s) => s.is_approved).length
+
   const handleVoiceChange = (charId: string, newVoice: string) => {
     setSavingCharId(charId)
     updateVoiceMutation.mutate(
@@ -352,6 +464,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     setEditMotion(shot.motion || 'zoom_in')
     setEditCharacterId(shot.character_id || '')
     setEditSfx(shot.sfx || '')
+    setEditShotSize((shot.shot_size as string) || 'medium')
+    setEditCameraAngle((shot.camera_angle as string) || 'eye_level')
+    setEditLighting((shot.lighting as string) || 'chiaroscuro')
   }
 
   const handleSaveShot = (e: React.FormEvent) => {
@@ -365,6 +480,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         motion: editMotion,
         character_id: editCharacterId || undefined,
         sfx: editSfx || undefined,
+        shot_size: editShotSize || undefined,
+        camera_angle: editCameraAngle || undefined,
+        lighting: editLighting || undefined,
       },
       {
         onSuccess: () => {
@@ -619,7 +737,8 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
         {/* Shots Tab */}
         {activeTab === 'shots' && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredShots.map((shot, index) => {
               const hasImage = Boolean(shot.has_image || cacheBuster[shot.id])
               const imgSrc = `/api/outputs/images/${shot.id}.png?t=${cacheBuster[shot.id] || ''}`
@@ -654,25 +773,117 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       />
                     )}
 
-                    {/* Film overlay & badges */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 opacity-70 group-hover:opacity-40 transition-opacity z-20 pointer-events-none" />
+                    {/* Film overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/50 opacity-80 group-hover:opacity-40 transition-opacity z-20 pointer-events-none" />
 
+                    {/* Top Left: Shot ID Badge */}
                     <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-cinema-amber font-bold border border-studio-border z-20">
                       {shot.id}
                     </div>
 
-                    <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-zinc-900/90 text-zinc-300 text-[10px] font-mono uppercase tracking-wider border border-studio-border z-20">
+                    {/* Top Right: Approval Status Toggle */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleToggleApprove(shot.id, Boolean(shot.is_approved))
+                      }}
+                      disabled={approvingShotId === shot.id}
+                      className={`absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold border transition-all flex items-center gap-1 z-30 cursor-pointer shadow-md backdrop-blur-md ${
+                        shot.is_approved
+                          ? 'bg-emerald-600/95 hover:bg-emerald-500 text-white border-emerald-400/60 shadow-emerald-500/20'
+                          : 'bg-black/85 hover:bg-zinc-800 text-amber-300 hover:text-amber-200 border-amber-500/30 hover:border-amber-400'
+                      }`}
+                      title={shot.is_approved ? 'ĐÃ DUYỆT (Bấm để hủy duyệt)' : 'CHỜ DUYỆT (Bấm để duyệt phân cảnh này)'}
+                    >
+                      {approvingShotId === shot.id ? (
+                        <Loader2 className="w-3 h-3 animate-spin text-white" />
+                      ) : shot.is_approved ? (
+                        <>
+                          <Check className="w-3 h-3 text-white stroke-[2.5]" />
+                          <span>ĐÃ DUYỆT</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                          <span>CHỜ DUYỆT</span>
+                        </>
+                      )}
+                    </button>
+
+                    {/* Bottom Left: Motion Tag */}
+                    <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-zinc-300 text-[9px] font-mono uppercase tracking-wider border border-white/10 z-20">
                       {shot.motion || 'zoom_in'}
                     </div>
 
-                    {hasImage && (
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px] z-20">
-                        <div className="px-3 py-1.5 rounded-lg bg-black/80 text-white text-xs font-medium flex items-center gap-1.5 border border-studio-border-hover">
+                    {/* Bottom Right: Media Readiness Pills */}
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 z-20">
+                      {shot.has_audio && (
+                        <span className="px-1.5 py-0.5 rounded bg-sky-500/80 backdrop-blur-sm text-white flex items-center gap-1 text-[9px] font-mono" title="Đã có file giọng đọc TTS">
+                          <Volume2 className="w-2.5 h-2.5" />
+                          <span>TTS</span>
+                        </span>
+                      )}
+                      {shot.has_video && (
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/80 backdrop-blur-sm text-white flex items-center gap-1 text-[9px] font-mono" title="Đã có clip video MP4">
+                          <Video className="w-2.5 h-2.5" />
+                          <span>CLIP</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Hover Actions: Preview Clip / Render Clip / Zoom Image */}
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/60 backdrop-blur-[2px] z-25 p-2">
+                      {shot.has_video ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setPreviewVideo({
+                              url: `/api/outputs/videos/${shot.id}.mp4?t=${cacheBuster[shot.id] || ''}`,
+                              title: `Phân cảnh ${shot.id} ${shot.dialogue ? `• "${shot.dialogue}"` : ''}`,
+                            })
+                          }}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg border border-emerald-400/50 transition-all active:scale-95 cursor-pointer"
+                          title="Xem trước clip video phân cảnh này"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white" />
+                          <span>Xem Clip</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRenderVideo(shot.id)
+                          }}
+                          disabled={renderingVideoShotId === shot.id}
+                          className="px-3 py-1.5 rounded-lg bg-cinema-amber hover:bg-amber-400 text-zinc-950 text-xs font-bold flex items-center gap-1.5 shadow-lg border border-amber-300 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                          title="Render clip Ken Burns cho riêng phân cảnh này"
+                        >
+                          {renderingVideoShotId === shot.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
+                          ) : (
+                            <Video className="w-3.5 h-3.5 text-zinc-950" />
+                          )}
+                          <span>{renderingVideoShotId === shot.id ? 'Đang tạo...' : 'Tạo Clip'}</span>
+                        </button>
+                      )}
+
+                      {hasImage && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setLightboxImage(imgSrc)
+                          }}
+                          className="p-1.5 rounded-lg bg-black/80 hover:bg-black text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer"
+                          title="Xem ảnh gốc HD"
+                        >
                           <Maximize2 className="w-3.5 h-3.5" />
-                          <span>Xem ảnh HD</span>
-                        </div>
-                      </div>
-                    )}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Shot details */}
@@ -718,16 +929,38 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         </div>
                       )}
 
-                      {/* Audio & Mood Chips */}
+                      {/* Cinematography & Audio Chips */}
                       <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
+                        {shot.shot_size && (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1" title="Khung hình điện ảnh">
+                            <Camera className="w-2.5 h-2.5 text-amber-400" />
+                            <span>{String(shot.shot_size).replace('_', ' ')}</span>
+                          </span>
+                        )}
+                        {shot.camera_angle && (
+                          <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 flex items-center gap-1" title="Góc máy quay">
+                            <span>📐 {String(shot.camera_angle).replace('_', ' ')}</span>
+                          </span>
+                        )}
+                        {shot.lighting && (
+                          <span className="px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 flex items-center gap-1" title="Ánh sáng phân cảnh">
+                            <span>💡 {String(shot.lighting).replace('_', ' ')}</span>
+                          </span>
+                        )}
+                        {shot.motion && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1" title="Chuyển động camera">
+                            <Video className="w-2.5 h-2.5 text-emerald-400" />
+                            <span>{String(shot.motion).replace('_', ' ')}</span>
+                          </span>
+                        )}
                         {shot.mood && (
-                          <span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1">
+                          <span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1" title="Cảm xúc âm nhạc">
                             <Music className="w-2.5 h-2.5 text-purple-400" />
                             <span>{shot.mood}</span>
                           </span>
                         )}
                         {shot.sfx && (
-                          <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20 flex items-center gap-1">
+                          <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20 flex items-center gap-1" title="Hiệu ứng âm thanh">
                             <Volume2 className="w-2.5 h-2.5 text-sky-400" />
                             <span>{shot.sfx}</span>
                           </span>
@@ -759,8 +992,44 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         </button>
                       </div>
 
-                      {/* Center: Reroll & Upload Icon Buttons */}
+                      {/* Center: Per-Shot Media Tools (TTS Voice, Video Clip, Reroll, Upload) */}
                       <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleRenderAudio(shot.id)}
+                          disabled={renderingAudioShotId === shot.id}
+                          className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                            shot.has_audio
+                              ? 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border-sky-500/30'
+                              : 'bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-sky-300 border-studio-border'
+                          }`}
+                          title={shot.has_audio ? 'Tạo lại giọng đọc TTS cho phân cảnh này (Đã có audio)' : 'Tạo giọng đọc TTS cho phân cảnh này'}
+                        >
+                          {renderingAudioShotId === shot.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
+                          ) : (
+                            <Volume2 className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRenderVideo(shot.id)}
+                          disabled={renderingVideoShotId === shot.id}
+                          className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                            shot.has_video
+                              ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/30'
+                              : 'bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-emerald-300 border-studio-border'
+                          }`}
+                          title={shot.has_video ? 'Render lại video clip cho phân cảnh này (Đã có clip)' : 'Render video clip (Ken Burns) cho phân cảnh này'}
+                        >
+                          {renderingVideoShotId === shot.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                          ) : (
+                            <Video className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+
                         <button
                           type="button"
                           onClick={() => handleRerollShot(shot.id)}
@@ -816,7 +1085,114 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               )
             })}
           </div>
-        )}
+
+          {/* Master Assembly & Quality Assurance Dashboard */}
+          <div className="mt-8 rounded-2xl bg-gradient-to-b from-studio-input/80 to-studio-card/90 border border-cinema-border p-5 sm:p-6 shadow-2xl">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+              {/* Left: Status & Quality Metrics */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                    <Film className="w-5 h-5 stroke-[2.2]" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
+                      <span>Bảng điều khiển & Xuất bản Master Movie</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                        Quy trình duyệt tỉ mỉ
+                      </span>
+                    </h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">
+                      Kiểm duyệt từng phân cảnh, xuất từng clip riêng lẻ và hoàn thiện phim chiếu rạp
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Indicators */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
+                  <div className="px-3 py-1.5 rounded-xl bg-studio-deck border border-studio-border flex items-center gap-2">
+                    <span className="text-zinc-500">Ảnh:</span>
+                    <span className={`font-bold ${readyImages === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {readyImages}/{totalShots}
+                    </span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-xl bg-studio-deck border border-studio-border flex items-center gap-2">
+                    <span className="text-zinc-500">Giọng (TTS):</span>
+                    <span className={`font-bold ${readyAudios === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {readyAudios}/{totalShots}
+                    </span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-xl bg-studio-deck border border-studio-border flex items-center gap-2">
+                    <span className="text-zinc-500">Clips:</span>
+                    <span className={`font-bold ${readyClips === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {readyClips}/{totalShots}
+                    </span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-xl bg-studio-deck border border-studio-border flex items-center gap-2">
+                    <span className="text-zinc-500">Đã duyệt:</span>
+                    <span className={`font-bold ${approvedShots === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {approvedShots}/{totalShots}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                {/* Approve all button if not all approved */}
+                {approvedShots < totalShots && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      for (const s of shots) {
+                        if (!s.is_approved) {
+                          await approveShotMutation.mutateAsync({ shotId: s.id, approved: true })
+                        }
+                      }
+                    }}
+                    disabled={approveShotMutation.isPending}
+                    className="px-4 py-3 rounded-xl bg-studio-deck hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+                    title="Xác nhận duyệt toàn bộ các phân cảnh hiện tại"
+                  >
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>Duyệt tất cả ({totalShots - approvedShots} còn lại)</span>
+                  </button>
+                )}
+
+                {/* Primary Master Assembly CTA */}
+                <button
+                  type="button"
+                  onClick={handleAssembleMaster}
+                  disabled={assembleMasterMutation.isPending || readyClips === 0}
+                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-xs sm:text-sm tracking-wide shadow-xl shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]"
+                >
+                  {assembleMasterMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                      <span>ĐANG GHÉP NỐI & MIX NHẠC ĐIỆN ẢNH...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Film className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
+                      <span>XUẤT BẢN VIDEO HOÀN CHỈNH ({readyClips}/{totalShots} CLIPS)</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick status notice if clips missing */}
+            {readyClips < totalShots && (
+              <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0" />
+                <span>
+                  Lưu ý: Đang có <strong>{totalShots - readyClips}</strong> phân cảnh chưa render video clip. Bạn có thể bấm nút tạo clip trên từng thẻ cảnh hoặc bấm xuất bản video để hệ thống tự động sinh các clip còn thiếu.
+                </span>
+              </div>
+            )}
+          </div>
+        </>
+      )}
       </CardContent>
 
       {/* Lightbox Modal */}
@@ -844,6 +1220,66 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               >
                 <X className="w-5 h-5" />
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Video Clip Preview Modal */}
+      <AnimatePresence>
+        {previewVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPreviewVideo(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-4xl rounded-2xl overflow-hidden border border-cinema-border shadow-2xl bg-zinc-950 flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-studio-border bg-studio-deck">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                    <Video className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-zinc-100">{previewVideo.title}</h3>
+                    <span className="text-[11px] text-zinc-400">Xem trước video clip phân cảnh độc lập</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewVideo(null)}
+                  className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="relative aspect-video bg-black flex items-center justify-center">
+                <video
+                  src={previewVideo.url}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <div className="px-5 py-3 border-t border-studio-border bg-studio-deck/60 flex items-center justify-between text-xs text-zinc-400">
+                <span>Độ phân giải: 1920x1080 (Full HD 16:9)</span>
+                <button
+                  type="button"
+                  onClick={() => setPreviewVideo(null)}
+                  className="px-3 py-1 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer font-medium"
+                >
+                  Đóng
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -955,12 +1391,47 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                      Góc máy & Chuyển động:
+                      Chuyển động Camera (Ease-In-Out):
                     </label>
                     <CustomSelect
                       value={editMotion}
                       onChange={setEditMotion}
                       options={MOTION_OPTIONS}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Khung hình (Shot Size):
+                    </label>
+                    <CustomSelect
+                      value={editShotSize}
+                      onChange={setEditShotSize}
+                      options={SHOT_SIZE_OPTIONS}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Góc máy (Angle):
+                    </label>
+                    <CustomSelect
+                      value={editCameraAngle}
+                      onChange={setEditCameraAngle}
+                      options={CAMERA_ANGLE_OPTIONS}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Ánh sáng (Lighting):
+                    </label>
+                    <CustomSelect
+                      value={editLighting}
+                      onChange={setEditLighting}
+                      options={LIGHTING_OPTIONS}
                     />
                   </div>
                 </div>
@@ -1090,12 +1561,47 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
                   <div>
                     <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                      Góc máy chuyển động:
+                      Chuyển động Camera (Ease-In-Out):
                     </label>
                     <CustomSelect
                       value={newShotMotion}
                       onChange={setNewShotMotion}
                       options={MOTION_OPTIONS}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Khung hình (Shot Size):
+                    </label>
+                    <CustomSelect
+                      value={newShotSize}
+                      onChange={setNewShotSize}
+                      options={SHOT_SIZE_OPTIONS}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Góc máy (Angle):
+                    </label>
+                    <CustomSelect
+                      value={newShotAngle}
+                      onChange={setNewShotAngle}
+                      options={CAMERA_ANGLE_OPTIONS}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Ánh sáng (Lighting):
+                    </label>
+                    <CustomSelect
+                      value={newShotLighting}
+                      onChange={setNewShotLighting}
+                      options={LIGHTING_OPTIONS}
                     />
                   </div>
                 </div>

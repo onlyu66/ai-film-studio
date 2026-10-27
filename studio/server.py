@@ -478,6 +478,10 @@ def get_storyboard():
             s["has_image"] = bool(sid and (img_dir / f"{sid}.png").is_file() and (img_dir / f"{sid}.png").stat().st_size > 0)
             s["has_audio"] = bool(sid and (audio_dir / f"{sid}.mp3").is_file() and (audio_dir / f"{sid}.mp3").stat().st_size > 0)
             s["has_video"] = bool(sid and (vid_dir / f"{sid}.mp4").is_file() and (vid_dir / f"{sid}.mp4").stat().st_size > 0)
+            s["is_approved"] = bool(s.get("is_approved", False))
+            s["image_url"] = f"/api/outputs/images/{sid}.png" if s["has_image"] else None
+            s["audio_url"] = f"/api/outputs/audio/{sid}.mp3" if s["has_audio"] else None
+            s["video_url"] = f"/api/outputs/videos/{sid}.mp4" if s["has_video"] else None
 
         return data
     except Exception as e:
@@ -557,6 +561,10 @@ class UpdateShotRequest(BaseModel):
     character_id: Optional[str] = None
     sfx: Optional[str] = None
     mood: Optional[str] = None
+    emotion: Optional[str] = None
+    shot_size: Optional[str] = None
+    camera_angle: Optional[str] = None
+    lighting: Optional[str] = None
 
 @app.post("/api/storyboard/update-shot")
 def update_shot(req: UpdateShotRequest):
@@ -633,6 +641,21 @@ def update_shot(req: UpdateShotRequest):
         if req.mood is not None:
             target_shot["mood"] = req.mood if req.mood else None
 
+        if req.emotion is not None:
+            target_shot["emotion"] = req.emotion if req.emotion else None
+
+        if req.shot_size is not None:
+            target_shot["shot_size"] = req.shot_size if req.shot_size else None
+
+        if req.camera_angle is not None:
+            target_shot["camera_angle"] = req.camera_angle if req.camera_angle else None
+
+        if req.lighting is not None:
+            target_shot["lighting"] = req.lighting if req.lighting else None
+
+        # Reset approval when a shot's content or visuals are modified
+        target_shot["is_approved"] = False
+
         if state:
             state.save()
 
@@ -653,6 +676,11 @@ class AddShotRequest(BaseModel):
     character_id: Optional[str] = None
     motion: str = "zoom_in"
     sfx: Optional[str] = None
+    mood: Optional[str] = None
+    emotion: Optional[str] = None
+    shot_size: Optional[str] = None
+    camera_angle: Optional[str] = None
+    lighting: Optional[str] = None
 
 @app.post("/api/storyboard/add-shot")
 def add_shot(req: AddShotRequest):
@@ -685,6 +713,11 @@ def add_shot(req: AddShotRequest):
             "motion": req.motion or "zoom_in",
             "duration": None,
             "sfx": req.sfx,
+            "mood": req.mood or "mysterious",
+            "emotion": req.emotion or "tense",
+            "shot_size": req.shot_size or "medium",
+            "camera_angle": req.camera_angle or "eye_level",
+            "lighting": req.lighting or "chiaroscuro",
         }
 
         shots.insert(insert_idx, new_shot)
@@ -971,6 +1004,271 @@ def upload_shot_image(req: UploadShotImageRequest):
         "shot_id": req.shot_id,
         "image_url": f"/api/outputs/images/{req.shot_id}.png?t={int(time.time())}"
     }
+
+class ApproveShotRequest(BaseModel):
+    shot_id: str
+    approved: bool = True
+
+@app.post("/api/storyboard/approve-shot")
+def approve_shot(req: ApproveShotRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        with open(sb_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        target = None
+        for s in data.get("shots", []):
+            if s.get("id") == req.shot_id:
+                s["is_approved"] = req.approved
+                target = s
+                break
+
+        if not target:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
+
+        with open(sb_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        status_str = "Đã duyệt" if req.approved else "Đã bỏ duyệt"
+        log_message(f"[Approval] {status_str} phân cảnh '{req.shot_id}'.")
+        return {"success": True, "shot_id": req.shot_id, "is_approved": req.approved}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RenderShotAudioRequest(BaseModel):
+    shot_id: str
+
+@app.post("/api/storyboard/render-shot-audio")
+def render_shot_audio(req: RenderShotAudioRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        from studio.storyboard import parse_storyboard_json
+        from studio.tts import generate_audio_for_shot
+
+        with open(sb_file, "r", encoding="utf-8") as f:
+            raw_text = f.read()
+        sb = parse_storyboard_json(raw_text)
+
+        target_shot = None
+        for s in sb.shots:
+            if s.id == req.shot_id:
+                target_shot = s
+                break
+
+        if not target_shot:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
+
+        audio_dir = Path("outputs/audio")
+        audio_dir.mkdir(parents=True, exist_ok=True)
+
+        log_message(f"[Audio] Đang tạo giọng đọc riêng cho phân cảnh '{req.shot_id}'...")
+        path, dur = generate_audio_for_shot(
+            shot=target_shot,
+            characters=sb.characters,
+            output_dir=audio_dir,
+            default_lang=sb.language or "vi",
+        )
+
+        with open(sb_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        for s in data.get("shots", []):
+            if s.get("id") == req.shot_id:
+                s["duration"] = round(dur, 2)
+                break
+        with open(sb_file, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+        log_message(f"[Audio] Hoàn thành giọng đọc '{req.shot_id}' ({dur:.1f}s).")
+        return {
+            "success": True,
+            "shot_id": req.shot_id,
+            "audio_url": f"/api/outputs/audio/{req.shot_id}.mp3?t={int(time.time())}",
+            "duration": dur,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_message(f"[Audio Error] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RenderShotVideoRequest(BaseModel):
+    shot_id: str
+
+@app.post("/api/storyboard/render-shot-video")
+def render_shot_video(req: RenderShotVideoRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        from studio.storyboard import parse_storyboard_json
+        from studio.motion import render_motion_for_shot
+        from studio.images import _create_fallback_image, generate_image_for_shot
+
+        with open(sb_file, "r", encoding="utf-8") as f:
+            raw_text = f.read()
+        sb = parse_storyboard_json(raw_text)
+
+        target_shot = None
+        for s in sb.shots:
+            if s.id == req.shot_id:
+                target_shot = s
+                break
+
+        if not target_shot:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
+
+        img_dir = Path("outputs/images")
+        audio_dir = Path("outputs/audio")
+        vid_dir = Path("outputs/videos")
+        vid_dir.mkdir(parents=True, exist_ok=True)
+
+        aspect_ratio = getattr(last_produce_request, "aspect_ratio", "16:9") if last_produce_request else "16:9"
+        style = getattr(last_produce_request, "style", "cinematic") if last_produce_request else "cinematic"
+        motion_engine = getattr(last_produce_request, "motion", "kenburns") if last_produce_request else "kenburns"
+
+        img_path = img_dir / f"{target_shot.id}.png"
+        if not img_path.exists() or img_path.stat().st_size < 1000:
+            img_path = generate_image_for_shot(
+                shot=target_shot,
+                characters=sb.characters,
+                style=style,
+                output_dir=img_dir,
+                aspect_ratio=aspect_ratio,
+            )
+            if not img_path or not img_path.exists():
+                img_path = img_dir / f"{target_shot.id}.png"
+                w, h = (720, 1280) if aspect_ratio == "9:16" else (1280, 720)
+                _create_fallback_image(img_path, width=w, height=h, label=target_shot.image_prompt or target_shot.id)
+
+        audio_path = audio_dir / f"{target_shot.id}.mp3"
+        dur = target_shot.duration or 5.0
+        if audio_path.exists():
+            try:
+                from pydub import AudioSegment
+                seg = AudioSegment.from_file(str(audio_path))
+                dur = max(2.5, len(seg) / 1000.0)
+            except Exception:
+                pass
+
+        out_video = vid_dir / f"{target_shot.id}.mp4"
+        log_message(f"[Motion] Đang render video clip cho phân cảnh '{req.shot_id}' ({dur:.1f}s)...")
+
+        render_motion_for_shot(
+            image_path=img_path,
+            output_path=out_video,
+            duration=dur,
+            motion_type=target_shot.motion or "zoom_in",
+            engine=motion_engine,
+            prompt=target_shot.image_prompt,
+            aspect_ratio=aspect_ratio,
+            letterbox=getattr(last_produce_request, "letterbox", False) if last_produce_request else False,
+            style=style,
+        )
+
+        log_message(f"[Motion] Hoàn tất clip phân cảnh '{req.shot_id}.mp4'.")
+        return {
+            "success": True,
+            "shot_id": req.shot_id,
+            "video_url": f"/api/outputs/videos/{req.shot_id}.mp4?t={int(time.time())}",
+            "duration": dur,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_message(f"[Motion Error] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class AssembleMasterRequest(BaseModel):
+    hardsub: Optional[bool] = None
+    aspect_ratio: Optional[str] = None
+    style: Optional[str] = None
+
+@app.post("/api/storyboard/assemble-master")
+def assemble_master(req: AssembleMasterRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        from studio.storyboard import parse_storyboard_json
+        from studio.assembly import run_assembly_stage
+        from studio.config import StudioConfig
+        from studio.state import StateManager
+
+        with open(sb_file, "r", encoding="utf-8") as f:
+            raw_text = f.read()
+        sb = parse_storyboard_json(raw_text)
+
+        vid_dir = Path("outputs/videos")
+        missing_clips = [s.id for s in sb.shots if not (vid_dir / f"{s.id}.mp4").exists() or (vid_dir / f"{s.id}.mp4").stat().st_size < 1000]
+        if missing_clips:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Còn {len(missing_clips)} phân cảnh chưa được render video: {', '.join(missing_clips[:4])}. Vui lòng bấm 'Render Clip' cho các phân cảnh này trước khi xuất bản."
+            )
+
+        eff_style = req.style or (getattr(last_produce_request, "style", "cinematic") if last_produce_request else "cinematic")
+        eff_ratio = req.aspect_ratio or (getattr(last_produce_request, "aspect_ratio", "16:9") if last_produce_request else "16:9")
+        eff_hardsub = req.hardsub if req.hardsub is not None else (getattr(last_produce_request, "hardsub", False) if last_produce_request else False)
+
+        cfg = StudioConfig(
+            topic=sb.title,
+            lang=sb.language,
+            style=eff_style,
+            aspect_ratio=eff_ratio,
+            hardsub=eff_hardsub,
+            output_dir=Path("outputs"),
+        )
+        state_file = Path("outputs/state.json")
+        state = StateManager(state_file)
+
+        audio_dir = Path("outputs/audio")
+        durations = {}
+        for s in sb.shots:
+            a_file = audio_dir / f"{s.id}.mp3"
+            if a_file.exists():
+                try:
+                    from pydub import AudioSegment
+                    durations[s.id] = len(AudioSegment.from_file(str(a_file))) / 1000.0
+                except Exception:
+                    durations[s.id] = s.duration or 5.0
+            else:
+                durations[s.id] = s.duration or 5.0
+
+        log_message("[Assembly] Bắt đầu ghép nối các video clip và hòa âm master audio...")
+        final_video = run_assembly_stage(
+            storyboard=sb,
+            config=cfg,
+            state=state,
+            durations=durations,
+            progress_callback=lambda st, msg, pct, lmsg: log_message(lmsg),
+        )
+
+        pipeline_state["final_video"] = f"/api/outputs/final/{final_video.name}"
+        pipeline_state["stage"] = 5
+        pipeline_state["stage_name"] = "Hoàn tất"
+        pipeline_state["progress"] = 100
+
+        log_message(f"[Assembly] Thành công xuất bản video hoàn chỉnh: {final_video.name}")
+        return {
+            "success": True,
+            "video_url": f"/api/outputs/final/{final_video.name}",
+            "filename": final_video.name,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        log_message(f"[Assembly Error] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/continue")
 def continue_film():

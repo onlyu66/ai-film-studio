@@ -22,8 +22,10 @@ def build_ffmpeg_command(
     height: int = 1080,
     vfx: bool = False,
     aspect_ratio: str = "16:9",
+    letterbox: bool = False,
+    style: str = "cinematic",
 ) -> List[str]:
-    """Construct the FFmpeg command line to generate Ken Burns camera motion from a still image."""
+    """Construct the FFmpeg command line to generate smooth Ease-In-Out Ken Burns camera motion from a still image."""
     d = max(1, int(duration * fps))
 
     if aspect_ratio == "9:16":
@@ -32,21 +34,49 @@ def build_ffmpeg_command(
     else:
         scale_filter = "scale=4000:-1"
 
-    # Formulas for different 2.5D camera motions
-    if motion_type == "zoom_out":
-        zoompan_expr = f"z='if(eq(on,1),1.2,max(zoom-0.0015,1.0))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-    elif motion_type == "pan_left":
-        zoompan_expr = f"z='1.15':x='if(eq(on,1),iw-iw/zoom,max(x-1,0))':y='ih/2-(ih/zoom/2)'"
-    elif motion_type == "pan_right":
-        zoompan_expr = f"z='1.15':x='min(x+1,iw-iw/zoom)':y='ih/2-(ih/zoom/2)'"
-    else:  # default zoom_in
-        zoompan_expr = f"z='min(zoom+0.0015,1.2)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+    # Cinematic sinusoidal S-curve ease-in-out factor: 0 at start, 1.0 at end, peak velocity at midpoint
+    ease = f"(0.5-0.5*cos(PI*on/{d}))"
+    motion_clean = (motion_type or "zoom_in").lower().strip()
+
+    if motion_clean in ("zoom_out", "pull_out"):
+        # Gentle dolly backwards from 1.15 to 1.0
+        zoompan_expr = f"z='1.15-0.15*{ease}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+    elif motion_clean in ("pan_left", "truck_left"):
+        # Smooth truck left
+        zoompan_expr = f"z='1.15':x='(iw-iw/zoom)*(1.0-{ease})':y='ih/2-(ih/zoom/2)'"
+    elif motion_clean in ("pan_right", "truck_right"):
+        # Smooth truck right
+        zoompan_expr = f"z='1.15':x='(iw-iw/zoom)*{ease}':y='ih/2-(ih/zoom/2)'"
+    elif motion_clean == "tilt_up":
+        # Smooth pedestal tilt upwards
+        zoompan_expr = f"z='1.15':x='iw/2-(iw/zoom/2)':y='(ih-ih/zoom)*(1.0-{ease})'"
+    elif motion_clean == "tilt_down":
+        # Smooth pedestal tilt downwards
+        zoompan_expr = f"z='1.15':x='iw/2-(iw/zoom/2)':y='(ih-ih/zoom)*{ease}'"
+    elif motion_clean in ("handheld", "action", "shake"):
+        # Organic handheld breathing camera motion with subtle harmonic drift
+        zoompan_expr = f"z='1.08+0.04*{ease}':x='iw/2-(iw/zoom/2)+6*sin(4*PI*on/{d})':y='ih/2-(ih/zoom/2)+4*cos(3*PI*on/{d})'"
+    else:  # default zoom_in / push_in
+        # Gentle dolly push-in from 1.0 to 1.15
+        zoompan_expr = f"z='1.0+0.15*{ease}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
 
     vf_filters = [f"{scale_filter},zoompan={zoompan_expr}:d={d}:s={width}x{height}:fps={fps}"]
 
     if vfx:
-        # Cinematic look: Vignette (dark corners) + subtle contrast & saturation boost + film grain
-        vf_filters.append("vignette=PI/4,eq=contrast=1.08:saturation=1.12:brightness=0.01")
+        # Style-tailored color grading
+        style_clean = (style or "cinematic").lower()
+        if style_clean == "noir":
+            vf_filters.append("vignette=PI/3,eq=contrast=1.25:saturation=0.0:brightness=-0.02")
+        elif style_clean == "anime":
+            vf_filters.append("eq=contrast=1.06:saturation=1.22:brightness=0.02")
+        elif style_clean == "documentary":
+            vf_filters.append("vignette=PI/5,eq=contrast=1.05:saturation=1.05:brightness=0.01")
+        else:  # cinematic Hollywood teal & orange warmth
+            vf_filters.append("vignette=PI/4,eq=contrast=1.10:saturation=1.14:brightness=0.01,colorbalance=rs=0.04:bs=-0.03:rm=0.02:bm=-0.01")
+
+    # Optional 2.39:1 widescreen anamorphic letterbox (12% black bars on top and bottom)
+    if letterbox and aspect_ratio != "9:16":
+        vf_filters.append("drawbox=x=0:y=0:w=iw:h=ih*0.12:color=black@1.0:t=fill,drawbox=x=0:y=ih-ih*0.12:w=iw:h=ih*0.12:color=black@1.0:t=fill")
 
     vf_filter = ",".join(vf_filters)
 
@@ -110,6 +140,8 @@ def render_motion_for_shot(
     engine: str = "kenburns",
     prompt: str = "",
     aspect_ratio: str = "16:9",
+    letterbox: bool = False,
+    style: str = "cinematic",
 ) -> Path:
     """Execute motion rendering for a single shot according to selected engine."""
     if not shutil.which("ffmpeg"):
@@ -132,6 +164,8 @@ def render_motion_for_shot(
         fps,
         vfx=vfx,
         aspect_ratio=aspect_ratio,
+        letterbox=letterbox,
+        style=style,
     )
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode != 0:
@@ -200,6 +234,8 @@ def run_motion_stage(
                     engine=config.motion_engine,
                     prompt=shot.image_prompt,
                     aspect_ratio=getattr(config, "aspect_ratio", "16:9"),
+                    letterbox=getattr(config, "letterbox", False),
+                    style=getattr(config, "style", "cinematic"),
                 )
 
             return shot.id, out_file

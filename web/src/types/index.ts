@@ -96,6 +96,7 @@ export interface Shot {
   has_image?: boolean
   has_audio?: boolean
   has_video?: boolean
+  is_approved?: boolean
   sfx?: string
   act?: number
   mood?: string

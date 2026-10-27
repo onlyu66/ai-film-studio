@@ -19,20 +19,34 @@ STYLE_DNA = {
 }
 
 def build_full_prompt(shot: Shot, characters: Dict[str, Character], style: str = "cinematic") -> str:
-    """Compose the complete generation prompt incorporating character anchors and style DNA."""
+    """Compose the complete generation prompt incorporating character visual DNA, cinematography framing, and style DNA."""
     parts = []
 
-    # 1. Prepend character visual anchor if applicable
+    # 1. Subject & Character Visual DNA Anchor
     if shot.character_id and shot.character_id in characters:
         char = characters[shot.character_id]
         if char.visual_anchor:
-            parts.append(char.visual_anchor)
+            parts.append(f"Subject: {char.name}, {char.visual_anchor}")
 
-    # 2. Shot scene prompt
+    # 2. Cinematography Framing, Angle & Lighting
+    cine_cues = []
+    if getattr(shot, "shot_size", None):
+        cine_cues.append(f"{shot.shot_size.replace('_', ' ')} shot")
+    if getattr(shot, "camera_angle", None):
+        cine_cues.append(f"{shot.camera_angle.replace('_', ' ')} camera angle")
+    if getattr(shot, "lighting", None):
+        cine_cues.append(f"{shot.lighting.replace('_', ' ')} lighting")
+    if cine_cues:
+        parts.append(", ".join(cine_cues))
+
+    # 3. Scene Action & Environment
     if shot.image_prompt:
         parts.append(shot.image_prompt)
 
-    # 3. Style DNA suffix
+    # 4. Cinematic Lens, Optical Quality & Style DNA
+    lens_quality = "shot on 35mm anamorphic lens, f/1.8 aperture, shallow depth of field, photorealistic 8k, color graded, masterpiece"
+    parts.append(lens_quality)
+
     style_suffix = STYLE_DNA.get(style.lower(), STYLE_DNA["cinematic"])
     parts.append(style_suffix)
 

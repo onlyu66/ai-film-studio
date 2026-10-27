@@ -278,3 +278,56 @@ def test_update_shot_resets_checkpoints(tmp_path, monkeypatch):
     assert not state_reloaded.is_stage_complete("s1", "audio")
     assert not state_reloaded.is_stage_complete("s1", "video")
 
+def test_approve_shot(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    sb_file = tmp_path / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Test",
+        "characters": {},
+        "shots": [{"id": "s1", "is_approved": False}]
+    }), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        if str(arg) == "outputs/storyboard.json":
+            return sb_file
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    resp = client.post("/api/storyboard/approve-shot", json={"shot_id": "s1", "approved": True})
+    assert resp.status_code == 200
+    assert resp.json()["is_approved"] is True
+
+    # Verify persisted in file
+    content = json.loads(sb_file.read_text(encoding="utf-8"))
+    assert content["shots"][0]["is_approved"] is True
+
+def test_assemble_master_validation(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    sb_file = tmp_path / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Test",
+        "characters": {},
+        "shots": [{"id": "s_missing"}]
+    }), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        if str(arg) == "outputs/storyboard.json":
+            return sb_file
+        if str(arg) == "outputs/videos":
+            return tmp_path / "videos"
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    resp = client.post("/api/storyboard/assemble-master", json={})
+    # Should fail with 400 because video clips are missing
+    assert resp.status_code == 400
+    assert "chưa được render" in resp.json()["detail"]
+

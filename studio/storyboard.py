@@ -29,6 +29,10 @@ class Shot:
     act: Optional[int] = 1
     mood: Optional[str] = None
     emotion: Optional[str] = None
+    shot_size: Optional[str] = None
+    camera_angle: Optional[str] = None
+    lighting: Optional[str] = None
+    is_approved: bool = False
 
 @dataclass
 class Storyboard:
@@ -65,6 +69,10 @@ class Storyboard:
                     "act": s.act,
                     "mood": s.mood,
                     "emotion": s.emotion,
+                    "shot_size": s.shot_size,
+                    "camera_angle": s.camera_angle,
+                    "lighting": s.lighting,
+                    "is_approved": s.is_approved,
                 }
                 for s in self.shots
             ],
@@ -148,6 +156,10 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                     act=act_num,
                     mood=str(s["mood"]).strip().lower() if s.get("mood") else None,
                     emotion=str(s["emotion"]).strip().lower() if s.get("emotion") else None,
+                    shot_size=str(s["shot_size"]).strip().lower() if s.get("shot_size") else None,
+                    camera_angle=str(s["camera_angle"]).strip().lower() if s.get("camera_angle") else None,
+                    lighting=str(s["lighting"]).strip().lower() if s.get("lighting") else None,
+                    is_approved=bool(s.get("is_approved", False)),
                 )
             )
 

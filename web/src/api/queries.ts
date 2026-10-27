@@ -13,6 +13,11 @@ import {
   addShot,
   deleteShot,
   reorderShots,
+  approveShot,
+  renderShotAudio,
+  renderShotVideo,
+  assembleMaster,
+  type AssembleMasterParams,
   fetchProjects,
   deleteProject,
   fetchProjectSeo,
@@ -172,6 +177,53 @@ export function useReorderShots() {
     mutationFn: (shotIds: string[]) => reorderShots(shotIds),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useApproveShot() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ shotId, approved }: { shotId: string; approved: boolean }) =>
+      approveShot(shotId, approved),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useRenderShotAudio() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (shotId: string) => renderShotAudio(shotId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useRenderShotVideo() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (shotId: string) => renderShotVideo(shotId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useAssembleMaster() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (params: AssembleMasterParams) => assembleMaster(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.status })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projects })
     },
   })
 }
