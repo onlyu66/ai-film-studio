@@ -4,33 +4,71 @@
 
 @layer base {
   body {
-    @apply bg-[#080A0F] text-slate-100 antialiased selection:bg-amber-500/20 selection:text-amber-300;
+    @apply bg-[#07080D] text-zinc-100 antialiased selection:bg-amber-500/25 selection:text-amber-200;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
 /* Custom Cinema Workstation Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090B10;
+  background: #080A10;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1F2535;
+  background: #1C202F;
   border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #333C52;
+  background: #2E364F;
 }
 
-/* Studio subtle animations */
-@keyframes pulseSubtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+/* Glassmorphism & Specular Card Effects */
+.glass-panel {
+  background: rgba(15, 17, 26, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-.animate-subtle-pulse {
-  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.glass-card {
+  background: rgba(18, 21, 32, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Glowing Amber Accents */
+.glow-amber-sm {
+  box-shadow: 0 0 15px -3px rgba(245, 158, 11, 0.25);
+}
+
+.glow-amber-md {
+  box-shadow: 0 0 25px -4px rgba(245, 158, 11, 0.35);
+}
+
+/* Studio ambient background radial glow */
+.studio-ambient-bg {
+  background-image: 
+    radial-gradient(circle at 50% -10%, rgba(245, 158, 11, 0.07) 0%, transparent 60%),
+    radial-gradient(circle at 10% 30%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 90% 70%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+}
+
+/* Subtle Shimmer for CTA button */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite ease-in-out;
 }

@@ -1,21 +1,47 @@
 import React, { useState, useEffect } from 'react'
-import { Sparkles, Play, Settings2, Languages, Clock, Palette, Bot, Film, Mic, MicOff, Camera, Video, Cpu, Server, Clapperboard, X, Send, Check, Loader2, Key, Eye, EyeOff, RefreshCw, AlertCircle, CheckCircle2, FileEdit, Smartphone, Monitor } from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from './ui/card'
-import { Button } from './ui/button'
-import { Badge } from './ui/badge'
+import {
+  Sparkles,
+  Play,
+  Settings2,
+  Languages,
+  Clock,
+  Palette,
+  Bot,
+  Film,
+  Mic,
+  MicOff,
+  Camera,
+  Video,
+  Cpu,
+  Server,
+  Clapperboard,
+  X,
+  Send,
+  Check,
+  Loader2,
+  Key,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  AlertCircle,
+  CheckCircle2,
+  FileEdit,
+  Smartphone,
+  Monitor,
+} from 'lucide-react'
 import { CustomSelect } from './ui/select'
 import { useTestWebhook, useFetchLlmModels } from '../api/queries'
 import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem } from '../types'
 
 const LANG_OPTIONS: SelectOption[] = [
-  { value: 'vi', label: 'Tiếng Việt', subtext: 'Giọng AI tự nhiên, truyền cảm', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">VI</span> },
-  { value: 'en', label: 'English (US)', subtext: 'Natural American cinematic narration', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">EN</span> },
-  { value: 'ja', label: 'Japanese', subtext: 'Studio narration & anime style', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">JA</span> },
-  { value: 'fr', label: 'French', subtext: 'Classic European cinema tone', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]">FR</span> },
+  { value: 'vi', label: 'Tiếng Việt', subtext: 'Giọng AI tự nhiên, truyền cảm', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-amber-300">VI</span> },
+  { value: 'en', label: 'English (US)', subtext: 'Natural American cinematic narration', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300">EN</span> },
+  { value: 'ja', label: 'Japanese (日本語)', subtext: 'Studio narration & anime style', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300">JA</span> },
+  { value: 'fr', label: 'French (Français)', subtext: 'Classic European cinema tone', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300">FR</span> },
 ]
 
 const LLM_OPTIONS: SelectOption[] = [
-  { value: 'gemini', label: 'Google Gemini', subtext: 'Khuyên dùng — Siêu tốc, ổn định', icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" /> },
+  { value: 'gemini', label: 'Google Gemini', subtext: 'Khuyên dùng — Siêu tốc, phân cảnh thông minh', icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" /> },
   { value: 'groq', label: 'Groq Cloud', subtext: 'Llama 3.3 70B & Mixtral', icon: <Cpu className="w-3.5 h-3.5 text-sky-400" /> },
   { value: 'ollama', label: 'Ollama Local', subtext: '100% Offline trên máy chủ', icon: <Server className="w-3.5 h-3.5 text-emerald-400" /> },
   { value: 'openai', label: 'OpenAI ChatGPT', subtext: 'GPT-4o & tương thích', icon: <Bot className="w-3.5 h-3.5 text-purple-400" /> },
@@ -23,12 +49,12 @@ const LLM_OPTIONS: SelectOption[] = [
 
 const MOTION_OPTIONS: SelectOption[] = [
   { value: 'vfx', label: 'Cinematic 2.5D VFX', subtext: 'Ken Burns & Dynamic Lighting', icon: <Camera className="w-3.5 h-3.5 text-amber-400" /> },
-  { value: 'kenburns', label: 'Ken Burns Classic', subtext: 'Zoom & Pan camera mượt mà', icon: <Film className="w-3.5 h-3.5 text-slate-400" /> },
+  { value: 'kenburns', label: 'Ken Burns Classic', subtext: 'Zoom & Pan camera mượt mà', icon: <Film className="w-3.5 h-3.5 text-zinc-400" /> },
   { value: 'replicate', label: 'Replicate AI Video', subtext: 'Image-to-Video Cloud động', icon: <Video className="w-3.5 h-3.5 text-indigo-400" /> },
 ]
 
 const LIPSYNC_OPTIONS: SelectOption[] = [
-  { value: 'none', label: 'Tắt nhép môi', subtext: 'Render nhanh, máy nhẹ', icon: <MicOff className="w-3.5 h-3.5 text-slate-400" /> },
+  { value: 'none', label: 'Tắt nhép môi', subtext: 'Render nhanh, máy nhẹ', icon: <MicOff className="w-3.5 h-3.5 text-zinc-400" /> },
   { value: 'cloud', label: 'SadTalker Lip-Sync', subtext: 'Khớp khẩu hình nhân vật', icon: <Mic className="w-3.5 h-3.5 text-indigo-400" /> },
 ]
 
@@ -63,11 +89,11 @@ const PRESET_IDEAS: (PresetIdea & { tag: string })[] = [
   }
 ]
 
-const STYLES: (StyleOption & { tag: string })[] = [
-  { id: 'cinematic', label: 'Cinematic 35mm', desc: 'Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp', emoji: '', gradient: '', tag: '35mm Film' },
-  { id: 'anime', label: 'Anime Studio', desc: 'Màu sắc Makoto Shinkai rực rỡ, chi tiết', emoji: '', gradient: '', tag: 'Animation' },
-  { id: 'noir', label: 'Film Noir', desc: 'Độ tương phản cao, bóng đổ bí ẩn kinh điển', emoji: '', gradient: '', tag: 'Classic Noir' },
-  { id: 'documentary', label: 'Documentary 8K', desc: 'Ảnh tư liệu thực tế National Geographic', emoji: '', gradient: '', tag: 'Photoreal' },
+const STYLES: (StyleOption & { tag: string; accent: string })[] = [
+  { id: 'cinematic', label: 'Cinematic 35mm', desc: 'Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp', emoji: '', gradient: '', tag: '35mm Film', accent: 'from-amber-500/20 to-orange-500/5' },
+  { id: 'anime', label: 'Anime Studio', desc: 'Màu sắc Makoto Shinkai rực rỡ, chi tiết', emoji: '', gradient: '', tag: 'Animation', accent: 'from-cyan-500/20 to-blue-500/5' },
+  { id: 'noir', label: 'Film Noir', desc: 'Độ tương phản cao, bóng đổ bí ẩn kinh điển', emoji: '', gradient: '', tag: 'Classic Noir', accent: 'from-zinc-500/20 to-zinc-900/10' },
+  { id: 'documentary', label: 'Documentary 8K', desc: 'Ảnh tư liệu thực tế National Geographic', emoji: '', gradient: '', tag: 'Photoreal', accent: 'from-emerald-500/20 to-teal-500/5' },
 ]
 
 export interface ProductionFormProps {
@@ -139,7 +165,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   const [lipSync, setLipSync] = useState('none')
   const [aspectRatio, setAspectRatio] = useState('16:9')
   const [hardsub, setHardsub] = useState(false)
-  const [pauseAfterScript, setPauseAfterScript] = useState(false)
+  const [pauseAfterScript, setPauseAfterScript] = useState(true)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [seriesTitle, setSeriesTitle] = useState('')
   const [episode, setEpisode] = useState(1)
@@ -206,142 +232,206 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   }
 
   return (
-    <Card id="director-inspector" className="border-white/[0.08] bg-[#0E1119] shadow-xl">
-      <CardHeader className="pb-3.5 border-b border-white/[0.06]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#141824] border border-white/[0.1] flex items-center justify-center text-amber-400 shrink-0 shadow-sm">
-              <Clapperboard className="w-4 h-4" />
+    <div id="director-inspector" className="glass-panel rounded-3xl p-5 sm:p-7 shadow-2xl relative">
+      {/* Series Sequel Alert */}
+      {parentProjectId && (
+        <div className="mb-5 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-amber-500 text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+              EP{episode}
             </div>
-            <div>
-              <CardTitle className="text-sm font-bold text-white tracking-tight flex items-center gap-2">
-                <span>DIRECTOR INSPECTOR</span>
-              </CardTitle>
-              <CardDescription className="text-[11px] text-slate-400">
-                Thiết lập kịch bản, phong cách điện ảnh & động cơ AI
-              </CardDescription>
+            <div className="min-w-0">
+              <span className="text-[10px] font-mono font-bold uppercase text-amber-400 block tracking-wider">
+                Chế độ Phim Bộ (Series Mode)
+              </span>
+              <p className="text-xs text-zinc-200 truncate">
+                Tiếp nối: <strong className="text-white">{seriesTitle || 'Tập trước'}</strong> (Kế thừa nhân vật & visual DNA)
+              </p>
             </div>
           </div>
-          <Badge variant="outline" className="text-[10px] font-mono border-white/[0.08] text-slate-400">
-            {aspectRatio} • {duration}M
-          </Badge>
+
+          <button
+            type="button"
+            onClick={() => {
+              setParentProjectId(undefined)
+              setSeriesTitle('')
+              setEpisode(1)
+              onResetSeries?.()
+            }}
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
+            title="Hủy liên kết tập phim"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
-      </CardHeader>
+      )}
 
-      <CardContent className="pt-4 space-y-5">
-        {/* Series Continuation Alert Banner if active */}
-        {parentProjectId && (
-          <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0">
-                EP{episode}
-              </div>
-              <div className="min-w-0">
-                <span className="text-[11px] font-bold uppercase text-amber-400 block tracking-wider">
-                  Chế độ Phim Bộ (Series Mode)
-                </span>
-                <p className="text-xs text-slate-200 truncate">
-                  Tiếp nối: <strong className="text-white">{seriesTitle || 'Tập trước'}</strong> (Kế thừa nhân vật & style)
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setParentProjectId(undefined)
-                setSeriesTitle('')
-                setEpisode(1)
-                onResetSeries?.()
-              }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0"
-              title="Hủy liên kết tập phim"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Preset chips */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3 text-amber-400" />
-              <span>Gợi ý kịch bản mẫu</span>
+      {/* Form Area */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* 1. Prompt Studio Area */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-zinc-200 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Ý tưởng kịch bản & Đề tài bộ phim</span>
             </label>
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider hidden sm:inline">
+              Flux 8K • Cinematic Script
+            </span>
           </div>
-          <div className="flex flex-wrap gap-1.5">
+
+          {/* Prompt Textarea */}
+          <div className="relative group">
+            <textarea
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              disabled={isRunning}
+              rows={3}
+              placeholder="Mô tả ý tưởng, cốt truyện, nhân vật hoặc đề tài tài liệu mà bạn muốn AI sản xuất thành phim..."
+              className="w-full px-4 py-3.5 rounded-2xl bg-zinc-950/80 border border-white/[0.09] group-hover:border-white/[0.15] text-zinc-100 placeholder-zinc-500 text-sm focus:outline-none focus:border-amber-400/70 focus:ring-2 focus:ring-amber-400/15 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
+            />
+            {topic && !isRunning && (
+              <button
+                type="button"
+                onClick={() => setTopic('')}
+                className="absolute top-3 right-3 p-1 rounded-md text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                title="Xóa nhanh prompt"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Clean Quick Inspiration Chips Below Textarea */}
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mr-1">Gợi ý nhanh:</span>
             {PRESET_IDEAS.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
                 onClick={() => handleApplyPreset(p)}
                 disabled={isRunning}
-                className="px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1A2030] border border-white/[0.07] hover:border-amber-500/40 text-left transition-colors cursor-pointer flex items-center gap-2"
+                className="px-2.5 py-1 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-white/[0.08] hover:border-amber-400/40 text-[11px] font-medium text-zinc-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5"
               >
-                <span className="text-[10px] font-mono uppercase px-1 py-0.2 rounded bg-white/[0.05] text-amber-400/90 font-bold border border-white/[0.06]">{p.tag}</span>
-                <span className="text-xs font-medium text-slate-200">{p.title}</span>
+                <span className="text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/10 text-amber-300 font-bold">{p.tag}</span>
+                <span>{p.title}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Topic Input */}
-        <div>
-          <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5">
-            Ý tưởng cốt truyện / Đề tài bộ phim
-          </label>
-          <div className="relative">
-            <textarea
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              disabled={isRunning}
-              rows={3}
-              placeholder="Nhập đề tài hoặc tiền đề bộ phim muốn sản xuất..."
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#080A10] border border-white/[0.08] text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-amber-500/80 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
-            />
-          </div>
-        </div>
-
-        {/* Visual Style Selection */}
-        <div>
-          <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-            <Palette className="w-3.5 h-3.5 text-amber-400" />
+        {/* 2. Visual Style Gallery Deck */}
+        <div className="space-y-2.5">
+          <label className="text-xs font-semibold text-zinc-300 flex items-center gap-2">
+            <Palette className="w-4 h-4 text-amber-400" />
             <span>Phong cách hình ảnh điện ảnh</span>
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
             {STYLES.map((st) => {
               const isSelected = style === st.id
               return (
-                <button
+                <div
                   key={st.id}
-                  type="button"
-                  onClick={() => setStyle(st.id)}
-                  disabled={isRunning}
-                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                  onClick={() => !isRunning && setStyle(st.id)}
+                  className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between ${
                     isSelected
-                      ? 'bg-[#181D2A] border-amber-500/80 shadow-sm'
-                      : 'bg-[#10131B] border-white/[0.06] hover:border-white/[0.14]'
+                      ? 'bg-gradient-to-b ' + st.accent + ' border-amber-400/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/40'
+                      : 'bg-zinc-900/40 border-white/[0.07] hover:border-white/[0.15] hover:bg-zinc-900/70'
                   }`}
                 >
-                  <span className={`text-xs font-bold block mb-0.5 ${isSelected ? 'text-amber-400' : 'text-slate-200'}`}>
-                    {st.label}
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tight block">
-                    {st.tag}
-                  </span>
-                </button>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold">
+                        {st.tag}
+                      </span>
+                      {isSelected && (
+                        <div className="w-4 h-4 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center">
+                          <Check className="w-2.5 h-2.5 stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+                    <h4 className={`text-xs sm:text-sm font-bold ${isSelected ? 'text-amber-300' : 'text-zinc-100'}`}>
+                      {st.label}
+                    </h4>
+                    <p className="text-[11px] text-zinc-400 leading-snug mt-1">
+                      {st.desc}
+                    </p>
+                  </div>
+                </div>
               )
             })}
           </div>
         </div>
 
-        {/* Language, Aspect Ratio & Duration */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          <div>
-            <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Languages className="w-3.5 h-3.5 text-slate-400" />
-              <span>Ngôn ngữ thoại</span>
+        {/* 3. Core Production Specs: Aspect Ratio, Duration & Language */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+          {/* Aspect Ratio */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Film className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Tỉ lệ khung hình</span>
+            </label>
+            <div className="grid grid-cols-2 gap-1.5 bg-zinc-950/70 p-1 rounded-xl border border-white/[0.08]">
+              <button
+                type="button"
+                onClick={() => setAspectRatio('16:9')}
+                disabled={isRunning}
+                className={`py-2 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  aspectRatio === '16:9'
+                    ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30 font-bold shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span>16:9 Cinema</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAspectRatio('9:16')}
+                disabled={isRunning}
+                className={`py-2 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  aspectRatio === '9:16'
+                    ? 'bg-amber-400/15 text-amber-300 border border-amber-400/30 font-bold shadow-sm'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span>9:16 Shorts</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Thời lượng phim</span>
+            </label>
+            <div className="grid grid-cols-4 gap-1 bg-zinc-950/70 p-1 rounded-xl border border-white/[0.08]">
+              {[1, 3, 5, 30].map((d) => (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDuration(d)}
+                  disabled={isRunning}
+                  className={`py-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
+                    duration === d
+                      ? 'bg-amber-400 text-zinc-950 shadow-sm'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  }`}
+                >
+                  {d}m
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Language */}
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Languages className="w-3.5 h-3.5 text-zinc-400" />
+              <span>Ngôn ngữ thuyết minh</span>
             </label>
             <CustomSelect
               value={lang}
@@ -350,83 +440,99 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               disabled={isRunning}
             />
           </div>
+        </div>
 
-          <div>
-            <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Film className="w-3.5 h-3.5 text-slate-400" />
-              <span>Khung hình</span>
-            </label>
-            <div className="grid grid-cols-2 gap-1.5 bg-[#080A10] p-1 rounded-xl border border-white/[0.08]">
-              <button
-                type="button"
-                onClick={() => setAspectRatio('16:9')}
-                disabled={isRunning}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  aspectRatio === '16:9'
-                    ? 'bg-[#181D2A] text-amber-400 font-bold border border-white/[0.08]'
-                    : 'text-slate-400 hover:text-white'
+        {/* 4. Production Switches */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          {/* Pause for Review */}
+          <div
+            onClick={() => setPauseAfterScript(!pauseAfterScript)}
+            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+              pauseAfterScript
+                ? 'bg-amber-500/10 border-amber-400/40 shadow-sm'
+                : 'bg-zinc-900/40 border-white/[0.06] hover:border-white/[0.12]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors shrink-0 ${
+                  pauseAfterScript
+                    ? 'bg-amber-400 text-zinc-950 font-bold'
+                    : 'bg-zinc-800 text-zinc-400'
                 }`}
               >
-                <Monitor className="w-3.5 h-3.5" />
-                <span>16:9</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAspectRatio('9:16')}
-                disabled={isRunning}
-                className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                  aspectRatio === '9:16'
-                    ? 'bg-[#181D2A] text-amber-400 font-bold border border-white/[0.08]'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-                <span>9:16</span>
-              </button>
+                <FileEdit className="w-4 h-4" />
+              </div>
+              <div>
+                <span className={`text-xs font-semibold block ${pauseAfterScript ? 'text-amber-300' : 'text-zinc-200'}`}>
+                  Duyệt kịch bản trước khi render
+                </span>
+                <span className="text-[11px] text-zinc-400 block leading-tight mt-0.5">
+                  Tạm dừng sau Hồi 1 để sửa thoại & đổi giọng
+                </span>
+              </div>
             </div>
+            <input
+              type="checkbox"
+              checked={pauseAfterScript}
+              onChange={(e) => setPauseAfterScript(e.target.checked)}
+              className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-zinc-950 border-zinc-700 cursor-pointer"
+            />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Thời lượng phim</span>
-            </label>
-            <div className="grid grid-cols-4 gap-1 bg-[#080A10] p-1 rounded-xl border border-white/[0.08]">
-              {[1, 3, 5, 30].map((d) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDuration(d)}
-                  disabled={isRunning}
-                  className={`py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${
-                    duration === d
-                      ? 'bg-amber-500 text-slate-950 shadow-sm'
-                      : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                  }`}
-                >
-                  {d}m
-                </button>
-              ))}
+          {/* Hardsub Burn-in */}
+          <div
+            onClick={() => setHardsub(!hardsub)}
+            className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+              hardsub
+                ? 'bg-amber-500/10 border-amber-400/40 shadow-sm'
+                : 'bg-zinc-900/40 border-white/[0.06] hover:border-white/[0.12]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors shrink-0 ${
+                  hardsub
+                    ? 'bg-amber-400 text-zinc-950 font-bold'
+                    : 'bg-zinc-800 text-zinc-400'
+                }`}
+              >
+                <Film className="w-4 h-4" />
+              </div>
+              <div>
+                <span className={`text-xs font-semibold block ${hardsub ? 'text-amber-300' : 'text-zinc-200'}`}>
+                  In phụ đề trực tiếp vào video
+                </span>
+                <span className="text-[11px] text-zinc-400 block leading-tight mt-0.5">
+                  Khắc phụ đề điện ảnh viền đen trực tiếp (Hardsub)
+                </span>
+              </div>
             </div>
+            <input
+              type="checkbox"
+              checked={hardsub}
+              onChange={(e) => setHardsub(e.target.checked)}
+              className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-zinc-950 border-zinc-700 cursor-pointer"
+            />
           </div>
         </div>
 
-        {/* Advanced Settings Accordion */}
-        <div className="pt-1">
+        {/* 5. Advanced Engine Accordion */}
+        <div className="pt-2">
           <button
             type="button"
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2 text-xs font-mono font-semibold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
+            className="flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer"
           >
-            <Settings2 className="w-3.5 h-3.5" />
-            <span>{showAdvanced ? 'Thu gọn cài đặt động cơ [-]' : 'Cài đặt Động cơ AI (LLM, Motion, SadTalker) [+]'}</span>
+            <Settings2 className="w-4 h-4" />
+            <span>{showAdvanced ? 'Thu gọn cài đặt động cơ [-]' : 'Cài đặt nâng cao (AI Engines, API Key, SadTalker) [+]'}</span>
           </button>
 
           {showAdvanced && (
-            <div className="relative z-30 mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3.5 transition-all animate-fadeIn">
+            <div className="relative z-30 mt-3 p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-white/[0.08] grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fadeIn">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <Bot className="w-3 h-3 text-amber-400" />
+                <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Bot className="w-3.5 h-3.5 text-amber-400" />
                   <span>Động cơ LLM</span>
                 </label>
                 <CustomSelect
@@ -438,8 +544,8 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <Film className="w-3 h-3 text-rose-400" />
+                <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Film className="w-3.5 h-3.5 text-rose-400" />
                   <span>Chuyển động máy quay</span>
                 </label>
                 <CustomSelect
@@ -451,8 +557,8 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                  <Mic className="w-3 h-3 text-indigo-400" />
+                <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Mic className="w-3.5 h-3.5 text-indigo-400" />
                   <span>Cử động môi (Lip-Sync)</span>
                 </label>
                 <CustomSelect
@@ -464,34 +570,34 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               </div>
 
               {/* API Key & Dynamic Model Selection Card */}
-              <div className="sm:col-span-3 p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+              <div className="sm:col-span-3 p-4 rounded-xl bg-zinc-900/60 border border-white/[0.08] space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-2.5">
                   <div className="flex items-center gap-2">
                     <Key className="w-4 h-4 text-amber-400" />
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
-                      Cấu hình API Key & Chọn Model ({LLM_OPTIONS.find((o) => o.value === llm)?.label})
+                    <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
+                      Cấu hình API Key & Model ({LLM_OPTIONS.find((o) => o.value === llm)?.label})
                     </span>
                   </div>
                   {hasEnvKey && !apiKey && (
-                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
-                      Đã kết nối qua file .env máy chủ
+                      Nhận diện từ file .env
                     </span>
                   )}
                   {apiKey && (
-                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-950/60 border border-amber-800/80 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
-                      Dùng API Key tùy chỉnh (lưu cục bộ)
+                      Key tùy chỉnh (lưu máy này)
                     </span>
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                   {/* API Key Input */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                        <span>API Key ({LLM_OPTIONS.find((o) => o.value === llm)?.label})</span>
+                      <label className="text-[10px] font-mono uppercase text-zinc-400 font-medium">
+                        API Key
                       </label>
                       {llm === 'gemini' && (
                         <a
@@ -537,14 +643,14 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                             : 'Nhập API key tại đây...'
                         }
                         disabled={isRunning || llm === 'ollama'}
-                        className="w-full pl-3 pr-28 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                        className="w-full pl-3 pr-28 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                       />
                       <div className="absolute right-1.5 flex items-center gap-1">
                         {apiKey && (
                           <button
                             type="button"
                             onClick={() => handleApiKeyChange('')}
-                            className="p-1 text-slate-400 hover:text-white text-xs"
+                            className="p-1 text-zinc-400 hover:text-white text-xs cursor-pointer"
                             title="Xóa key"
                           >
                             <X className="w-3.5 h-3.5" />
@@ -553,7 +659,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                         <button
                           type="button"
                           onClick={() => setShowApiKey(!showApiKey)}
-                          className="p-1 text-slate-400 hover:text-white"
+                          className="p-1 text-zinc-400 hover:text-white cursor-pointer"
                           title={showApiKey ? 'Ẩn key' : 'Hiện key'}
                         >
                           {showApiKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -562,7 +668,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                           type="button"
                           onClick={() => loadModelsForProvider(llm, apiKey)}
                           disabled={fetchModelsMutation.isPending || isRunning}
-                          className="px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-colors border border-amber-500/30 cursor-pointer"
+                          className="px-2 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-colors border border-amber-500/30 cursor-pointer"
                           title="Tải danh sách model"
                         >
                           {fetchModelsMutation.isPending ? (
@@ -579,11 +685,8 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   {/* Model Selection */}
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-amber-400" />
-                        <span>
-                          Model Kịch bản {availableModels.length > 0 && `(${availableModels.length} khả dụng)`}
-                        </span>
+                      <label className="text-[10px] font-mono uppercase text-zinc-400 font-medium">
+                        Model Kịch bản {availableModels.length > 0 && `(${availableModels.length} khả dụng)`}
                       </label>
                       <button
                         type="button"
@@ -600,14 +703,14 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                         value={customModelText}
                         onChange={(e) => setCustomModelText(e.target.value)}
                         placeholder="VD: gemini-3.5-flash, gpt-4o, llama3.2..."
-                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                        className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                       />
                     ) : availableModels.length > 0 ? (
                       <select
                         value={selectedModel}
                         onChange={(e) => setSelectedModel(e.target.value)}
                         disabled={isRunning}
-                        className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 font-medium cursor-pointer"
+                        className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-medium cursor-pointer"
                       >
                         {availableModels.map((m) => (
                           <option key={m.id} value={m.id}>
@@ -617,7 +720,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                         ))}
                       </select>
                     ) : (
-                      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/80 border border-dashed border-slate-700 text-xs text-slate-400">
+                      <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-950/80 border border-dashed border-white/[0.08] text-xs text-zinc-500">
                         <span>
                           {fetchModelsMutation.isPending
                             ? 'Đang tải danh sách model...'
@@ -629,9 +732,9 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   </div>
                 </div>
 
-                {/* Error Banner if any */}
+                {/* Error Banner */}
                 {modelsError && (
-                  <div className="p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/80 flex items-start gap-2 text-rose-300 text-xs animate-fadeIn">
+                  <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-rose-300 text-xs animate-fadeIn">
                     <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="font-semibold">{modelsError}</p>
@@ -643,8 +746,9 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                 )}
               </div>
 
+              {/* Series Details */}
               <div className="sm:col-span-2">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <label className="block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                   <Clapperboard className="w-3 h-3 text-amber-400" />
                   <span>Tên Series Phim (Tùy chọn)</span>
                 </label>
@@ -653,12 +757,12 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   value={seriesTitle}
                   onChange={(e) => setSeriesTitle(e.target.value)}
                   placeholder="Để trống nếu là phim độc lập"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <label className="block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
                   <Clock className="w-3 h-3 text-amber-400" />
                   <span>Tập số (Episode)</span>
                 </label>
@@ -668,14 +772,15 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   max={999}
                   value={episode}
                   onChange={(e) => setEpisode(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-bold"
                 />
               </div>
 
-              <div className="sm:col-span-3 pt-2 border-t border-slate-800/80">
+              {/* Webhook */}
+              <div className="sm:col-span-3 pt-2 border-t border-white/[0.06]">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                    <Send className="w-3 h-3 text-emerald-400" />
+                  <label className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Send className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Webhook Tự Động Hóa (Discord / Telegram / n8n / Zapier)</span>
                   </label>
                   {webhookUrl && (
@@ -702,108 +807,44 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   type="url"
                   value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
-                  placeholder="https://discord.com/api/webhooks/... hoặc URL nhận thông báo"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                  placeholder="https://discord.com/api/webhooks/... hoặc URL webhook nhận thông báo"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                 />
               </div>
             </div>
           )}
         </div>
 
-        {/* Pause for Review Switch */}
-        <div
-          onClick={() => setPauseAfterScript(!pauseAfterScript)}
-          className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-            pauseAfterScript
-              ? 'bg-[#161B28] border-amber-500/60'
-              : 'bg-[#10131B] border-white/[0.06] hover:border-white/[0.12]'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
-                pauseAfterScript
-                  ? 'bg-amber-500 text-slate-950 font-bold'
-                  : 'bg-white/[0.06] text-slate-400'
-              }`}
-            >
-              <FileEdit className="w-3.5 h-3.5" />
-            </div>
-            <div>
-              <span className={`text-xs font-semibold block ${pauseAfterScript ? 'text-amber-400' : 'text-slate-200'}`}>
-                Duyệt & Chỉnh Sửa Kịch Bản Trước Khi Render
-              </span>
-              <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
-                Tạm dừng sau Hồi 1 để bạn duyệt phân cảnh, sửa lời thoại & đổi giọng
-              </span>
-            </div>
-          </div>
-          <input
-            type="checkbox"
-            checked={pauseAfterScript}
-            onChange={(e) => setPauseAfterScript(e.target.checked)}
-            className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-700 cursor-pointer"
-          />
-        </div>
-
-        {/* Hardsub Burn-in Switch */}
-        <div
-          onClick={() => setHardsub(!hardsub)}
-          className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-            hardsub
-              ? 'bg-[#161B28] border-amber-500/60'
-              : 'bg-[#10131B] border-white/[0.06] hover:border-white/[0.12]'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
-                hardsub
-                  ? 'bg-amber-500 text-slate-950 font-bold'
-                  : 'bg-white/[0.06] text-slate-400'
-              }`}
-            >
-              <Film className="w-3.5 h-3.5" />
-            </div>
-            <div>
-              <span className={`text-xs font-semibold block ${hardsub ? 'text-amber-400' : 'text-slate-200'}`}>
-                In phụ đề trực tiếp vào video (Hardsub)
-              </span>
-              <span className="text-[11px] text-slate-400 block leading-tight mt-0.5">
-                Khắc phụ đề điện ảnh / karaoke viền đen sắc nét trực tiếp vào video
-              </span>
-            </div>
-          </div>
-          <input
-            type="checkbox"
-            checked={hardsub}
-            onChange={(e) => setHardsub(e.target.checked)}
-            className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-700 cursor-pointer"
-          />
-        </div>
-
-        {/* Submit Button */}
-        <div className="pt-2">
-          <Button
+        {/* 6. Primary Action CTA Button */}
+        <div className="pt-2 flex justify-center">
+          <button
             type="submit"
-            onClick={handleSubmit}
-            size="lg"
             disabled={isRunning || !topic.trim()}
-            className="w-full py-4 text-xs sm:text-sm tracking-wider gap-2.5 font-bold uppercase bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-400/40 shadow-sm cursor-pointer"
+            className="w-full sm:max-w-md py-3.5 px-6 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer shadow-xl relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed group glow-amber-sm hover:glow-amber-md active:scale-[0.98]"
           >
-            <Play className="w-4 h-4 fill-current" />
-            <span>
-              {isRunning
-                ? pauseAfterScript
-                  ? 'ĐANG SOẠN KỊCH BẢN...'
-                  : 'ĐANG SẢN XUẤT PHIM THEO YÊU CẦU...'
-                : pauseAfterScript
-                ? 'TẠO KỊCH BẢN & CHỜ DUYỆT'
-                : 'BẮT ĐẦU SẢN XUẤT PHIM'}
-            </span>
-          </Button>
+            {/* Shimmer line */}
+            <div className="absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/35 to-transparent -skew-x-12 animate-shimmer pointer-events-none" />
+
+            {isRunning ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
+                <span>
+                  {pauseAfterScript ? 'Đang soạn kịch bản & phân cảnh...' : 'Đang sản xuất toàn bộ phim...'}
+                </span>
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 fill-current" />
+                <span>
+                  {pauseAfterScript
+                    ? 'Tạo Kịch Bản & Dừng Để Duyệt (Khuyên Dùng)'
+                    : 'Bắt Đầu Sản Xuất Phim Tự Động'}
+                </span>
+              </>
+            )}
+          </button>
         </div>
-      </CardContent>
-    </Card>
+      </form>
+    </div>
   )
 }

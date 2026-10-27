@@ -265,15 +265,19 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
   if (!storyboard || (!rawShots.length && !Object.keys(rawCharacters).length)) {
     return (
-      <Card className="border-cinema-border bg-cinema-deck p-12 text-center shadow-xl">
-        <div className="w-14 h-14 rounded-xl bg-cinema-card border border-cinema-border flex items-center justify-center mx-auto mb-3 text-zinc-500">
-          <Film className="w-7 h-7" />
+      <div className="glass-card rounded-2xl p-5 text-center border border-dashed border-white/[0.08] max-w-4xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-zinc-400">
+          <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center text-amber-400/80 shrink-0">
+            <Film className="w-4 h-4" />
+          </div>
+          <div className="text-center sm:text-left">
+            <h4 className="text-xs font-semibold text-zinc-200">Kịch bản & Phân cảnh điện ảnh 35mm sẽ xuất hiện tại đây</h4>
+            <p className="text-[11px] text-zinc-500 mt-0.5">
+              Sau khi bấm "Tạo Kịch Bản", toàn bộ danh sách nhân vật, mô tả Visual DNA và bảng phân cảnh chi tiết sẽ sẵn sàng để bạn duyệt.
+            </p>
+          </div>
         </div>
-        <h3 className="text-sm font-bold text-zinc-300">Chưa có Kịch bản & Phân cảnh</h3>
-        <p className="text-xs text-zinc-500 mt-1 max-w-md mx-auto leading-relaxed">
-          Toàn bộ danh sách nhân vật, mô tả Visual DNA và bảng phân cảnh 35mm sẽ xuất hiện tại đây ngay khi bạn bấm sản xuất phim.
-        </p>
-      </Card>
+      </div>
     )
   }
 

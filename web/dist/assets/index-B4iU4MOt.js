@@ -24484,37 +24484,51 @@ const Button = React.forwardRef(({
   );
 });
 Button.displayName = "Button";
-function Navbar({ status, onClean, isCleaning, onWatchMovie, onOpenLibrary }) {
+function Navbar({
+  status,
+  onClean,
+  isCleaning,
+  onWatchMovie,
+  onOpenLibrary,
+  onToggleConsole,
+  showConsole = false,
+  logsCount = 0
+}) {
+  const isRunning = (status == null ? void 0 : status.status) === "running";
+  const isScriptReady = (status == null ? void 0 : status.status) === "script_ready";
+  const isCompleted = (status == null ? void 0 : status.status) === "completed";
+  const isError = (status == null ? void 0 : status.status) === "error";
   const getStatusBadge = () => {
-    switch (status == null ? void 0 : status.status) {
-      case "script_ready":
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-3.5 h-3.5 text-amber-400" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Kịch bản chờ duyệt" })
-        ] });
-      case "running":
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-mono", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-2 h-2 rounded-full bg-rose-500 animate-ping" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-rose-400" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate max-w-[150px]", children: status.stage_name || "Đang render..." })
-        ] });
-      case "completed":
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-3.5 h-3.5" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Phim hoàn tất" })
-        ] });
-      case "error":
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "w-3.5 h-3.5" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Có lỗi phát sinh" })
-        ] });
-      default:
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-2.5 py-1 rounded-full bg-[#121622] border border-white/[0.08] text-slate-400 text-xs font-mono", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-emerald-400" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Ready" })
-        ] });
+    if (isScriptReady) {
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-3.5 h-3.5 text-amber-400" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Kịch bản chờ duyệt" })
+      ] });
     }
+    if (isRunning) {
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-2 h-2 rounded-full bg-amber-500 animate-ping" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-amber-400" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "truncate max-w-[130px] font-semibold", children: (status == null ? void 0 : status.stage_name) || "Đang tạo phim..." })
+      ] });
+    }
+    if (isCompleted) {
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-3.5 h-3.5" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Phim hoàn tất" })
+      ] });
+    }
+    if (isError) {
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "w-3.5 h-3.5" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Lỗi xử lý" })
+      ] });
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 px-2.5 py-1 rounded-full bg-zinc-900/80 border border-white/[0.08] text-zinc-400 text-xs font-mono", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-1.5 h-1.5 rounded-full bg-emerald-400" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Ready" })
+    ] });
   };
   const scrollTo = (id2) => {
     const el = document.getElementById(id2);
@@ -24522,22 +24536,22 @@ function Navbar({ status, onClean, isCleaning, onWatchMovie, onOpenLibrary }) {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("header", { className: "sticky top-0 z-40 bg-[#080A0F]/90 backdrop-blur-md border-b border-white/[0.08] px-4 sm:px-6 py-2.5 transition-all", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto flex items-center justify-between gap-4", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 h-8 rounded-lg bg-[#141824] border border-white/[0.1] flex items-center justify-center text-amber-400 shadow-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Clapperboard, { className: "w-4 h-4" }) }),
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("header", { className: "sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "max-w-7xl mx-auto glass-panel rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 shadow-2xl", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 cursor-pointer", onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }), children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shadow-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Clapperboard, { className: "w-4 h-4 text-amber-400" }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-bold tracking-tight text-white font-sans", children: "AI FILM STUDIO" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono uppercase tracking-widest text-slate-400 bg-white/[0.04] border border-white/[0.08] px-1.5 py-0.5 rounded", children: "Workstation" })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-sm font-extrabold tracking-tight text-white font-sans", children: "AI FILM STUDIO" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-mono uppercase tracking-widest text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded", children: "PRO" })
       ] })
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "hidden md:flex items-center p-1 rounded-xl bg-[#10131C] border border-white/[0.06] text-xs font-medium text-slate-400", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("nav", { className: "hidden lg:flex items-center p-1 rounded-xl bg-zinc-950/40 border border-white/[0.06] text-xs font-medium text-zinc-400", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "button",
         {
           type: "button",
           onClick: () => scrollTo("director-inspector"),
-          className: "px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer",
-          children: "Đạo diễn & Kịch bản"
+          className: "px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer",
+          children: "Đạo diễn"
         }
       ),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -24545,29 +24559,43 @@ function Navbar({ status, onClean, isCleaning, onWatchMovie, onOpenLibrary }) {
         {
           type: "button",
           onClick: () => scrollTo("storyboard-section"),
-          className: "px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer",
-          children: "Bảng phân cảnh"
+          className: "px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer",
+          children: "Phân cảnh & Kịch bản"
         }
       ),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "button",
         {
           type: "button",
-          onClick: () => scrollTo("timeline-section"),
-          className: "px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.04] transition-colors cursor-pointer",
-          children: "Dòng thời gian"
+          onClick: () => scrollTo("storyboard-section"),
+          className: "px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer",
+          children: "Timeline 35mm"
         }
       )
     ] }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
       getStatusBadge(),
-      (status == null ? void 0 : status.status) === "completed" && (status == null ? void 0 : status.final_video) && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      onToggleConsole && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: onToggleConsole,
+          className: `flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer border ${showConsole ? "bg-amber-500/15 text-amber-300 border-amber-500/40" : "bg-zinc-900/70 text-zinc-400 hover:text-white hover:bg-zinc-800 border-white/[0.08]"}`,
+          title: "Mở bảng nhật ký thực thi (Execution Logs)",
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Terminal, { className: "w-3.5 h-3.5" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Console" }),
+            logsCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] px-1 py-0.2 rounded bg-white/[0.08] text-zinc-300", children: logsCount })
+          ]
+        }
+      ),
+      isCompleted && (status == null ? void 0 : status.final_video) && /* @__PURE__ */ jsxRuntimeExports.jsxs(
         Button,
         {
           variant: "default",
           size: "sm",
           onClick: onWatchMovie,
-          className: "gap-1.5 text-xs h-8 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-sm cursor-pointer",
+          className: "gap-1.5 text-xs h-8 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold shadow-md shadow-emerald-500/20 cursor-pointer",
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx(MonitorPlay, { className: "w-3.5 h-3.5 fill-current" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Xem Phim" })
@@ -24580,10 +24608,10 @@ function Navbar({ status, onClean, isCleaning, onWatchMovie, onOpenLibrary }) {
           variant: "outline",
           size: "sm",
           onClick: onOpenLibrary,
-          className: "gap-1.5 text-xs h-8 cursor-pointer",
+          className: "gap-1.5 text-xs h-8 border-white/[0.08] hover:bg-white/[0.06] text-zinc-300 cursor-pointer",
           title: "Thư viện phim đã sản xuất",
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-slate-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-zinc-400" }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "hidden sm:inline", children: "Thư viện" })
           ]
         }
@@ -24594,64 +24622,14 @@ function Navbar({ status, onClean, isCleaning, onWatchMovie, onOpenLibrary }) {
           variant: "ghost",
           size: "sm",
           onClick: onClean,
-          disabled: (status == null ? void 0 : status.status) === "running" || isCleaning,
-          className: "h-8 text-xs text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer",
+          disabled: isRunning || isCleaning,
+          className: "h-8 text-xs text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer",
           title: "Làm mới dự án",
           children: /* @__PURE__ */ jsxRuntimeExports.jsx(Trash2, { className: "w-3.5 h-3.5" })
         }
       )
     ] })
   ] }) });
-}
-function Card({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "div",
-    {
-      className: cn(
-        "rounded-2xl border border-white/[0.07] bg-[#0E1119] text-slate-100 shadow-xl shadow-black/50",
-        className
-      ),
-      ...props
-    }
-  );
-}
-function CardHeader({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn("flex flex-col space-y-1.5 p-6 pb-4", className), ...props });
-}
-function CardTitle({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "h3",
-    {
-      className: cn("text-base font-bold leading-none tracking-tight text-white", className),
-      ...props
-    }
-  );
-}
-function CardDescription({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: cn("text-xs text-slate-400 leading-relaxed", className), ...props });
-}
-function CardContent({ className, ...props }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn("p-6 pt-0", className), ...props });
-}
-function Badge({ className, variant = "default", ...props }) {
-  const variants = {
-    default: "bg-amber-500/10 text-cinema-amber border-amber-500/30",
-    secondary: "bg-cinema-card text-zinc-400 border-cinema-border",
-    success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
-    danger: "bg-rose-500/10 text-rose-400 border-rose-500/30",
-    outline: "text-zinc-400 border-cinema-border"
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsx(
-    "div",
-    {
-      className: cn(
-        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-mono font-medium transition-colors",
-        variants[variant],
-        className
-      ),
-      ...props
-    }
-  );
 }
 function CustomSelect({
   value,
@@ -28782,24 +28760,24 @@ function useFetchLlmModels() {
   });
 }
 const LANG_OPTIONS = [
-  { value: "vi", label: "Tiếng Việt", subtext: "Giọng AI tự nhiên, truyền cảm", icon: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]", children: "VI" }) },
-  { value: "en", label: "English (US)", subtext: "Natural American cinematic narration", icon: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]", children: "EN" }) },
-  { value: "ja", label: "Japanese", subtext: "Studio narration & anime style", icon: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]", children: "JA" }) },
-  { value: "fr", label: "French", subtext: "Classic European cinema tone", icon: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08]", children: "FR" }) }
+  { value: "vi", label: "Tiếng Việt", subtext: "Giọng AI tự nhiên, truyền cảm", icon: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-amber-300", children: "VI" }) },
+  { value: "en", label: "English (US)", subtext: "Natural American cinematic narration", icon: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300", children: "EN" }) },
+  { value: "ja", label: "Japanese (日本語)", subtext: "Studio narration & anime style", icon: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300", children: "JA" }) },
+  { value: "fr", label: "French (Français)", subtext: "Classic European cinema tone", icon: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/[0.08] border border-white/[0.1] text-zinc-300", children: "FR" }) }
 ];
 const LLM_OPTIONS = [
-  { value: "gemini", label: "Google Gemini", subtext: "Khuyên dùng — Siêu tốc, ổn định", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3.5 h-3.5 text-amber-400" }) },
+  { value: "gemini", label: "Google Gemini", subtext: "Khuyên dùng — Siêu tốc, phân cảnh thông minh", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3.5 h-3.5 text-amber-400" }) },
   { value: "groq", label: "Groq Cloud", subtext: "Llama 3.3 70B & Mixtral", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Cpu, { className: "w-3.5 h-3.5 text-sky-400" }) },
   { value: "ollama", label: "Ollama Local", subtext: "100% Offline trên máy chủ", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Server, { className: "w-3.5 h-3.5 text-emerald-400" }) },
   { value: "openai", label: "OpenAI ChatGPT", subtext: "GPT-4o & tương thích", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Bot, { className: "w-3.5 h-3.5 text-purple-400" }) }
 ];
 const MOTION_OPTIONS$1 = [
   { value: "vfx", label: "Cinematic 2.5D VFX", subtext: "Ken Burns & Dynamic Lighting", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Camera, { className: "w-3.5 h-3.5 text-amber-400" }) },
-  { value: "kenburns", label: "Ken Burns Classic", subtext: "Zoom & Pan camera mượt mà", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-slate-400" }) },
+  { value: "kenburns", label: "Ken Burns Classic", subtext: "Zoom & Pan camera mượt mà", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-zinc-400" }) },
   { value: "replicate", label: "Replicate AI Video", subtext: "Image-to-Video Cloud động", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Video, { className: "w-3.5 h-3.5 text-indigo-400" }) }
 ];
 const LIPSYNC_OPTIONS = [
-  { value: "none", label: "Tắt nhép môi", subtext: "Render nhanh, máy nhẹ", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(MicOff, { className: "w-3.5 h-3.5 text-slate-400" }) },
+  { value: "none", label: "Tắt nhép môi", subtext: "Render nhanh, máy nhẹ", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(MicOff, { className: "w-3.5 h-3.5 text-zinc-400" }) },
   { value: "cloud", label: "SadTalker Lip-Sync", subtext: "Khớp khẩu hình nhân vật", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(Mic, { className: "w-3.5 h-3.5 text-indigo-400" }) }
 ];
 const PRESET_IDEAS = [
@@ -28833,13 +28811,13 @@ const PRESET_IDEAS = [
   }
 ];
 const STYLES = [
-  { id: "cinematic", label: "Cinematic 35mm", desc: "Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp", emoji: "", gradient: "", tag: "35mm Film" },
-  { id: "anime", label: "Anime Studio", desc: "Màu sắc Makoto Shinkai rực rỡ, chi tiết", emoji: "", gradient: "", tag: "Animation" },
-  { id: "noir", label: "Film Noir", desc: "Độ tương phản cao, bóng đổ bí ẩn kinh điển", emoji: "", gradient: "", tag: "Classic Noir" },
-  { id: "documentary", label: "Documentary 8K", desc: "Ảnh tư liệu thực tế National Geographic", emoji: "", gradient: "", tag: "Photoreal" }
+  { id: "cinematic", label: "Cinematic 35mm", desc: "Ánh sáng kịch tính, tỉ lệ điện ảnh cao cấp", emoji: "", gradient: "", tag: "35mm Film", accent: "from-amber-500/20 to-orange-500/5" },
+  { id: "anime", label: "Anime Studio", desc: "Màu sắc Makoto Shinkai rực rỡ, chi tiết", emoji: "", gradient: "", tag: "Animation", accent: "from-cyan-500/20 to-blue-500/5" },
+  { id: "noir", label: "Film Noir", desc: "Độ tương phản cao, bóng đổ bí ẩn kinh điển", emoji: "", gradient: "", tag: "Classic Noir", accent: "from-zinc-500/20 to-zinc-900/10" },
+  { id: "documentary", label: "Documentary 8K", desc: "Ảnh tư liệu thực tế National Geographic", emoji: "", gradient: "", tag: "Photoreal", accent: "from-emerald-500/20 to-teal-500/5" }
 ];
 function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
-  var _a2, _b2;
+  var _a2;
   const [topic, setTopic] = reactExports.useState("Bí ẩn thành phố Atlantis chìm sâu dưới đáy đại dương và đoàn thám hiểm cổ vật");
   const [lang, setLang] = reactExports.useState("vi");
   const [duration, setDuration] = reactExports.useState(5);
@@ -28896,7 +28874,7 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
   const [lipSync, setLipSync] = reactExports.useState("none");
   const [aspectRatio2, setAspectRatio] = reactExports.useState("16:9");
   const [hardsub, setHardsub] = reactExports.useState(false);
-  const [pauseAfterScript, setPauseAfterScript] = reactExports.useState(false);
+  const [pauseAfterScript, setPauseAfterScript] = reactExports.useState(true);
   const [showAdvanced, setShowAdvanced] = reactExports.useState(false);
   const [seriesTitle, setSeriesTitle] = reactExports.useState("");
   const [episode, setEpisode] = reactExports.useState(1);
@@ -28956,116 +28934,172 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
       webhook_url: webhookUrl.trim() || void 0
     });
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { id: "director-inspector", className: "border-white/[0.08] bg-[#0E1119] shadow-xl", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(CardHeader, { className: "pb-3.5 border-b border-white/[0.06]", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-8 h-8 rounded-lg bg-[#141824] border border-white/[0.1] flex items-center justify-center text-amber-400 shrink-0 shadow-sm", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Clapperboard, { className: "w-4 h-4" }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(CardTitle, { className: "text-sm font-bold text-white tracking-tight flex items-center gap-2", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "DIRECTOR INSPECTOR" }) }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(CardDescription, { className: "text-[11px] text-slate-400", children: "Thiết lập kịch bản, phong cách điện ảnh & động cơ AI" })
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { id: "director-inspector", className: "glass-panel rounded-3xl p-5 sm:p-7 shadow-2xl relative", children: [
+    parentProjectId && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mb-5 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3 min-w-0", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-8 h-8 rounded-xl bg-amber-500 text-zinc-950 flex items-center justify-center font-bold text-xs shrink-0 shadow-sm", children: [
+          "EP",
+          episode
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono font-bold uppercase text-amber-400 block tracking-wider", children: "Chế độ Phim Bộ (Series Mode)" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-zinc-200 truncate", children: [
+            "Tiếp nối: ",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { className: "text-white", children: seriesTitle || "Tập trước" }),
+            " (Kế thừa nhân vật & visual DNA)"
+          ] })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "outline", className: "text-[10px] font-mono border-white/[0.08] text-slate-400", children: [
-        aspectRatio2,
-        " • ",
-        duration,
-        "M"
-      ] })
-    ] }) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(CardContent, { className: "pt-4 space-y-5", children: [
-      parentProjectId && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between gap-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5 min-w-0", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-7 h-7 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0", children: [
-            "EP",
-            episode
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] font-bold uppercase text-amber-400 block tracking-wider", children: "Chế độ Phim Bộ (Series Mode)" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("p", { className: "text-xs text-slate-200 truncate", children: [
-              "Tiếp nối: ",
-              /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { className: "text-white", children: seriesTitle || "Tập trước" }),
-              " (Kế thừa nhân vật & style)"
-            ] })
-          ] })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "button",
-          {
-            type: "button",
-            onClick: () => {
-              setParentProjectId(void 0);
-              setSeriesTitle("");
-              setEpisode(1);
-              onResetSeries == null ? void 0 : onResetSeries();
-            },
-            className: "p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0",
-            title: "Hủy liên kết tập phim",
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-4 h-4" })
-          }
-        )
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center justify-between mb-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3 h-3 text-amber-400" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Gợi ý kịch bản mẫu" })
-        ] }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex flex-wrap gap-1.5", children: PRESET_IDEAS.map((p, idx) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "button",
-          {
-            type: "button",
-            onClick: () => handleApplyPreset(p),
-            disabled: isRunning,
-            className: "px-2.5 py-1.5 rounded-lg bg-[#121622] hover:bg-[#1A2030] border border-white/[0.07] hover:border-amber-500/40 text-left transition-colors cursor-pointer flex items-center gap-2",
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono uppercase px-1 py-0.2 rounded bg-white/[0.05] text-amber-400/90 font-bold border border-white/[0.06]", children: p.tag }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-medium text-slate-200", children: p.title })
-            ]
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "button",
+        {
+          type: "button",
+          onClick: () => {
+            setParentProjectId(void 0);
+            setSeriesTitle("");
+            setEpisode(1);
+            onResetSeries == null ? void 0 : onResetSeries();
           },
-          idx
-        )) })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5", children: "Ý tưởng cốt truyện / Đề tài bộ phim" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "relative", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "textarea",
-          {
-            value: topic,
-            onChange: (e) => setTopic(e.target.value),
-            disabled: isRunning,
-            rows: 3,
-            placeholder: "Nhập đề tài hoặc tiền đề bộ phim muốn sản xuất...",
-            className: "w-full px-3.5 py-2.5 rounded-xl bg-[#080A10] border border-white/[0.08] text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-amber-500/80 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
-          }
-        ) })
-      ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Palette, { className: "w-3.5 h-3.5 text-amber-400" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Phong cách hình ảnh điện ảnh" })
+          className: "p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/[0.06] transition-colors cursor-pointer shrink-0",
+          title: "Hủy liên kết tập phim",
+          children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-4 h-4" })
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("form", { onSubmit: handleSubmit, className: "space-y-6", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2.5", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-xs font-semibold text-zinc-200 flex items-center gap-2", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-4 h-4 text-amber-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Ý tưởng kịch bản & Đề tài bộ phim" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono text-zinc-500 uppercase tracking-wider hidden sm:inline", children: "Flux 8K • Cinematic Script" })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 sm:grid-cols-4 gap-2", children: STYLES.map((st) => {
-          const isSelected = style === st.id;
-          return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative group", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "textarea",
+            {
+              value: topic,
+              onChange: (e) => setTopic(e.target.value),
+              disabled: isRunning,
+              rows: 3,
+              placeholder: "Mô tả ý tưởng, cốt truyện, nhân vật hoặc đề tài tài liệu mà bạn muốn AI sản xuất thành phim...",
+              className: "w-full px-4 py-3.5 rounded-2xl bg-zinc-950/80 border border-white/[0.09] group-hover:border-white/[0.15] text-zinc-100 placeholder-zinc-500 text-sm focus:outline-none focus:border-amber-400/70 focus:ring-2 focus:ring-amber-400/15 transition-all resize-none disabled:opacity-50 font-sans leading-relaxed shadow-inner"
+            }
+          ),
+          topic && !isRunning && /* @__PURE__ */ jsxRuntimeExports.jsx(
             "button",
             {
               type: "button",
-              onClick: () => setStyle2(st.id),
+              onClick: () => setTopic(""),
+              className: "absolute top-3 right-3 p-1 rounded-md text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer",
+              title: "Xóa nhanh prompt",
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-3.5 h-3.5" })
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center gap-1.5 pt-0.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono text-zinc-500 uppercase tracking-wider mr-1", children: "Gợi ý nhanh:" }),
+          PRESET_IDEAS.map((p, idx) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => handleApplyPreset(p),
               disabled: isRunning,
-              className: `p-2.5 rounded-xl border text-left transition-all cursor-pointer ${isSelected ? "bg-[#181D2A] border-amber-500/80 shadow-sm" : "bg-[#10131B] border-white/[0.06] hover:border-white/[0.14]"}`,
+              className: "px-2.5 py-1 rounded-lg bg-zinc-900/80 hover:bg-zinc-800 border border-white/[0.08] hover:border-amber-400/40 text-[11px] font-medium text-zinc-300 hover:text-white transition-all cursor-pointer flex items-center gap-1.5",
               children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `text-xs font-bold block mb-0.5 ${isSelected ? "text-amber-400" : "text-slate-200"}`, children: st.label }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono text-slate-400 uppercase tracking-tight block", children: st.tag })
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] font-mono px-1 py-0.2 rounded bg-amber-400/10 text-amber-300 font-bold", children: p.tag }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: p.title })
               ]
+            },
+            idx
+          ))
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-2.5", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-xs font-semibold text-zinc-300 flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Palette, { className: "w-4 h-4 text-amber-400" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Phong cách hình ảnh điện ảnh" })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 lg:grid-cols-4 gap-2.5", children: STYLES.map((st) => {
+          const isSelected = style === st.id;
+          return /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              onClick: () => !isRunning && setStyle2(st.id),
+              className: `p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col justify-between ${isSelected ? "bg-gradient-to-b " + st.accent + " border-amber-400/70 shadow-lg shadow-amber-500/10 ring-1 ring-amber-400/40" : "bg-zinc-900/40 border-white/[0.07] hover:border-white/[0.15] hover:bg-zinc-900/70"}`,
+              children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono uppercase tracking-wider text-zinc-400 font-semibold", children: st.tag }),
+                  isSelected && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-4 h-4 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-2.5 h-2.5 stroke-[3]" }) })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: `text-xs sm:text-sm font-bold ${isSelected ? "text-amber-300" : "text-zinc-100"}`, children: st.label }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-zinc-400 leading-snug mt-1", children: st.desc })
+              ] })
             },
             st.id
           );
         }) })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-3.5", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Languages, { className: "w-3.5 h-3.5 text-slate-400" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Ngôn ngữ thoại" })
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[11px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-zinc-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Tỉ lệ khung hình" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-1.5 bg-zinc-950/70 p-1 rounded-xl border border-white/[0.08]", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "button",
+              {
+                type: "button",
+                onClick: () => setAspectRatio("16:9"),
+                disabled: isRunning,
+                className: `py-2 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${aspectRatio2 === "16:9" ? "bg-amber-400/15 text-amber-300 border border-amber-400/30 font-bold shadow-sm" : "text-zinc-400 hover:text-white"}`,
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Monitor, { className: "w-3.5 h-3.5" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "16:9 Cinema" })
+                ]
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs(
+              "button",
+              {
+                type: "button",
+                onClick: () => setAspectRatio("9:16"),
+                disabled: isRunning,
+                className: `py-2 px-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${aspectRatio2 === "9:16" ? "bg-amber-400/15 text-amber-300 border border-amber-400/30 font-bold shadow-sm" : "text-zinc-400 hover:text-white"}`,
+                children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Smartphone, { className: "w-3.5 h-3.5" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "9:16 Shorts" })
+                ]
+              }
+            )
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[11px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Clock, { className: "w-3.5 h-3.5 text-zinc-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Thời lượng phim" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-4 gap-1 bg-zinc-950/70 p-1 rounded-xl border border-white/[0.08]", children: [1, 3, 5, 30].map((d) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => setDuration(d),
+              disabled: isRunning,
+              className: `py-2 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${duration === d ? "bg-amber-400 text-zinc-950 shadow-sm" : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"}`,
+              children: [
+                d,
+                "m"
+              ]
+            },
+            d
+          )) })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-1.5", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[11px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Languages, { className: "w-3.5 h-3.5 text-zinc-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Ngôn ngữ thuyết minh" })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             CustomSelect,
@@ -29076,79 +29110,89 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
               disabled: isRunning
             }
           )
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-slate-400" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Khung hình" })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-2 gap-1.5 bg-[#080A10] p-1 rounded-xl border border-white/[0.08]", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "button",
-              {
-                type: "button",
-                onClick: () => setAspectRatio("16:9"),
-                disabled: isRunning,
-                className: `py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${aspectRatio2 === "16:9" ? "bg-[#181D2A] text-amber-400 font-bold border border-white/[0.08]" : "text-slate-400 hover:text-white"}`,
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Monitor, { className: "w-3.5 h-3.5" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "16:9" })
-                ]
-              }
-            ),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs(
-              "button",
-              {
-                type: "button",
-                onClick: () => setAspectRatio("9:16"),
-                disabled: isRunning,
-                className: `py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer ${aspectRatio2 === "9:16" ? "bg-[#181D2A] text-amber-400 font-bold border border-white/[0.08]" : "text-slate-400 hover:text-white"}`,
-                children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Smartphone, { className: "w-3.5 h-3.5" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "9:16" })
-                ]
-              }
-            )
-          ] })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-mono font-medium text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Clock, { className: "w-3.5 h-3.5 text-slate-400" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Thời lượng phim" })
-          ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-4 gap-1 bg-[#080A10] p-1 rounded-xl border border-white/[0.08]", children: [1, 3, 5, 30].map((d) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "button",
-            {
-              type: "button",
-              onClick: () => setDuration(d),
-              disabled: isRunning,
-              className: `py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${duration === d ? "bg-amber-500 text-slate-950 shadow-sm" : "text-slate-400 hover:text-white hover:bg-white/[0.04]"}`,
-              children: [
-                d,
-                "m"
-              ]
-            },
-            d
-          )) })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-1", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            onClick: () => setPauseAfterScript(!pauseAfterScript),
+            className: `p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${pauseAfterScript ? "bg-amber-500/10 border-amber-400/40 shadow-sm" : "bg-zinc-900/40 border-white/[0.06] hover:border-white/[0.12]"}`,
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "div",
+                  {
+                    className: `w-8 h-8 rounded-xl flex items-center justify-center transition-colors shrink-0 ${pauseAfterScript ? "bg-amber-400 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-400"}`,
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-4 h-4" })
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `text-xs font-semibold block ${pauseAfterScript ? "text-amber-300" : "text-zinc-200"}`, children: "Duyệt kịch bản trước khi render" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-zinc-400 block leading-tight mt-0.5", children: "Tạm dừng sau Hồi 1 để sửa thoại & đổi giọng" })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "input",
+                {
+                  type: "checkbox",
+                  checked: pauseAfterScript,
+                  onChange: (e) => setPauseAfterScript(e.target.checked),
+                  className: "w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-zinc-950 border-zinc-700 cursor-pointer"
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            onClick: () => setHardsub(!hardsub),
+            className: `p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${hardsub ? "bg-amber-500/10 border-amber-400/40 shadow-sm" : "bg-zinc-900/40 border-white/[0.06] hover:border-white/[0.12]"}`,
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-3", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "div",
+                  {
+                    className: `w-8 h-8 rounded-xl flex items-center justify-center transition-colors shrink-0 ${hardsub ? "bg-amber-400 text-zinc-950 font-bold" : "bg-zinc-800 text-zinc-400"}`,
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-4 h-4" })
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `text-xs font-semibold block ${hardsub ? "text-amber-300" : "text-zinc-200"}`, children: "In phụ đề trực tiếp vào video" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-zinc-400 block leading-tight mt-0.5", children: "Khắc phụ đề điện ảnh viền đen trực tiếp (Hardsub)" })
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "input",
+                {
+                  type: "checkbox",
+                  checked: hardsub,
+                  onChange: (e) => setHardsub(e.target.checked),
+                  className: "w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-zinc-950 border-zinc-700 cursor-pointer"
+                }
+              )
+            ]
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "pt-2", children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "button",
           {
             type: "button",
             onClick: () => setShowAdvanced(!showAdvanced),
-            className: "flex items-center gap-2 text-xs font-mono font-semibold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer",
+            className: "flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-amber-400 transition-colors cursor-pointer",
             children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Settings2, { className: "w-3.5 h-3.5" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: showAdvanced ? "Thu gọn cài đặt động cơ [-]" : "Cài đặt Động cơ AI (LLM, Motion, SadTalker) [+]" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Settings2, { className: "w-4 h-4" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: showAdvanced ? "Thu gọn cài đặt động cơ [-]" : "Cài đặt nâng cao (AI Engines, API Key, SadTalker) [+]" })
             ]
           }
         ),
-        showAdvanced && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative z-30 mt-3 p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 grid grid-cols-1 sm:grid-cols-3 gap-3.5 transition-all animate-fadeIn", children: [
+        showAdvanced && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "relative z-30 mt-3 p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-white/[0.08] grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fadeIn", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Bot, { className: "w-3 h-3 text-amber-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Bot, { className: "w-3.5 h-3.5 text-amber-400" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Động cơ LLM" })
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -29162,8 +29206,8 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3 h-3 text-rose-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5 text-rose-400" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Chuyển động máy quay" })
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -29177,8 +29221,8 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(Mic, { className: "w-3 h-3 text-indigo-400" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Mic, { className: "w-3.5 h-3.5 text-indigo-400" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Cử động môi (Lip-Sync)" })
             ] }),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -29191,33 +29235,29 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
               }
             )
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "sm:col-span-3 p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/80 space-y-3", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "sm:col-span-3 p-4 rounded-xl bg-zinc-900/60 border border-white/[0.08] space-y-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-2.5", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(Key, { className: "w-4 h-4 text-amber-400" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs font-bold text-white uppercase tracking-wider", children: [
-                  "Cấu hình API Key & Chọn Model (",
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-xs font-bold text-zinc-200 uppercase tracking-wider", children: [
+                  "Cấu hình API Key & Model (",
                   (_a2 = LLM_OPTIONS.find((o) => o.value === llm)) == null ? void 0 : _a2.label,
                   ")"
                 ] })
               ] }),
-              hasEnvKey && !apiKey && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-2 py-0.5 rounded-full flex items-center gap-1", children: [
+              hasEnvKey && !apiKey && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-3 h-3" }),
-                "Đã kết nối qua file .env máy chủ"
+                "Nhận diện từ file .env"
               ] }),
-              apiKey && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-semibold text-amber-400 bg-amber-950/60 border border-amber-800/80 px-2 py-0.5 rounded-full flex items-center gap-1", children: [
+              apiKey && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full flex items-center gap-1", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-3 h-3" }),
-                "Dùng API Key tùy chỉnh (lưu cục bộ)"
+                "Key tùy chỉnh (lưu máy này)"
               ] })
             ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3.5", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-                    "API Key (",
-                    (_b2 = LLM_OPTIONS.find((o) => o.value === llm)) == null ? void 0 : _b2.label,
-                    ")"
-                  ] }) }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "text-[10px] font-mono uppercase text-zinc-400 font-medium", children: "API Key" }),
                   llm === "gemini" && /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "a",
                     {
@@ -29258,7 +29298,7 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                       onChange: (e) => handleApiKeyChange(e.target.value),
                       placeholder: hasEnvKey ? "Đã nhận diện key từ .env (nhập để ghi đè)" : llm === "ollama" ? "Ollama không cần API key" : "Nhập API key tại đây...",
                       disabled: isRunning || llm === "ollama",
-                      className: "w-full pl-3 pr-28 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                      className: "w-full pl-3 pr-28 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                     }
                   ),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "absolute right-1.5 flex items-center gap-1", children: [
@@ -29267,7 +29307,7 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                       {
                         type: "button",
                         onClick: () => handleApiKeyChange(""),
-                        className: "p-1 text-slate-400 hover:text-white text-xs",
+                        className: "p-1 text-zinc-400 hover:text-white text-xs cursor-pointer",
                         title: "Xóa key",
                         children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-3.5 h-3.5" })
                       }
@@ -29277,7 +29317,7 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                       {
                         type: "button",
                         onClick: () => setShowApiKey(!showApiKey),
-                        className: "p-1 text-slate-400 hover:text-white",
+                        className: "p-1 text-zinc-400 hover:text-white cursor-pointer",
                         title: showApiKey ? "Ẩn key" : "Hiện key",
                         children: showApiKey ? /* @__PURE__ */ jsxRuntimeExports.jsx(EyeOff, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Eye, { className: "w-3.5 h-3.5" })
                       }
@@ -29288,7 +29328,7 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                         type: "button",
                         onClick: () => loadModelsForProvider(llm, apiKey),
                         disabled: fetchModelsMutation.isPending || isRunning,
-                        className: "px-2 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-colors border border-amber-500/30 cursor-pointer",
+                        className: "px-2 py-1 bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 text-[10px] font-bold rounded-lg flex items-center gap-1 transition-colors border border-amber-500/30 cursor-pointer",
                         title: "Tải danh sách model",
                         children: [
                           fetchModelsMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3 h-3 animate-spin" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefreshCw, { className: "w-3 h-3" }),
@@ -29301,12 +29341,9 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
               ] }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1", children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsx(Sparkles, { className: "w-3 h-3 text-amber-400" }),
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
-                      "Model Kịch bản ",
-                      availableModels.length > 0 && `(${availableModels.length} khả dụng)`
-                    ] })
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[10px] font-mono uppercase text-zinc-400 font-medium", children: [
+                    "Model Kịch bản ",
+                    availableModels.length > 0 && `(${availableModels.length} khả dụng)`
                   ] }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "button",
@@ -29325,7 +29362,7 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                     value: customModelText,
                     onChange: (e) => setCustomModelText(e.target.value),
                     placeholder: "VD: gemini-3.5-flash, gpt-4o, llama3.2...",
-                    className: "w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                    className: "w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                   }
                 ) : availableModels.length > 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
                   "select",
@@ -29333,7 +29370,7 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                     value: selectedModel,
                     onChange: (e) => setSelectedModel(e.target.value),
                     disabled: isRunning,
-                    className: "w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 font-medium cursor-pointer",
+                    className: "w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-medium cursor-pointer",
                     children: availableModels.map((m) => /* @__PURE__ */ jsxRuntimeExports.jsxs("option", { value: m.id, children: [
                       m.recommended ? "⭐ " : "",
                       m.name || m.id,
@@ -29341,13 +29378,13 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                       m.description ? `— ${m.description}` : ""
                     ] }, m.id))
                   }
-                ) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-2 rounded-xl bg-slate-950/80 border border-dashed border-slate-700 text-xs text-slate-400", children: [
+                ) : /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between px-3 py-2 rounded-xl bg-zinc-950/80 border border-dashed border-white/[0.08] text-xs text-zinc-500", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: fetchModelsMutation.isPending ? "Đang tải danh sách model..." : 'Chưa có model. Bấm "Tải Models" sau khi điền API Key.' }),
                   fetchModelsMutation.isPending && /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-amber-400" })
                 ] })
               ] })
             ] }),
-            modelsError && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-2.5 rounded-lg bg-rose-950/40 border border-rose-800/80 flex items-start gap-2 text-rose-300 text-xs animate-fadeIn", children: [
+            modelsError && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 flex items-start gap-2 text-rose-300 text-xs animate-fadeIn", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(CircleAlert, { className: "w-4 h-4 text-rose-400 shrink-0 mt-0.5" }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex-1", children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold", children: modelsError }),
@@ -29356,7 +29393,7 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
             ] })
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "sm:col-span-2", children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Clapperboard, { className: "w-3 h-3 text-amber-400" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Tên Series Phim (Tùy chọn)" })
             ] }),
@@ -29367,12 +29404,12 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                 value: seriesTitle,
                 onChange: (e) => setSeriesTitle(e.target.value),
                 placeholder: "Để trống nếu là phim độc lập",
-                className: "w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className: "w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400"
               }
             )
           ] }),
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "block text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5 flex items-center gap-1", children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(Clock, { className: "w-3 h-3 text-amber-400" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Tập số (Episode)" })
             ] }),
@@ -29384,14 +29421,14 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                 max: 999,
                 value: episode,
                 onChange: (e) => setEpisode(Math.max(1, parseInt(e.target.value) || 1)),
-                className: "w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
+                className: "w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-bold"
               }
             )
           ] }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "sm:col-span-3 pt-2 border-t border-slate-800/80", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "sm:col-span-3 pt-2 border-t border-white/[0.06]", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-1.5", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(Send, { className: "w-3 h-3 text-emerald-400" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "text-[11px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Send, { className: "w-3.5 h-3.5 text-emerald-400" }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Webhook Tự Động Hóa (Discord / Telegram / n8n / Zapier)" })
               ] }),
               webhookUrl && /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -29414,86 +29451,28 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
                 type: "url",
                 value: webhookUrl,
                 onChange: (e) => setWebhookUrl(e.target.value),
-                placeholder: "https://discord.com/api/webhooks/... hoặc URL nhận thông báo",
-                className: "w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                placeholder: "https://discord.com/api/webhooks/... hoặc URL webhook nhận thông báo",
+                className: "w-full px-3 py-2 rounded-xl bg-zinc-950 border border-white/[0.08] text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
               }
             )
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "div",
-        {
-          onClick: () => setPauseAfterScript(!pauseAfterScript),
-          className: `p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${pauseAfterScript ? "bg-[#161B28] border-amber-500/60" : "bg-[#10131B] border-white/[0.06] hover:border-white/[0.12]"}`,
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "div",
-                {
-                  className: `w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${pauseAfterScript ? "bg-amber-500 text-slate-950 font-bold" : "bg-white/[0.06] text-slate-400"}`,
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-3.5 h-3.5" })
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `text-xs font-semibold block ${pauseAfterScript ? "text-amber-400" : "text-slate-200"}`, children: "Duyệt & Chỉnh Sửa Kịch Bản Trước Khi Render" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-400 block leading-tight mt-0.5", children: "Tạm dừng sau Hồi 1 để bạn duyệt phân cảnh, sửa lời thoại & đổi giọng" })
-              ] })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "input",
-              {
-                type: "checkbox",
-                checked: pauseAfterScript,
-                onChange: (e) => setPauseAfterScript(e.target.checked),
-                className: "w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-700 cursor-pointer"
-              }
-            )
-          ]
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        "div",
-        {
-          onClick: () => setHardsub(!hardsub),
-          className: `p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${hardsub ? "bg-[#161B28] border-amber-500/60" : "bg-[#10131B] border-white/[0.06] hover:border-white/[0.12]"}`,
-          children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(
-                "div",
-                {
-                  className: `w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${hardsub ? "bg-amber-500 text-slate-950 font-bold" : "bg-white/[0.06] text-slate-400"}`,
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-3.5 h-3.5" })
-                }
-              ),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `text-xs font-semibold block ${hardsub ? "text-amber-400" : "text-slate-200"}`, children: "In phụ đề trực tiếp vào video (Hardsub)" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] text-slate-400 block leading-tight mt-0.5", children: "Khắc phụ đề điện ảnh / karaoke viền đen sắc nét trực tiếp vào video" })
-              ] })
-            ] }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx(
-              "input",
-              {
-                type: "checkbox",
-                checked: hardsub,
-                onChange: (e) => setHardsub(e.target.checked),
-                className: "w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-950 border-slate-700 cursor-pointer"
-              }
-            )
-          ]
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
-        Button,
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "pt-2 flex justify-center", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "button",
         {
           type: "submit",
-          onClick: handleSubmit,
-          size: "lg",
           disabled: isRunning || !topic.trim(),
-          className: "w-full py-4 text-xs sm:text-sm tracking-wider gap-2.5 font-bold uppercase bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-400/40 shadow-sm cursor-pointer",
+          className: "w-full sm:max-w-md py-3.5 px-6 rounded-2xl font-bold text-sm tracking-wide flex items-center justify-center gap-2.5 transition-all duration-300 cursor-pointer shadow-xl relative overflow-hidden bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed group glow-amber-sm hover:glow-amber-md active:scale-[0.98]",
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-4 h-4 fill-current" }),
-            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: isRunning ? pauseAfterScript ? "ĐANG SOẠN KỊCH BẢN..." : "ĐANG SẢN XUẤT PHIM THEO YÊU CẦU..." : pauseAfterScript ? "TẠO KỊCH BẢN & CHỜ DUYỆT" : "BẮT ĐẦU SẢN XUẤT PHIM" })
+            /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "absolute inset-0 w-1/3 h-full bg-gradient-to-r from-transparent via-white/35 to-transparent -skew-x-12 animate-shimmer pointer-events-none" }),
+            isRunning ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 animate-spin text-zinc-950" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: pauseAfterScript ? "Đang soạn kịch bản & phân cảnh..." : "Đang sản xuất toàn bộ phim..." })
+            ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx(Play, { className: "w-4 h-4 fill-current" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: pauseAfterScript ? "Tạo Kịch Bản & Dừng Để Duyệt (Khuyên Dùng)" : "Bắt Đầu Sản Xuất Phim Tự Động" })
+            ] })
           ]
         }
       ) })
@@ -29501,86 +29480,93 @@ function ProductionForm({ onSubmit, isRunning, initialData, onResetSeries }) {
   ] });
 }
 const STAGES = [
-  { id: 1, name: "Kịch bản & Phân cảnh", desc: "Viết kịch bản & nhân vật", icon: FileText, tag: "LLM" },
-  { id: 2, name: "Giọng đọc (TTS)", desc: "Lồng tiếng cảm xúc Edge-TTS", icon: Mic, tag: "Audio" },
-  { id: 3, name: "Tạo hình ảnh (Flux)", desc: "Kết xuất visual 8K điện ảnh", icon: Image, tag: "Visual" },
-  { id: 4, name: "Chuyển động (Motion)", desc: "Lia máy quay & VFX", icon: Video, tag: "Motion" },
-  { id: 5, name: "Hậu kỳ & Xuất phim", desc: "Ghép BGM ducking & Phụ đề", icon: Sparkles, tag: "Master" }
+  { id: 1, name: "Kịch bản & Phân cảnh", shortName: "Kịch bản", desc: "Viết kịch bản & nhân vật", icon: FileText, tag: "LLM" },
+  { id: 2, name: "Giọng đọc (TTS)", shortName: "Giọng đọc", desc: "Lồng tiếng Edge-TTS", icon: Mic, tag: "Audio" },
+  { id: 3, name: "Tạo hình ảnh (Flux)", shortName: "Hình ảnh", desc: "Visual 8K điện ảnh", icon: Image, tag: "Visual" },
+  { id: 4, name: "Chuyển động (Motion)", shortName: "Chuyển động", desc: "Lia máy quay & VFX", icon: Video, tag: "Motion" },
+  { id: 5, name: "Hậu kỳ & Xuất phim", shortName: "Hậu kỳ", desc: "BGM ducking & Phụ đề", icon: Sparkles, tag: "Master" }
 ];
 function ProgressStage({ currentStage, status, progress: progress2 }) {
   const isRunning = status === "running";
   const isCompleted = status === "completed";
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "relative overflow-hidden border-cinema-border bg-cinema-deck shadow-2xl", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(CardHeader, { className: "pb-3 border-b border-cinema-border", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col sm:flex-row sm:items-center justify-between gap-3", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] font-mono font-semibold uppercase tracking-widest text-cinema-amber", children: "Production Pipeline" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(Badge, { variant: "secondary", className: "text-[10px] py-0 px-2 font-mono bg-cinema-card border-cinema-border text-zinc-400", children: "5 GIAI ĐOẠN ĐIỆN ẢNH" })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(CardTitle, { className: "text-base font-bold text-zinc-100 mt-1 tracking-tight", children: "Tiến trình sản xuất tự động" })
+  const isScriptReady = status === "script_ready";
+  const isActiveProduction = isRunning || isCompleted || isScriptReady;
+  if (!isActiveProduction) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full glass-card rounded-2xl px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all border border-white/[0.06]", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-2 h-2 rounded-full bg-emerald-400" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] font-mono font-semibold uppercase tracking-widest text-zinc-300", children: "Pipeline 5 Giai Đoạn" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[10px] font-mono text-zinc-500 hidden md:inline", children: "• Tự động hóa từ Kịch bản đến Master Video" })
       ] }),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center sm:justify-end gap-3", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono text-zinc-500 uppercase tracking-wider", children: "Tiến độ:" }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-3xl font-bold font-mono text-cinema-amber tracking-tight", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "flex items-center gap-2 overflow-x-auto scrollbar-none", children: STAGES.map((s, idx) => {
+        const Icon2 = s.icon;
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2 shrink-0", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-900/60 border border-white/[0.06] text-zinc-400 text-xs", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-3 h-3 text-zinc-500" }),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "font-medium text-[11px] text-zinc-300", children: s.shortName })
+          ] }),
+          idx < STAGES.length - 1 && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-zinc-700 text-xs font-mono", children: "→" })
+        ] }, s.id);
+      }) })
+    ] });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "w-full glass-panel rounded-2xl p-4 sm:p-5 transition-all border border-amber-500/20", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-3 mb-3", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "w-2 h-2 rounded-full bg-amber-400 animate-ping" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-bold uppercase tracking-wider text-amber-300", children: isRunning ? `Đang thực thi Giai đoạn ${currentStage}/5` : isScriptReady ? "Giai đoạn 1 Hoàn tất — Chờ duyệt" : "Sản xuất hoàn tất" })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono text-zinc-400", children: "Tiến độ:" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-2xl font-bold font-mono text-amber-400", children: [
           progress2,
           "%"
         ] })
       ] })
-    ] }) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs(CardContent, { className: "pt-4 space-y-4", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full h-2 bg-cinema-canvas rounded-full overflow-hidden p-0.5 border border-cinema-border", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-        motion.div,
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-full h-2 bg-zinc-900 rounded-full overflow-hidden mb-4 border border-white/[0.06] p-0.5", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      motion.div,
+      {
+        className: "h-full bg-gradient-to-r from-amber-500 via-amber-400 to-amber-300 rounded-full shadow-sm shadow-amber-500/40",
+        initial: { width: 0 },
+        animate: { width: `${progress2}%` },
+        transition: { duration: 0.4, ease: "easeOut" }
+      }
+    ) }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5", children: STAGES.map((s) => {
+      const Icon2 = s.icon;
+      const isDone = isCompleted || currentStage > s.id;
+      const isActive = isRunning && currentStage === s.id;
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
         {
-          className: "h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full shadow-sm shadow-amber-500/20",
-          initial: { width: 0 },
-          animate: { width: `${progress2}%` },
-          transition: { duration: 0.5, ease: "easeOut" }
-        }
-      ) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3", children: STAGES.map((s) => {
-        const Icon2 = s.icon;
-        const isDone = isCompleted || currentStage > s.id;
-        const isActive = isRunning && currentStage === s.id;
-        return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          motion.div,
-          {
-            whileHover: { y: -1 },
-            transition: { duration: 0.15 },
-            className: `relative rounded-xl p-3 border transition-all flex flex-col justify-between ${isActive ? "bg-amber-500/[0.08] border-amber-500/50 shadow-lg shadow-amber-500/5 ring-1 ring-amber-500/30" : isDone ? "bg-emerald-500/[0.05] border-emerald-500/30" : "bg-cinema-card border-cinema-border opacity-70 hover:opacity-90"}`,
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between mb-2", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "div",
-                    {
-                      className: `w-7 h-7 rounded-lg flex items-center justify-center transition-all ${isActive ? "bg-cinema-amber text-zinc-950 font-bold" : isDone ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-800 text-zinc-400"}`,
-                      children: isActive ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-3.5 h-3.5 animate-spin text-zinc-950" }) : isDone ? /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-3.5 h-3.5 text-emerald-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-3.5 h-3.5" })
-                    }
-                  ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-mono font-medium text-zinc-500", children: [
-                    "0",
-                    s.id
-                  ] })
-                ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: `text-xs font-semibold leading-snug ${isActive ? "text-amber-300" : isDone ? "text-zinc-200" : "text-zinc-400"}`, children: s.name }),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-zinc-500 mt-1 leading-snug font-normal", children: s.desc })
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "mt-3 pt-2 border-t border-cinema-border flex items-center justify-between", children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[9px] uppercase tracking-wider font-mono text-zinc-500", children: s.tag }),
-                isActive && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "flex h-1.5 w-1.5 relative", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500" })
+          className: `rounded-xl p-3 transition-all border flex items-center gap-2.5 ${isActive ? "bg-amber-500/10 border-amber-500/50 shadow-md shadow-amber-500/10 ring-1 ring-amber-500/30" : isDone ? "bg-emerald-500/[0.08] border-emerald-500/30 text-zinc-300" : "bg-zinc-900/40 border-white/[0.05] text-zinc-500 opacity-60"}`,
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(
+              "div",
+              {
+                className: `w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${isActive ? "bg-amber-400 text-zinc-950 font-bold" : isDone ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-800 text-zinc-500"}`,
+                children: isActive ? /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 animate-spin text-zinc-950" }) : isDone ? /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-4 h-4 text-emerald-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { className: "w-4 h-4" })
+              }
+            ),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-w-0 flex-1", children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center justify-between gap-1", children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `text-xs font-semibold truncate ${isActive ? "text-amber-300 font-bold" : isDone ? "text-zinc-200" : "text-zinc-400"}`, children: s.name }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] font-mono text-zinc-500 shrink-0", children: [
+                  "0",
+                  s.id
                 ] })
-              ] })
-            ]
-          },
-          s.id
-        );
-      }) })
-    ] })
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[10px] text-zinc-500 truncate leading-tight mt-0.5", children: s.desc })
+            ] })
+          ]
+        },
+        s.id
+      );
+    }) })
   ] });
 }
-function TerminalLogs({ logs, className }) {
+function TerminalLogs({ logs, className, onClose }) {
   const scrollRef = reactExports.useRef(null);
   const [copied, setCopied] = reactExports.useState(false);
   const [autoScroll, setAutoScroll] = reactExports.useState(true);
@@ -29595,13 +29581,13 @@ function TerminalLogs({ logs, className }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2e3);
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: cn("bg-cinema-deck border border-cinema-border rounded-xl overflow-hidden shadow-xl flex flex-col h-full min-h-[420px]", className), children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-3 bg-cinema-card border-b border-cinema-border flex items-center justify-between flex-shrink-0", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: cn("glass-panel rounded-2xl overflow-hidden shadow-2xl flex flex-col h-full min-h-[360px] border border-white/[0.08]", className), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "px-4 py-3 bg-zinc-950/80 border-b border-white/[0.08] flex items-center justify-between flex-shrink-0", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2.5", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-6 h-6 rounded-md bg-amber-500/10 flex items-center justify-center text-cinema-amber", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Terminal, { className: "w-3.5 h-3.5" }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-6 h-6 rounded-lg bg-amber-400/10 flex items-center justify-center text-amber-400", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Terminal, { className: "w-3.5 h-3.5" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-semibold text-zinc-200", children: "Execution Console" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(Badge, { variant: "secondary", className: "text-[9px] px-1.5 py-0 font-mono bg-cinema-deck border-cinema-border text-zinc-400", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs font-mono font-bold text-zinc-200", children: "Execution Console" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "text-[10px] px-2 py-0.5 rounded-full font-mono bg-zinc-900 border border-white/[0.08] text-zinc-400", children: [
             (logs == null ? void 0 : logs.length) || 0,
             " events"
           ] })
@@ -29613,7 +29599,7 @@ function TerminalLogs({ logs, className }) {
           {
             type: "button",
             onClick: () => setAutoScroll(!autoScroll),
-            className: `text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${autoScroll ? "bg-amber-500/10 text-amber-300 border-amber-500/30" : "bg-zinc-800 text-zinc-400 border-zinc-700"}`,
+            className: `text-[10px] font-mono px-2 py-1 rounded-md border flex items-center gap-1 transition-colors cursor-pointer ${autoScroll ? "bg-amber-400/15 text-amber-300 border-amber-400/30 font-semibold" : "bg-zinc-900 text-zinc-400 border-white/[0.08]"}`,
             title: "Tự động cuộn theo log mới nhất",
             children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx(CircleArrowDown, { className: "w-3 h-3" }),
@@ -29627,9 +29613,19 @@ function TerminalLogs({ logs, className }) {
             type: "button",
             onClick: handleCopy,
             disabled: !(logs == null ? void 0 : logs.length),
-            className: "p-1.5 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30 cursor-pointer",
+            className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors disabled:opacity-30 cursor-pointer",
             title: "Sao chép toàn bộ nhật ký",
             children: copied ? /* @__PURE__ */ jsxRuntimeExports.jsx(Check, { className: "w-3.5 h-3.5 text-emerald-400" }) : /* @__PURE__ */ jsxRuntimeExports.jsx(Copy, { className: "w-3.5 h-3.5" })
+          }
+        ),
+        onClose && /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            type: "button",
+            onClick: onClose,
+            className: "p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer",
+            title: "Thu nhỏ console",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(X, { className: "w-3.5 h-3.5" })
           }
         )
       ] })
@@ -29638,10 +29634,10 @@ function TerminalLogs({ logs, className }) {
       "div",
       {
         ref: scrollRef,
-        className: "p-4 flex-1 overflow-y-auto font-mono text-[11px] sm:text-xs space-y-1.5 text-zinc-300 select-text leading-relaxed bg-cinema-canvas",
+        className: "p-4 flex-1 overflow-y-auto font-mono text-[11px] sm:text-xs space-y-1.5 text-zinc-300 select-text leading-relaxed bg-zinc-950/90",
         children: !logs || logs.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-zinc-600 italic py-16 text-center flex flex-col items-center justify-center gap-2", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(Clock, { className: "w-6 h-6 text-zinc-700 stroke-[1.5]" }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs", children: "[Studio Idle] Hệ thống đang ở trạng thái chờ lệnh sản xuất phim..." })
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-xs", children: "[Studio Idle] Hệ thống sẵn sàng tiếp nhận lệnh sản xuất phim..." })
         ] }) : logs.map((log, index) => {
           const isError = log.includes("Lỗi") || log.includes("failed") || log.includes("Warning");
           const isSuccess = log.includes("Thành công") || log.includes("✓") || log.includes("hoàn thành");
@@ -29649,7 +29645,7 @@ function TerminalLogs({ logs, className }) {
           return /* @__PURE__ */ jsxRuntimeExports.jsx(
             "div",
             {
-              className: `font-mono transition-colors break-words ${isError ? "text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded border-l-2 border-rose-500" : isSuccess ? "text-emerald-400 font-medium" : isStage ? "text-cinema-amber font-semibold bg-amber-500/[0.08] px-2 py-0.5 rounded border-l-2 border-cinema-amber" : "text-zinc-400"}`,
+              className: `font-mono transition-colors break-words ${isError ? "text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-lg border-l-2 border-rose-500" : isSuccess ? "text-emerald-400 font-semibold" : isStage ? "text-amber-300 font-bold bg-amber-500/10 px-2.5 py-1 rounded-lg border-l-2 border-amber-400" : "text-zinc-400"}`,
               children: log
             },
             index
@@ -29658,6 +29654,53 @@ function TerminalLogs({ logs, className }) {
       }
     )
   ] });
+}
+function Card({ className, ...props }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "div",
+    {
+      className: cn(
+        "rounded-2xl border border-white/[0.07] bg-[#0E1119] text-slate-100 shadow-xl shadow-black/50",
+        className
+      ),
+      ...props
+    }
+  );
+}
+function CardHeader({ className, ...props }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn("flex flex-col space-y-1.5 p-6 pb-4", className), ...props });
+}
+function CardTitle({ className, ...props }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "h3",
+    {
+      className: cn("text-base font-bold leading-none tracking-tight text-white", className),
+      ...props
+    }
+  );
+}
+function CardContent({ className, ...props }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: cn("p-6 pt-0", className), ...props });
+}
+function Badge({ className, variant = "default", ...props }) {
+  const variants = {
+    default: "bg-amber-500/10 text-cinema-amber border-amber-500/30",
+    secondary: "bg-cinema-card text-zinc-400 border-cinema-border",
+    success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+    danger: "bg-rose-500/10 text-rose-400 border-rose-500/30",
+    outline: "text-zinc-400 border-cinema-border"
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "div",
+    {
+      className: cn(
+        "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-mono font-medium transition-colors",
+        variants[variant],
+        className
+      ),
+      ...props
+    }
+  );
 }
 function TimelineScrubber({
   shots,
@@ -30104,11 +30147,13 @@ function StoryboardView({ storyboard, isScriptReady, onContinue }) {
   const currentLang = ((storyboard == null ? void 0 : storyboard.language) || "vi").toLowerCase().split("-")[0];
   const currentVoiceOptions = VOICE_OPTIONS_BY_LANG[currentLang] || VOICE_OPTIONS_BY_LANG["vi"];
   if (!storyboard || !rawShots.length && !Object.keys(rawCharacters).length) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs(Card, { className: "border-cinema-border bg-cinema-deck p-12 text-center shadow-xl", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-14 h-14 rounded-xl bg-cinema-card border border-cinema-border flex items-center justify-center mx-auto mb-3 text-zinc-500", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-7 h-7" }) }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-sm font-bold text-zinc-300", children: "Chưa có Kịch bản & Phân cảnh" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-xs text-zinc-500 mt-1 max-w-md mx-auto leading-relaxed", children: "Toàn bộ danh sách nhân vật, mô tả Visual DNA và bảng phân cảnh 35mm sẽ xuất hiện tại đây ngay khi bạn bấm sản xuất phim." })
-    ] });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "glass-card rounded-2xl p-5 text-center border border-dashed border-white/[0.08] max-w-4xl mx-auto", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex flex-col sm:flex-row items-center justify-center gap-3 text-zinc-400", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-9 h-9 rounded-xl bg-zinc-900 border border-white/[0.08] flex items-center justify-center text-amber-400/80 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Film, { className: "w-4 h-4" }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "text-center sm:text-left", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("h4", { className: "text-xs font-semibold text-zinc-200", children: "Kịch bản & Phân cảnh điện ảnh 35mm sẽ xuất hiện tại đây" }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-zinc-500 mt-0.5", children: 'Sau khi bấm "Tạo Kịch Bản", toàn bộ danh sách nhân vật, mô tả Visual DNA và bảng phân cảnh chi tiết sẽ sẵn sàng để bạn duyệt.' })
+      ] })
+    ] }) });
   }
   const characters = rawCharacters;
   const shots = rawShots;
@@ -31508,6 +31553,7 @@ function App() {
   const [showVideoModal, setShowVideoModal] = reactExports.useState(false);
   const [showLibraryModal, setShowLibraryModal] = reactExports.useState(false);
   const [showSeoModal, setShowSeoModal] = reactExports.useState(false);
+  const [showConsole, setShowConsole] = reactExports.useState(false);
   const [activeSeoProjectId, setActiveSeoProjectId] = reactExports.useState(null);
   const [seriesInitialData, setSeriesInitialData] = reactExports.useState(null);
   const [activeVideoUrl, setActiveVideoUrl] = reactExports.useState(null);
@@ -31521,6 +31567,11 @@ function App() {
   const produceMutation = useProduceMovie();
   const cleanMutation = useCleanOutputs();
   const continueMutation = useContinueProduction();
+  reactExports.useEffect(() => {
+    if (isRunning) {
+      setShowConsole(true);
+    }
+  }, [isRunning]);
   reactExports.useEffect(() => {
     if ((statusData == null ? void 0 : statusData.status) === "script_ready" || (statusData == null ? void 0 : statusData.status) === "completed") {
       refetchStoryboard();
@@ -31660,7 +31711,7 @@ function App() {
       setShowLibraryModal(true);
     }
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen bg-cinema-canvas text-zinc-100 flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-300", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "min-h-screen studio-ambient-bg text-zinc-100 flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-300", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       Navbar,
       {
@@ -31668,20 +31719,23 @@ function App() {
         onClean: handleClean,
         isCleaning: cleanMutation.isPending,
         onWatchMovie: handlePlayCurrentMovie,
-        onOpenLibrary: () => setShowLibraryModal(true)
+        onOpenLibrary: () => setShowLibraryModal(true),
+        onToggleConsole: () => setShowConsole(!showConsole),
+        showConsole,
+        logsCount: displayLogs.length
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8", children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("main", { className: "flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: status.status === "completed" && status.final_video && /* @__PURE__ */ jsxRuntimeExports.jsxs(
         motion.div,
         {
           initial: { opacity: 0, y: -20, scale: 0.98 },
           animate: { opacity: 1, y: 0, scale: 1 },
           exit: { opacity: 0, y: -20, scale: 0.98 },
-          className: "p-5 sm:p-6 rounded-2xl bg-cinema-deck border border-emerald-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden",
+          className: "p-5 sm:p-6 rounded-3xl glass-panel border border-emerald-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden",
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-6 h-6" }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(CircleCheck, { className: "w-6 h-6" }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
                   /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] font-mono font-semibold uppercase tracking-wider text-emerald-400", children: "Master Production Finished" }),
@@ -31728,13 +31782,13 @@ function App() {
           initial: { opacity: 0, y: -20, scale: 0.98 },
           animate: { opacity: 1, y: 0, scale: 1 },
           exit: { opacity: 0, y: -20, scale: 0.98 },
-          className: "p-5 sm:p-6 rounded-2xl bg-cinema-deck border border-amber-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden",
+          className: "p-5 sm:p-6 rounded-3xl glass-panel border border-amber-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden",
           children: [
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-4", children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-cinema-amber shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-6 h-6" }) }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0", children: /* @__PURE__ */ jsxRuntimeExports.jsx(FilePen, { className: "w-6 h-6" }) }),
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "flex items-center gap-2", children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] font-mono font-semibold uppercase tracking-wider text-cinema-amber", children: "Review & Edit Screenplay Mode" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "text-[11px] font-mono font-semibold uppercase tracking-wider text-amber-400", children: "Review & Edit Screenplay Mode" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20", children: "STAGE 1 COMPLETE" })
                 ] }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx("h3", { className: "text-base font-bold text-zinc-100 mt-0.5", children: "Kịch bản & Phân cảnh đã sẵn sàng để bạn duyệt!" }),
@@ -31769,7 +31823,7 @@ function App() {
                   size: "default",
                   onClick: handleContinue,
                   disabled: continueMutation.isPending,
-                  className: "gap-2 font-bold text-xs bg-cinema-amber hover:bg-amber-400 text-zinc-950 shadow-md shadow-amber-500/20 shrink-0 cursor-pointer",
+                  className: "gap-2 font-bold text-xs bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-md shadow-amber-500/20 shrink-0 cursor-pointer",
                   children: continueMutation.isPending ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsx(LoaderCircle, { className: "w-4 h-4 animate-spin" }),
                     /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Đang kích hoạt..." })
@@ -31791,8 +31845,8 @@ function App() {
           progress: status.progress
         }
       ),
-      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch relative z-20", children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "lg:col-span-7 flex flex-col", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "space-y-6", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(
           ProductionForm,
           {
             onSubmit: handleStartProduction,
@@ -31800,8 +31854,24 @@ function App() {
             initialData: seriesInitialData,
             onResetSeries: () => setSeriesInitialData(null)
           }
-        ) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "lg:col-span-5 flex flex-col", children: /* @__PURE__ */ jsxRuntimeExports.jsx(TerminalLogs, { logs: displayLogs, className: "h-full" }) })
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(AnimatePresence, { children: showConsole && /* @__PURE__ */ jsxRuntimeExports.jsx(
+          motion.div,
+          {
+            initial: { opacity: 0, height: 0, y: -10 },
+            animate: { opacity: 1, height: "auto", y: 0 },
+            exit: { opacity: 0, height: 0, y: -10 },
+            transition: { duration: 0.25 },
+            className: "overflow-hidden",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+              TerminalLogs,
+              {
+                logs: displayLogs,
+                onClose: () => setShowConsole(false)
+              }
+            )
+          }
+        ) })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         StoryboardView,
@@ -31812,6 +31882,20 @@ function App() {
         }
       )
     ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "fixed bottom-5 right-5 z-40", children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "button",
+      {
+        type: "button",
+        onClick: () => setShowConsole(!showConsole),
+        className: `px-3.5 py-2 rounded-full glass-panel flex items-center gap-2 text-xs font-mono font-medium shadow-2xl transition-all cursor-pointer border ${showConsole ? "bg-amber-500/20 text-amber-300 border-amber-500/40 glow-amber-sm" : "hover:bg-zinc-800 text-zinc-300 hover:text-white border-white/[0.1] hover:border-amber-400/40"}`,
+        title: "Bật / Tắt cửa sổ nhật ký thực thi",
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(Terminal, { className: "w-3.5 h-3.5 text-amber-400" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "Console" }),
+          displayLogs.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "px-1.5 py-0.2 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[10px]", children: displayLogs.length })
+        ]
+      }
+    ) }),
     showVideoModal && activeVideoUrl && /* @__PURE__ */ jsxRuntimeExports.jsx(
       VideoPlayerModal,
       {
@@ -31848,7 +31932,10 @@ function App() {
         }
       }
     ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("footer", { className: "border-t border-cinema-border py-6 text-center text-xs text-zinc-600 font-mono", children: "AI FILM STUDIO PRO © 2026 — Cinema Workstation Edition" })
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("footer", { className: "border-t border-white/[0.06] py-8 text-center text-xs text-zinc-500 font-mono space-y-1", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "font-semibold text-zinc-400 tracking-wider uppercase", children: "AI Film Studio Pro • Cinema Workstation Edition" }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "text-[11px] text-zinc-600", children: "Built with React, TypeScript, TanStack Query, Axios, Tailwind CSS & Vite" })
+    ] })
   ] });
 }
 const queryClient = new QueryClient({

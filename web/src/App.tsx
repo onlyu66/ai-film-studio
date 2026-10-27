@@ -11,7 +11,7 @@ import VideoPlayerModal from './components/VideoPlayerModal'
 import ProjectLibraryModal from './components/ProjectLibraryModal'
 import SeoPublishModal from './components/SeoPublishModal'
 import { Button } from './components/ui/button'
-import { CheckCircle2, MonitorPlay, FileEdit, Play, Loader2, Share2 } from 'lucide-react'
+import { CheckCircle2, MonitorPlay, FileEdit, Play, Loader2, Share2, Terminal } from 'lucide-react'
 import {
   useStudioStatus,
   useStoryboard,
@@ -28,6 +28,7 @@ export default function App() {
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false)
   const [showLibraryModal, setShowLibraryModal] = useState<boolean>(false)
   const [showSeoModal, setShowSeoModal] = useState<boolean>(false)
+  const [showConsole, setShowConsole] = useState<boolean>(false)
   const [activeSeoProjectId, setActiveSeoProjectId] = useState<string | null>(null)
   const [seriesInitialData, setSeriesInitialData] = useState<Partial<ProductionFormData> | null>(null)
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null)
@@ -43,6 +44,13 @@ export default function App() {
   const produceMutation = useProduceMovie()
   const cleanMutation = useCleanOutputs()
   const continueMutation = useContinueProduction()
+
+  // Auto-open console when production starts
+  useEffect(() => {
+    if (isRunning) {
+      setShowConsole(true)
+    }
+  }, [isRunning])
 
   // Invalidate and refetch storyboard when entering script_ready or completed
   useEffect(() => {
@@ -201,16 +209,19 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-cinema-canvas text-zinc-100 flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-300">
+    <div className="min-h-screen studio-ambient-bg text-zinc-100 flex flex-col font-sans selection:bg-amber-500/20 selection:text-amber-300">
       <Navbar
         status={status}
         onClean={handleClean}
         isCleaning={cleanMutation.isPending}
         onWatchMovie={handlePlayCurrentMovie}
         onOpenLibrary={() => setShowLibraryModal(true)}
+        onToggleConsole={() => setShowConsole(!showConsole)}
+        showConsole={showConsole}
+        logsCount={displayLogs.length}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Banner when movie completed */}
         <AnimatePresence>
           {status.status === 'completed' && status.final_video && (
@@ -218,10 +229,10 @@ export default function App() {
               initial={{ opacity: 0, y: -20, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              className="p-5 sm:p-6 rounded-2xl bg-cinema-deck border border-emerald-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
+              className="p-5 sm:p-6 rounded-3xl glass-panel border border-emerald-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
@@ -266,15 +277,15 @@ export default function App() {
               initial={{ opacity: 0, y: -20, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              className="p-5 sm:p-6 rounded-2xl bg-cinema-deck border border-amber-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
+              className="p-5 sm:p-6 rounded-3xl glass-panel border border-amber-500/40 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-5 relative overflow-hidden"
             >
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-cinema-amber shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                   <FileEdit className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-cinema-amber">Review & Edit Screenplay Mode</span>
+                    <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-amber-400">Review & Edit Screenplay Mode</span>
                     <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-amber-500/10 text-amber-300 border border-amber-500/20">STAGE 1 COMPLETE</span>
                   </div>
                   <h3 className="text-base font-bold text-zinc-100 mt-0.5">Kịch bản & Phân cảnh đã sẵn sàng để bạn duyệt!</h3>
@@ -303,7 +314,7 @@ export default function App() {
                   size="default"
                   onClick={handleContinue}
                   disabled={continueMutation.isPending}
-                  className="gap-2 font-bold text-xs bg-cinema-amber hover:bg-amber-400 text-zinc-950 shadow-md shadow-amber-500/20 shrink-0 cursor-pointer"
+                  className="gap-2 font-bold text-xs bg-amber-400 hover:bg-amber-300 text-zinc-950 shadow-md shadow-amber-500/20 shrink-0 cursor-pointer"
                 >
                   {continueMutation.isPending ? (
                     <>
@@ -322,36 +333,70 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Top: Full-width Cinema Pipeline Progress */}
+        {/* Top: Cinema Pipeline Stepper */}
         <ProgressStage
           currentStage={status.stage}
           status={status.status}
           progress={status.progress}
         />
 
-        {/* Middle: Balanced Production Studio Workspace */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch relative z-20">
-          <div className="lg:col-span-7 flex flex-col">
-            <ProductionForm
-              onSubmit={handleStartProduction}
-              isRunning={status.status === 'running' || produceMutation.isPending}
-              initialData={seriesInitialData}
-              onResetSeries={() => setSeriesInitialData(null)}
-            />
-          </div>
+        {/* Center: Focused Creative Director Suite */}
+        <div className="space-y-6">
+          <ProductionForm
+            onSubmit={handleStartProduction}
+            isRunning={status.status === 'running' || produceMutation.isPending}
+            initialData={seriesInitialData}
+            onResetSeries={() => setSeriesInitialData(null)}
+          />
 
-          <div className="lg:col-span-5 flex flex-col">
-            <TerminalLogs logs={displayLogs} className="h-full" />
-          </div>
+          {/* Interactive Console Drawer (Smooth Expand / Collapse) */}
+          <AnimatePresence>
+            {showConsole && (
+              <motion.div
+                initial={{ opacity: 0, height: 0, y: -10 }}
+                animate={{ opacity: 1, height: 'auto', y: 0 }}
+                exit={{ opacity: 0, height: 0, y: -10 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <TerminalLogs
+                  logs={displayLogs}
+                  onClose={() => setShowConsole(false)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Bottom Section: Storyboard Gallery */}
+        {/* Bottom Section: Storyboard & Timeline Gallery */}
         <StoryboardView
           storyboard={storyboard}
           isScriptReady={status.status === 'script_ready'}
           onContinue={handleContinue}
         />
       </main>
+
+      {/* Floating Terminal Quick Dock Button */}
+      <div className="fixed bottom-5 right-5 z-40">
+        <button
+          type="button"
+          onClick={() => setShowConsole(!showConsole)}
+          className={`px-3.5 py-2 rounded-full glass-panel flex items-center gap-2 text-xs font-mono font-medium shadow-2xl transition-all cursor-pointer border ${
+            showConsole
+              ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 glow-amber-sm'
+              : 'hover:bg-zinc-800 text-zinc-300 hover:text-white border-white/[0.1] hover:border-amber-400/40'
+          }`}
+          title="Bật / Tắt cửa sổ nhật ký thực thi"
+        >
+          <Terminal className="w-3.5 h-3.5 text-amber-400" />
+          <span>Console</span>
+          {displayLogs.length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-400/20 text-amber-300 font-bold text-[10px]">
+              {displayLogs.length}
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* Video Modal Player */}
       {showVideoModal && activeVideoUrl && (
@@ -388,9 +433,10 @@ export default function App() {
         }}
       />
 
-      {/* Footer */}
-      <footer className="border-t border-cinema-border py-6 text-center text-xs text-zinc-600 font-mono">
-        AI FILM STUDIO PRO &copy; 2026 — Cinema Workstation Edition
+      {/* Modern Studio Footer */}
+      <footer className="border-t border-white/[0.06] py-8 text-center text-xs text-zinc-500 font-mono space-y-1">
+        <p className="font-semibold text-zinc-400 tracking-wider uppercase">AI Film Studio Pro • Cinema Workstation Edition</p>
+        <p className="text-[11px] text-zinc-600">Built with React, TypeScript, TanStack Query, Axios, Tailwind CSS & Vite</p>
       </footer>
     </div>
   )
