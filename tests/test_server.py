@@ -269,14 +269,50 @@ def test_update_shot_resets_checkpoints(tmp_path, monkeypatch):
     })
     assert resp.status_code == 200
 
-    # Audio and video files should be unlinked
+    # Audio should be unlinked for fresh TTS, but video is PRESERVED (no need to re-render video)
     assert not audio_file.exists()
+    assert video_file.exists()
+
+    # When image_prompt is changed, video is unlinked
+    resp2 = client.post("/api/storyboard/update-shot", json={
+        "shot_id": "s1",
+        "image_prompt": "Updated Image Prompt"
+    })
+    assert resp2.status_code == 200
     assert not video_file.exists()
 
-    # State checkpoint for s1 audio and video should be reset
+    # State checkpoint for s1 video should be reset after visual prompt change
     state_reloaded = StateManager(state_file)
-    assert not state_reloaded.is_stage_complete("s1", "audio")
     assert not state_reloaded.is_stage_complete("s1", "video")
+
+def test_update_shot_volume_controls(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    sb_file = tmp_path / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Test",
+        "characters": {},
+        "shots": [{"id": "s1", "dialogue": "Line", "voice_volume": 1.0, "sfx_volume": 1.0}]
+    }), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        if str(arg) == "outputs/storyboard.json":
+            return sb_file
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    resp = client.post("/api/storyboard/update-shot", json={
+        "shot_id": "s1",
+        "voice_volume": 1.5,
+        "sfx_volume": 0.8
+    })
+    assert resp.status_code == 200
+    data = json.loads(sb_file.read_text(encoding="utf-8"))
+    assert data["shots"][0]["voice_volume"] == 1.5
+    assert data["shots"][0]["sfx_volume"] == 0.8
 
 def test_approve_shot(tmp_path, monkeypatch):
     import json
@@ -365,4 +401,47 @@ def test_gzip_compression_enabled():
     # Verify GZipMiddleware is in the FastAPI middleware stack
     has_gzip = any(m.cls == GZipMiddleware for m in app.user_middleware)
     assert has_gzip, "GZipMiddleware should be registered in FastAPI app"
+
+def test_render_shot_audio_endpoint(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    out_dir = tmp_path / "outputs"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "audio").mkdir(parents=True, exist_ok=True)
+
+    sb_file = out_dir / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Audio Test",
+        "language": "vi",
+        "characters": {},
+        "shots": [{"id": "shot_test_01", "dialogue": "Xin chào thế giới", "character_id": None}]
+    }), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        str_arg = str(arg)
+        if str_arg == "outputs/storyboard.json":
+            return sb_file
+        if str_arg == "outputs/audio":
+            return out_dir / "audio"
+        if str_arg.startswith("outputs/"):
+            return out_dir / str_arg.replace("outputs/", "")
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    dummy_audio = out_dir / "audio" / "shot_test_01.mp3"
+    dummy_audio.write_text("fake audio")
+    monkeypatch.setattr("studio.tts.generate_audio_for_shot", lambda **kwargs: dummy_audio)
+    monkeypatch.setattr("studio.tts.get_audio_duration", lambda p: 4.2)
+
+    resp = client.post("/api/storyboard/render-shot-audio", json={"shot_id": "shot_test_01"})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["shot_id"] == "shot_test_01"
+    assert data["duration"] == 4.2
+    assert "shot_test_01.mp3" in data["audio_url"]
+
 

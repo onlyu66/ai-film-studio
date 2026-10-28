@@ -49,6 +49,8 @@ export interface UpdateShotParams {
   shot_size?: string
   camera_angle?: string
   lighting?: string
+  voice_volume?: number
+  sfx_volume?: number
 }
 
 export async function updateShot(params: UpdateShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
@@ -103,6 +105,8 @@ export interface AddShotParams {
   shot_size?: string
   camera_angle?: string
   lighting?: string
+  voice_volume?: number
+  sfx_volume?: number
 }
 
 export async function addShot(params: AddShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
@@ -148,6 +152,14 @@ export async function renderShotAudio(shotId: string): Promise<{ success: boolea
 export async function renderShotVideo(shotId: string): Promise<{ success: boolean; shot_id: string; video_url: string; duration: number }> {
   const response = await apiClient.post<{ success: boolean; shot_id: string; video_url: string; duration: number }>(
     '/api/storyboard/render-shot-video',
+    { shot_id: shotId }
+  )
+  return response.data
+}
+
+export async function remuxShotVideo(shotId: string): Promise<{ success: boolean; shot_id: string; video_url: string }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; video_url: string }>(
+    '/api/storyboard/remux-shot-video',
     { shot_id: shotId }
   )
   return response.data

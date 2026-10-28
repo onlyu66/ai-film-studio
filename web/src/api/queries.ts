@@ -16,6 +16,7 @@ import {
   approveShot,
   renderShotAudio,
   renderShotVideo,
+  remuxShotVideo,
   assembleMaster,
   type AssembleMasterParams,
   fetchProjects,
@@ -218,6 +219,17 @@ export function useRenderShotVideo() {
 
   return useMutation({
     mutationFn: (shotId: string) => renderShotVideo(shotId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useRemuxShotVideo() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (shotId: string) => remuxShotVideo(shotId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
     },

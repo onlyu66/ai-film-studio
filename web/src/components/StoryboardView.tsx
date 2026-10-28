@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Film,
@@ -23,6 +23,8 @@ import {
   User,
   Video,
   Download,
+  Sliders,
+  Zap,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -42,6 +44,7 @@ import {
   useApproveShot,
   useRenderShotAudio,
   useRenderShotVideo,
+  useRemuxShotVideo,
   useAssembleMaster,
 } from '../api/queries'
 import type { StoryboardData, SelectOption } from '../types'
@@ -70,6 +73,8 @@ interface ShotData {
   shot_size?: string
   camera_angle?: string
   lighting?: string
+  voice_volume?: number
+  sfx_volume?: number
   has_image?: boolean
   has_audio?: boolean
   has_video?: boolean
@@ -119,6 +124,26 @@ const LIGHTING_OPTIONS: SelectOption[] = [
   { value: 'dramatic_backlit', label: 'Dramatic Backlit (Ngược sáng)', subtext: 'Bóng dáng nổi bật trên nền ánh sáng' },
 ]
 
+const MOOD_OPTIONS: SelectOption[] = [
+  { value: 'epic', label: 'Epic (Hào hùng, tráng lệ)', subtext: 'Âm hưởng vĩ đại, hùng tráng' },
+  { value: 'mysterious', label: 'Mysterious (Bí ẩn, kỳ bí)', subtext: 'Kỳ bí, khơi gợi tò mò' },
+  { value: 'dark', label: 'Dark / Tense (U tối, căng thẳng)', subtext: 'Căng thẳng, hồi hộp, kịch tính' },
+  { value: 'romantic', label: 'Romantic (Lãng mạn, êm đềm)', subtext: 'Ấm áp, thơ mộng, cảm xúc' },
+  { value: 'melancholic', label: 'Melancholic (U sầu, trầm mặc)', subtext: 'Lắng đọng, nuối tiếc, sâu sắc' },
+  { value: 'action', label: 'Action (Hành động dồn dập)', subtext: 'Nhịp điệu nhanh, dồn dập, mạnh mẽ' },
+  { value: 'hopeful', label: 'Hopeful (Hy vọng, tươi sáng)', subtext: 'Vươn lên, tràn đầy niềm tin' },
+]
+
+const EMOTION_OPTIONS: SelectOption[] = [
+  { value: 'neutral', label: 'Bình thản / Neutral', subtext: 'Trạng thái cân bằng, tự nhiên' },
+  { value: 'tense', label: 'Căng thẳng / Tense', subtext: 'Cảnh giác, hồi hộp cao độ' },
+  { value: 'joyful', label: 'Hân hoan / Joyful', subtext: 'Vui vẻ, phấn khích, rạng rỡ' },
+  { value: 'angry', label: 'Phẫn nộ / Angry', subtext: 'Tức giận, quyết liệt, gay gắt' },
+  { value: 'sorrowful', label: 'Đau buồn / Sorrowful', subtext: 'Đau khổ, xót xa, buồn bã' },
+  { value: 'determined', label: 'Kiên định / Determined', subtext: 'Quyết tâm, kiên cường, dứt khoát' },
+  { value: 'terrified', label: 'Kinh hãi / Terrified', subtext: 'Sợ hãi, hoảng loạn' },
+]
+
 const VOICE_OPTIONS_BY_LANG: Record<string, SelectOption[]> = {
   vi: [
     { value: 'vi-VN-NamMinhNeural', label: 'Nam Minh (Giọng Nam)', subtext: 'Trầm ấm, hào hùng, điện ảnh' },
@@ -140,6 +165,18 @@ const VOICE_OPTIONS_BY_LANG: Record<string, SelectOption[]> = {
   ],
 }
 
+const SFX_PRESETS = [
+  { key: 'rain', label: '🌧️ Mưa (Rain)' },
+  { key: 'wind', label: '💨 Gió (Wind)' },
+  { key: 'thunder', label: '⚡ Sấm sét (Thunder)' },
+  { key: 'waves', label: '🌊 Sóng biển (Waves)' },
+  { key: 'campfire', label: '🔥 Lửa trại (Campfire)' },
+  { key: 'birds', label: '🐦 Chim hót (Birds)' },
+  { key: 'city', label: '🏙️ Phố xá (City)' },
+  { key: 'traffic', label: '🚗 Giao thông (Traffic)' },
+  { key: 'cyberpunk', label: '🚀 Sci-Fi / Cyber' },
+] as const
+
 export default function StoryboardView({ storyboard, isScriptReady, onContinue }: StoryboardViewProps) {
   const [activeTab, setActiveTab] = useState<'shots' | 'characters'>('shots')
   const [searchQuery, setSearchQuery] = useState('')
@@ -156,13 +193,21 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [editMotion, setEditMotion] = useState('zoom_in')
   const [editCharacterId, setEditCharacterId] = useState('')
   const [editSfx, setEditSfx] = useState('')
+  const [editVoiceVolume, setEditVoiceVolume] = useState<number>(1.0)
+  const [editSfxVolume, setEditSfxVolume] = useState<number>(1.0)
   const [editShotSize, setEditShotSize] = useState('medium')
   const [editCameraAngle, setEditCameraAngle] = useState('eye_level')
   const [editLighting, setEditLighting] = useState('chiaroscuro')
+  const [editMood, setEditMood] = useState('epic')
+  const [editEmotion, setEditEmotion] = useState('neutral')
+  const [activeMediaTab, setActiveMediaTab] = useState<'video' | 'image'>('video')
+  const [playingShotAudio, setPlayingShotAudio] = useState<string | null>(null)
+  const shotAudioRef = useRef<HTMLAudioElement | null>(null)
 
   const [playingVoice, setPlayingVoice] = useState<string | null>(null)
   const [rerollingShotId, setRerollingShotId] = useState<string | null>(null)
   const [uploadingShotId, setUploadingShotId] = useState<string | null>(null)
+  const [remuxingShotId, setRemuxingShotId] = useState<string | null>(null)
   const [cacheBuster, setCacheBuster] = useState<Record<string, number>>({})
 
   // Add Shot modal state
@@ -171,10 +216,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [newShotPrompt, setNewShotPrompt] = useState('')
   const [newShotMotion, setNewShotMotion] = useState('zoom_in')
   const [newShotSfx, setNewShotSfx] = useState('')
+  const [newShotVoiceVolume, setNewShotVoiceVolume] = useState<number>(1.0)
+  const [newShotSfxVolume, setNewShotSfxVolume] = useState<number>(1.0)
   const [newShotChar, setNewShotChar] = useState('')
   const [newShotSize, setNewShotSize] = useState('medium')
   const [newShotAngle, setNewShotAngle] = useState('eye_level')
   const [newShotLighting, setNewShotLighting] = useState('chiaroscuro')
+  const [newShotMood, setNewShotMood] = useState('epic')
+  const [newShotEmotion, setNewShotEmotion] = useState('neutral')
 
   const updateVoiceMutation = useUpdateCharacterVoice()
   const updateShotMutation = useUpdateShot()
@@ -189,6 +238,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const approveShotMutation = useApproveShot()
   const renderShotAudioMutation = useRenderShotAudio()
   const renderShotVideoMutation = useRenderShotVideo()
+  const remuxShotVideoMutation = useRemuxShotVideo()
   const assembleMasterMutation = useAssembleMaster()
 
   const [generatingCharId, setGeneratingCharId] = useState<string | null>(null)
@@ -198,6 +248,30 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [approvingShotId, setApprovingShotId] = useState<string | null>(null)
   const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string; shotId?: string } | null>(null)
   const [videoError, setVideoError] = useState<boolean>(false)
+  const [playingSfx, setPlayingSfx] = useState<string | null>(null)
+  const sfxAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  const handlePlaySfx = (sfxKey?: string | null) => {
+    if (!sfxKey) return
+    if (playingSfx === sfxKey) {
+      if (sfxAudioRef.current) {
+        sfxAudioRef.current.pause()
+        sfxAudioRef.current.currentTime = 0
+      }
+      setPlayingSfx(null)
+      return
+    }
+    if (sfxAudioRef.current) {
+      sfxAudioRef.current.pause()
+    }
+    const cleanKey = sfxKey.toLowerCase().trim().replace(/\s+/g, '_')
+    const audio = new Audio(`/api/assets/sfx/${cleanKey}.mp3`)
+    sfxAudioRef.current = audio
+    setPlayingSfx(sfxKey)
+    audio.play().catch(() => setPlayingSfx(null))
+    audio.onended = () => setPlayingSfx(null)
+    audio.onerror = () => setPlayingSfx(null)
+  }
 
   const handleGenerateHeadshot = (charId: string, char: CharacterData) => {
     setGeneratingCharId(charId)
@@ -291,6 +365,32 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     })
   }
 
+  const handleRemuxVideo = (shotId: string) => {
+    setRemuxingShotId(shotId)
+    remuxShotVideoMutation.mutate(shotId, {
+      onSettled: () => {
+        setRemuxingShotId(null)
+        setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
+      },
+      onError: (err: any) => alert(err?.message || 'Lỗi khi ghép lại âm thanh vào video clip'),
+    })
+  }
+
+  const handlePlayShotAudio = (shotId: string) => {
+    if (playingShotAudio === shotId) {
+      shotAudioRef.current?.pause()
+      setPlayingShotAudio(null)
+      return
+    }
+    shotAudioRef.current?.pause()
+    const audio = new Audio(`/api/outputs/audio/${shotId}.mp3?t=${cacheBuster[shotId] || Date.now()}`)
+    shotAudioRef.current = audio
+    setPlayingShotAudio(shotId)
+    audio.play().catch(() => setPlayingShotAudio(null))
+    audio.onended = () => setPlayingShotAudio(null)
+    audio.onerror = () => setPlayingShotAudio(null)
+  }
+
   const handleAssembleMaster = () => {
     assembleMasterMutation.mutate(
       {},
@@ -352,10 +452,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         image_prompt: newShotPrompt,
         motion: newShotMotion,
         sfx: newShotSfx || undefined,
+        voice_volume: newShotVoiceVolume,
+        sfx_volume: newShotSfxVolume,
         character_id: newShotChar || undefined,
         shot_size: newShotSize || undefined,
         camera_angle: newShotAngle || undefined,
         lighting: newShotLighting || undefined,
+        mood: newShotMood || undefined,
+        emotion: newShotEmotion || undefined,
       },
       {
         onSuccess: () => {
@@ -363,10 +467,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
           setNewShotDialogue('')
           setNewShotPrompt('')
           setNewShotSfx('')
+          setNewShotVoiceVolume(1.0)
+          setNewShotSfxVolume(1.0)
           setNewShotChar('')
           setNewShotSize('medium')
           setNewShotAngle('eye_level')
           setNewShotLighting('chiaroscuro')
+          setNewShotMood('epic')
+          setNewShotEmotion('neutral')
         },
         onError: (err: any) => alert(err.message || 'Lỗi khi thêm phân cảnh'),
       }
@@ -473,13 +581,18 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     setEditMotion(shot.motion || 'zoom_in')
     setEditCharacterId(shot.character_id || '')
     setEditSfx(shot.sfx || '')
+    setEditVoiceVolume(typeof shot.voice_volume === 'number' ? shot.voice_volume : 1.0)
+    setEditSfxVolume(typeof shot.sfx_volume === 'number' ? shot.sfx_volume : 1.0)
     setEditShotSize((shot.shot_size as string) || 'medium')
     setEditCameraAngle((shot.camera_angle as string) || 'eye_level')
     setEditLighting((shot.lighting as string) || 'chiaroscuro')
+    setEditMood((shot.mood as string) || 'epic')
+    setEditEmotion((shot.emotion as string) || 'neutral')
+    setActiveMediaTab(shot.has_video ? 'video' : 'image')
   }
 
-  const handleSaveShot = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSaveShot = (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
     if (!editingShot) return
     updateShotMutation.mutate(
       {
@@ -489,13 +602,18 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         motion: editMotion,
         character_id: editCharacterId || undefined,
         sfx: editSfx || undefined,
+        voice_volume: editVoiceVolume,
+        sfx_volume: editSfxVolume,
         shot_size: editShotSize || undefined,
         camera_angle: editCameraAngle || undefined,
         lighting: editLighting || undefined,
+        mood: editMood || undefined,
+        emotion: editEmotion || undefined,
       },
       {
         onSuccess: () => {
           setEditingShot(null)
+          setCacheBuster((prev) => ({ ...prev, [editingShot.id]: Date.now() }))
         },
         onError: (err: any) => {
           alert(err?.message || 'Lỗi khi cập nhật phân cảnh')
@@ -849,7 +967,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
             {filteredShots.map((shot, index) => {
               const hasImage = Boolean(shot.has_image || cacheBuster[shot.id])
               const imgSrc = `/api/outputs/images/${shot.id}.png?t=${cacheBuster[shot.id] || ''}`
@@ -857,11 +975,76 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               return (
                 <motion.div
                   key={shot.id}
-                  whileHover={{ y: -2 }}
-                  transition={{ duration: 0.15 }}
-                  className="group rounded-xl bg-cinema-card border border-cinema-border overflow-hidden hover:border-cinema-border-hover transition-all flex flex-col"
+                  whileHover={{ y: -3 }}
+                  transition={{ duration: 0.18 }}
+                  className="group rounded-2xl bg-cinema-card border border-cinema-border overflow-hidden hover:border-amber-500/30 shadow-lg hover:shadow-2xl hover:shadow-black/50 transition-all flex flex-col"
                 >
-                  {/* Thumbnail / Video / Lightbox click */}
+                  {/* Top Bar: Sequence Number, Act/Scene, Up/Down Reorder & Approval Toggle */}
+                  <div className="px-3.5 py-2.5 flex items-center justify-between gap-2 border-b border-cinema-border/70 bg-cinema-deck/60">
+                    {/* Left: Shot ID & Act/Scene */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono font-bold text-xs text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
+                        #{String(index + 1).padStart(2, '0')}
+                      </span>
+                      <span className="text-[11px] font-mono text-zinc-400 truncate">
+                        {shot.act ? `Hồi ${shot.act}` : ''} {shot.chapter ? `• Cảnh ${shot.chapter}` : ''}
+                      </span>
+                    </div>
+
+                    {/* Right: Quick Reorder & Approval */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {/* Reorder Buttons */}
+                      <div className="flex items-center bg-cinema-canvas/90 rounded-lg border border-cinema-border/80 p-0.5">
+                        <button
+                          type="button"
+                          onClick={() => handleMoveShot(index, 'up')}
+                          disabled={index === 0}
+                          className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none rounded hover:bg-cinema-deck transition-colors cursor-pointer"
+                          title="Di chuyển phân cảnh lên trước"
+                        >
+                          <ArrowUp className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMoveShot(index, 'down')}
+                          disabled={index === shots.length - 1}
+                          className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none rounded hover:bg-cinema-deck transition-colors cursor-pointer"
+                          title="Di chuyển phân cảnh xuống sau"
+                        >
+                          <ArrowDown className="w-3 h-3" />
+                        </button>
+                      </div>
+
+                      {/* Approval Toggle */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleApprove(shot.id, Boolean(shot.is_approved))}
+                        disabled={approvingShotId === shot.id}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 whitespace-nowrap ${
+                          shot.is_approved
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30'
+                            : 'bg-amber-500/10 text-amber-300 border-amber-500/25 hover:bg-amber-500/20'
+                        }`}
+                        title={shot.is_approved ? 'ĐÃ DUYỆT (Bấm để hủy duyệt)' : 'CHỜ DUYỆT (Bấm để duyệt phân cảnh này)'}
+                      >
+                        {approvingShotId === shot.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
+                        ) : shot.is_approved ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-400 stroke-[2.5]" />
+                            <span className="whitespace-nowrap">ĐÃ DUYỆT</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                            <span className="whitespace-nowrap">CHỜ DUYỆT</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Cinema 16:9 Thumbnail Canvas */}
                   <div
                     onClick={() => {
                       if (shot.has_video) {
@@ -875,7 +1058,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         setLightboxImage(imgSrc)
                       }
                     }}
-                    className={`relative aspect-video bg-studio-input flex items-center justify-center overflow-hidden ${
+                    className={`relative aspect-video bg-cinema-canvas flex items-center justify-center overflow-hidden group/thumb ${
                       shot.has_video || hasImage ? 'cursor-pointer' : 'cursor-default'
                     }`}
                     title={
@@ -886,11 +1069,13 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         : ''
                     }
                   >
-                    {/* Fallback background when image doesn't exist */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-zinc-600 bg-studio-deck">
-                      <Film className="w-5 h-5 text-zinc-700 stroke-[1.5]" />
-                      <span className="text-[9px] font-mono tracking-wider text-zinc-600">CHƯA TẠO ẢNH</span>
-                    </div>
+                    {/* Placeholder when no image exists */}
+                    {!hasImage && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 text-zinc-600 bg-cinema-deck/80">
+                        <Film className="w-6 h-6 text-zinc-700 stroke-[1.5]" />
+                        <span className="text-[10px] font-mono tracking-wider text-zinc-500 uppercase">CHƯA TẠO ẢNH</span>
+                      </div>
+                    )}
 
                     {hasImage && (
                       <img
@@ -898,97 +1083,47 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         alt={shot.id}
                         loading="lazy"
                         decoding="async"
-                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                          const target = e.currentTarget
-                          target.style.display = 'none'
-                        }}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 z-10"
+                        onError={(e) => { e.currentTarget.style.display = 'none' }}
+                        className="absolute inset-0 w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-500"
                       />
                     )}
 
-                    {/* Film overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/50 opacity-80 group-hover:opacity-40 transition-opacity z-20 pointer-events-none" />
+                    {/* Gradient cinematic vignette */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent pointer-events-none" />
 
-                    {/* Top Left: Shot ID Badge */}
-                    <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] font-mono text-cinema-amber font-bold border border-studio-border z-20">
-                      {shot.id}
-                    </div>
-
-                    {/* Top Right: Approval Status Toggle */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleToggleApprove(shot.id, Boolean(shot.is_approved))
-                      }}
-                      disabled={approvingShotId === shot.id}
-                      className={`absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold border transition-all flex items-center gap-1 z-30 cursor-pointer shadow-md backdrop-blur-md ${
-                        shot.is_approved
-                          ? 'bg-emerald-600/95 hover:bg-emerald-500 text-white border-emerald-400/60 shadow-emerald-500/20'
-                          : 'bg-black/85 hover:bg-zinc-800 text-amber-300 hover:text-amber-200 border-amber-500/30 hover:border-amber-400'
-                      }`}
-                      title={shot.is_approved ? 'ĐÃ DUYỆT (Bấm để hủy duyệt)' : 'CHỜ DUYỆT (Bấm để duyệt phân cảnh này)'}
-                    >
-                      {approvingShotId === shot.id ? (
-                        <Loader2 className="w-3 h-3 animate-spin text-white" />
-                      ) : shot.is_approved ? (
-                        <>
-                          <Check className="w-3 h-3 text-white stroke-[2.5]" />
-                          <span>ĐÃ DUYỆT</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                          <span>CHỜ DUYỆT</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* Center Video Play Badge if video exists */}
+                    {/* Center Video Play Badge if Video exists */}
                     {shot.has_video && (
-                      <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                        <div className="w-11 h-11 rounded-full bg-black/60 border border-emerald-400/50 flex items-center justify-center text-white shadow-xl backdrop-blur-sm group-hover:scale-110 group-hover:bg-emerald-600 group-hover:border-emerald-300 transition-all duration-300">
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-12 h-12 rounded-full bg-black/60 border border-emerald-400/50 flex items-center justify-center text-white shadow-2xl backdrop-blur-sm group-hover/thumb:scale-110 group-hover/thumb:bg-emerald-600 group-hover/thumb:border-emerald-300 transition-all duration-300">
                           <Play className="w-5 h-5 fill-white text-white ml-0.5" />
                         </div>
                       </div>
                     )}
 
-                    {/* Bottom Left: Motion Tag */}
-                    <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-zinc-300 text-[9px] font-mono uppercase tracking-wider border border-white/10 z-20">
-                      {shot.motion || 'zoom_in'}
+                    {/* Bottom Bar on Thumbnail: Motion on left, Media Readiness on right */}
+                    <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-1 pointer-events-none z-10">
+                      <span className="px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-zinc-300 text-[9px] font-mono uppercase tracking-wider border border-white/10">
+                        🎥 {String(shot.motion || 'zoom_in').replace('_', ' ')}
+                      </span>
+
+                      <div className="flex items-center gap-1">
+                        {shot.has_audio && (
+                          <span className="px-1.5 py-0.5 rounded bg-sky-500/80 backdrop-blur-md text-white text-[9px] font-mono font-bold flex items-center gap-1 shadow-sm">
+                            <Volume2 className="w-2.5 h-2.5" />
+                            <span>TTS</span>
+                          </span>
+                        )}
+                        {shot.has_video && (
+                          <span className="px-1.5 py-0.5 rounded bg-emerald-600 backdrop-blur-md text-white text-[9px] font-mono font-bold flex items-center gap-1 shadow-sm">
+                            <Film className="w-2.5 h-2.5" />
+                            <span>CLIP</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Bottom Right: Media Readiness Pills */}
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1 z-20">
-                      {shot.has_audio && (
-                        <span className="px-1.5 py-0.5 rounded bg-sky-500/80 backdrop-blur-sm text-white flex items-center gap-1 text-[9px] font-mono" title="Đã có file giọng đọc TTS">
-                          <Volume2 className="w-2.5 h-2.5" />
-                          <span>TTS</span>
-                        </span>
-                      )}
-                      {shot.has_video && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setVideoError(false)
-                            setPreviewVideo({
-                              url: `/api/outputs/videos/${shot.id}.mp4?t=${cacheBuster[shot.id] || Date.now()}`,
-                              title: `Phân cảnh ${shot.id} ${shot.dialogue ? `• "${shot.dialogue}"` : ''}`,
-                              shotId: shot.id,
-                            })
-                          }}
-                          className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 backdrop-blur-sm text-white flex items-center gap-1 text-[9px] font-mono font-bold border border-emerald-400/40 shadow-sm cursor-pointer transition-all active:scale-95"
-                          title="Bấm để xem video clip phân cảnh này"
-                        >
-                          <Play className="w-2 h-2 fill-white" />
-                          <span>CLIP</span>
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Hover Actions: Preview Clip / Render Clip / Zoom Image */}
-                    <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/70 backdrop-blur-[2px] z-30 p-2">
+                    {/* Hover Actions Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover/thumb:opacity-100 transition-opacity bg-black/75 backdrop-blur-sm p-3 z-20">
                       {shot.has_video ? (
                         <button
                           type="button"
@@ -1001,10 +1136,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                               shotId: shot.id,
                             })
                           }}
-                          className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-xl border border-emerald-400/50 transition-all active:scale-95 cursor-pointer"
-                          title="Xem trước clip video phân cảnh này"
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-xl border border-emerald-400/50 transition-all active:scale-95 cursor-pointer"
                         >
-                          <Play className="w-4 h-4 fill-white" />
+                          <Play className="w-3.5 h-3.5 fill-white" />
                           <span>Xem Clip</span>
                         </button>
                       ) : (
@@ -1015,8 +1149,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                             handleRenderVideo(shot.id)
                           }}
                           disabled={renderingVideoShotId === shot.id}
-                          className="px-3 py-1.5 rounded-lg bg-cinema-amber hover:bg-amber-400 text-zinc-950 text-xs font-bold flex items-center gap-1.5 shadow-lg border border-amber-300 transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                          title="Render clip Ken Burns cho riêng phân cảnh này"
+                          className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold flex items-center gap-1.5 shadow-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                         >
                           {renderingVideoShotId === shot.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950" />
@@ -1034,7 +1167,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                             e.stopPropagation()
                             setLightboxImage(imgSrc)
                           }}
-                          className="p-2 rounded-xl bg-black/80 hover:bg-black text-zinc-300 hover:text-white border border-studio-border transition-colors cursor-pointer"
+                          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors cursor-pointer"
                           title="Xem ảnh gốc HD"
                         >
                           <Maximize2 className="w-4 h-4" />
@@ -1043,124 +1176,125 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     </div>
                   </div>
 
-                  {/* Shot details */}
-                  <div className="p-3.5 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                      {/* Character & Act Header Bar */}
-                      <div className="flex items-center justify-between gap-2 pb-2 border-b border-studio-border/60">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <div className="w-5 h-5 rounded-md bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                  {/* Shot Details Body */}
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3.5">
+                    <div className="space-y-3">
+                      {/* Character & Voice Banner */}
+                      <div className="flex items-center justify-between text-xs pb-2 border-b border-cinema-border/50">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className="w-5 h-5 rounded-md bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 shrink-0">
                             <User className="w-3 h-3" />
                           </div>
-                          <span className="text-xs font-bold text-amber-300 truncate">
-                            {shot.character_id ? (characters[shot.character_id]?.name || shot.character_id) : 'Cảnh quay chung'}
+                          <span className="font-bold text-zinc-200 text-xs truncate">
+                            {shot.character_id ? (characters[shot.character_id]?.name || shot.character_id) : 'Cảnh quay chung / Thuyết minh'}
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0 font-mono text-[10px]">
-                          {shot.act && (
-                            <span className="px-1.5 py-0.5 rounded bg-studio-input text-zinc-400 border border-studio-border font-medium">
-                              Hồi {shot.act}
-                            </span>
-                          )}
-                          <span className="text-zinc-600">Ch.{shot.chapter || 1}</span>
-                        </div>
+                        {shot.character_id && characters[shot.character_id]?.voice && (
+                          <span className="text-[10px] font-mono text-zinc-400 shrink-0 bg-cinema-deck/80 px-2 py-0.5 rounded border border-cinema-border">
+                            🎙️ {characters[shot.character_id]?.voice?.split('-')[2]?.replace('Neural', '') || 'Voice'}
+                          </span>
+                        )}
                       </div>
 
-                      {/* Dialogue Section */}
-                      <div className="mt-2.5 min-h-[38px]">
-                        <p className="text-xs text-zinc-100 font-normal leading-relaxed line-clamp-3">
+                      {/* Dialogue Section with amber accent quote line */}
+                      <div
+                        onClick={() => handleOpenEditShot(shot)}
+                        className="cursor-pointer hover:bg-cinema-canvas/60 p-2.5 -mx-1 rounded-lg transition-colors border-l-2 border-amber-500/50 group/text"
+                        title="Bấm để mở Shot Studio và chỉnh sửa phân cảnh này"
+                      >
+                        <p className="text-xs text-zinc-100 group-hover/text:text-amber-200 font-normal leading-relaxed line-clamp-3">
                           {shot.dialogue ? (
                             <span className="italic">"{shot.dialogue}"</span>
                           ) : (
-                            <span className="text-zinc-500 italic text-[11px]">(Cảnh quay tĩnh tư liệu & âm nhạc)</span>
+                            <span className="text-zinc-500 italic text-[11px]">(Cảnh quay tĩnh tư liệu & âm nhạc điện ảnh)</span>
                           )}
                         </p>
                       </div>
 
                       {/* Visual Prompt Snippet */}
                       {shot.image_prompt && (
-                        <div className="mt-2 p-2 rounded-lg bg-studio-input/80 border border-studio-border/50 text-[10px] text-zinc-400 font-mono line-clamp-2 leading-relaxed" title={shot.image_prompt}>
+                        <div
+                          onClick={() => handleOpenEditShot(shot)}
+                          className="p-2 rounded-lg bg-cinema-canvas/80 hover:bg-cinema-canvas border border-cinema-border hover:border-amber-500/30 text-[10px] text-zinc-400 hover:text-zinc-300 font-mono line-clamp-2 leading-relaxed cursor-pointer transition-colors"
+                          title="Bấm để mở Shot Studio và chỉnh sửa Prompt"
+                        >
                           <span className="text-zinc-500 font-semibold uppercase mr-1">PROMPT:</span>
                           {shot.image_prompt}
                         </div>
                       )}
 
-                      {/* Cinematography & Audio Chips */}
-                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px] font-mono">
-                        {shot.shot_size && (
-                          <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 flex items-center gap-1" title="Khung hình điện ảnh">
-                            <Camera className="w-2.5 h-2.5 text-amber-400" />
-                            <span>{String(shot.shot_size).replace('_', ' ')}</span>
+                      {/* Cinematography & Audio Specs — Modern 2-Row Structured Grid */}
+                      <div className="p-2.5 rounded-xl bg-cinema-canvas/60 border border-cinema-border/70 text-[10px] font-mono space-y-2">
+                        {/* Row 1: Camera Angle, Shot Size, Lighting */}
+                        <div className="flex flex-wrap items-center justify-between gap-1 text-zinc-400">
+                          <span className="flex items-center gap-1.5 text-amber-300/90 font-medium">
+                            <Camera className="w-3 h-3 text-amber-400 shrink-0" />
+                            <span>{String(shot.shot_size || 'medium').replace('_', ' ')}</span>
+                            <span className="text-zinc-600">•</span>
+                            <span>{String(shot.camera_angle || 'eye_level').replace('_', ' ')}</span>
                           </span>
-                        )}
-                        {shot.camera_angle && (
-                          <span className="px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 flex items-center gap-1" title="Góc máy quay">
-                            <span>📐 {String(shot.camera_angle).replace('_', ' ')}</span>
-                          </span>
-                        )}
-                        {shot.lighting && (
-                          <span className="px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-300 border border-yellow-500/20 flex items-center gap-1" title="Ánh sáng phân cảnh">
-                            <span>💡 {String(shot.lighting).replace('_', ' ')}</span>
-                          </span>
-                        )}
-                        {shot.motion && (
-                          <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 flex items-center gap-1" title="Chuyển động camera">
-                            <Video className="w-2.5 h-2.5 text-emerald-400" />
-                            <span>{String(shot.motion).replace('_', ' ')}</span>
-                          </span>
-                        )}
-                        {shot.mood && (
-                          <span className="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1" title="Cảm xúc âm nhạc">
-                            <Music className="w-2.5 h-2.5 text-purple-400" />
-                            <span>{shot.mood}</span>
-                          </span>
-                        )}
-                        {shot.sfx && (
-                          <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-300 border border-sky-500/20 flex items-center gap-1" title="Hiệu ứng âm thanh">
-                            <Volume2 className="w-2.5 h-2.5 text-sky-400" />
-                            <span>{shot.sfx}</span>
-                          </span>
-                        )}
+
+                          <div className="flex items-center gap-2">
+                            {shot.lighting && (
+                              <span className="text-zinc-400">
+                                💡 {String(shot.lighting).replace('_', ' ')}
+                              </span>
+                            )}
+                            {shot.mood && (
+                              <span className="flex items-center gap-1 text-purple-300">
+                                <Music className="w-2.5 h-2.5 text-purple-400" />
+                                <span>{shot.mood}</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Row 2: Volumes & SFX with preview button */}
+                        <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-cinema-border/50 text-zinc-400">
+                          <div className="flex items-center gap-2">
+                            <span>Thoại: <strong className="text-amber-300 font-bold">{Math.round((shot.voice_volume ?? 1.0) * 100)}%</strong></span>
+                            <span>SFX: <strong className="text-sky-300 font-bold">{Math.round((shot.sfx_volume ?? 1.0) * 100)}%</strong></span>
+                          </div>
+
+                          {shot.sfx && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handlePlaySfx(shot.sfx)
+                              }}
+                              className={`px-2 py-0.5 rounded border flex items-center gap-1 cursor-pointer transition-all ${
+                                playingSfx === shot.sfx
+                                  ? 'bg-sky-500/25 text-sky-200 border-sky-400 ring-1 ring-sky-400/50'
+                                  : 'bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border-sky-500/25'
+                              }`}
+                              title={`Nghe thử âm thanh môi trường: ${shot.sfx}`}
+                            >
+                              <Volume2 className="w-2.5 h-2.5 text-sky-400" />
+                              <span>{shot.sfx}</span>
+                              {playingSfx === shot.sfx && <span className="text-[8px] text-sky-400 font-bold">▶</span>}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Dedicated Action Toolbar */}
-                    <div className="pt-2.5 border-t border-studio-border flex items-center justify-between gap-1.5">
-                      {/* Left: Reorder Up/Down */}
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleMoveShot(index, 'up')}
-                          disabled={index === 0}
-                          className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none border border-studio-border transition-colors cursor-pointer"
-                          title="Đưa lên trước"
-                        >
-                          <ArrowUp className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleMoveShot(index, 'down')}
-                          disabled={index === shots.length - 1}
-                          className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-white disabled:opacity-20 disabled:pointer-events-none border border-studio-border transition-colors cursor-pointer"
-                          title="Đưa xuống sau"
-                        >
-                          <ArrowDown className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-
-                      {/* Center: Per-Shot Media Tools (TTS Voice, Video Clip, Reroll, Upload) */}
-                      <div className="flex items-center gap-1">
+                    {/* Bottom Action Bar: Fast Production Tools & Primary Sửa Button */}
+                    <div className="pt-3 border-t border-cinema-border/70 flex items-center justify-between gap-2 mt-auto">
+                      {/* Left: Quick Production Tools */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Audio TTS */}
                         <button
                           type="button"
                           onClick={() => handleRenderAudio(shot.id)}
                           disabled={renderingAudioShotId === shot.id}
-                          className={`p-1.5 rounded-lg border transition-all cursor-pointer flex items-center justify-center shrink-0 ${
+                          className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
                             shot.has_audio
-                              ? 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border-sky-500/30'
-                              : 'bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-sky-300 border-studio-border'
+                              ? 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border-sky-500/40 shadow-sm'
+                              : 'bg-cinema-canvas hover:bg-cinema-deck text-zinc-400 hover:text-sky-300 border-cinema-border'
                           }`}
-                          title={shot.has_audio ? 'Tạo lại giọng đọc TTS cho phân cảnh này (Đã có audio)' : 'Tạo giọng đọc TTS cho phân cảnh này'}
+                          title={shot.has_audio ? 'Tạo lại giọng đọc TTS (Đã có audio)' : 'Tạo giọng đọc TTS cho shot này'}
                         >
                           {renderingAudioShotId === shot.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
@@ -1169,32 +1303,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           )}
                         </button>
 
-                        {/* If shot has video: show direct Play Clip button */}
-                        {shot.has_video && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setVideoError(false)
-                              setPreviewVideo({
-                                url: `/api/outputs/videos/${shot.id}.mp4?t=${cacheBuster[shot.id] || Date.now()}`,
-                                title: `Phân cảnh ${shot.id} ${shot.dialogue ? `• "${shot.dialogue}"` : ''}`,
-                                shotId: shot.id,
-                              })
-                            }}
-                            className="p-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-300 border border-emerald-500/40 transition-all cursor-pointer flex items-center justify-center shrink-0 shadow-sm active:scale-95"
-                            title="Xem trước clip video phân cảnh này"
-                          >
-                            <Play className="w-3.5 h-3.5 fill-current" />
-                          </button>
-                        )}
-
-                        {/* Render / Re-render Video Clip button */}
+                        {/* Video Clip Render */}
                         <button
                           type="button"
                           onClick={() => handleRenderVideo(shot.id)}
                           disabled={renderingVideoShotId === shot.id}
-                          className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-emerald-300 border border-studio-border transition-all cursor-pointer flex items-center justify-center shrink-0"
-                          title={shot.has_video ? 'Render lại video clip cho phân cảnh này' : 'Render video clip (Ken Burns) cho phân cảnh này'}
+                          className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                            shot.has_video
+                              ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40 shadow-sm'
+                              : 'bg-cinema-canvas hover:bg-cinema-deck text-zinc-400 hover:text-emerald-300 border-cinema-border'
+                          }`}
+                          title={shot.has_video ? 'Render lại clip video (Đã có clip)' : 'Render video clip Ken Burns cho shot này'}
                         >
                           {renderingVideoShotId === shot.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
@@ -1203,12 +1322,13 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           )}
                         </button>
 
+                        {/* AI Image Reroll */}
                         <button
                           type="button"
                           onClick={() => handleRerollShot(shot.id)}
                           disabled={rerollingShotId === shot.id}
-                          className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-amber-400 border border-studio-border hover:border-amber-400/40 transition-colors cursor-pointer flex items-center justify-center shrink-0"
-                          title="Tạo lại ảnh mới bằng AI (Reroll)"
+                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-zinc-300 hover:text-amber-400 border border-cinema-border hover:border-amber-400/40 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                          title="Tạo lại ảnh bằng AI (Reroll)"
                         >
                           {rerollingShotId === shot.id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
@@ -1217,11 +1337,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           )}
                         </button>
 
+                        {/* Custom Image Upload */}
                         <label
-                          className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border hover:border-studio-border-hover transition-colors cursor-pointer flex items-center justify-center shrink-0"
+                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-zinc-400 hover:text-zinc-200 border border-cinema-border hover:border-cinema-border-hover flex items-center justify-center transition-all cursor-pointer active:scale-95"
                           title="Tải ảnh tùy chỉnh từ máy tính"
                         >
-                          <Upload className="w-3.5 h-3.5 text-zinc-400" />
+                          <Upload className="w-3.5 h-3.5" />
                           <input
                             type="file"
                             accept="image/*"
@@ -1232,22 +1353,23 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         </label>
                       </div>
 
-                      {/* Right: Primary Sửa (Edit) & Delete */}
-                      <div className="flex items-center gap-1">
+                      {/* Right: Primary Sửa Shot & Delete */}
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           onClick={() => handleOpenEditShot(shot)}
-                          className="p-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap"
-                          title="Sửa lời thoại, nhân vật, visual prompt và góc máy"
+                          className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 via-amber-500/25 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-300 border border-amber-500/40 hover:border-amber-400 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
+                          title="Mở Shot Studio để chỉnh sửa lời thoại, visual prompt, âm lượng, SFX..."
                         >
-                          <Edit3 className="w-3.5 h-3.5 text-amber-400" />
+                          <Edit3 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <span className="whitespace-nowrap font-bold">Sửa Shot</span>
                         </button>
 
                         <button
                           type="button"
                           onClick={() => handleDeleteShot(shot.id)}
-                          className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-colors cursor-pointer shrink-0"
-                          title="Xóa phân cảnh"
+                          className="w-7 h-7 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
+                          title="Xóa phân cảnh này"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1260,100 +1382,146 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
           </div>
 
           {/* Master Assembly & Quality Assurance Dashboard */}
-          <div className="mt-8 rounded-2xl bg-gradient-to-b from-cinema-deck/90 to-cinema-card/95 border border-cinema-border p-5 sm:p-6 shadow-2xl relative overflow-hidden">
-            {/* Top Amber glow accent */}
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+          <div className="mt-8 rounded-2xl bg-gradient-to-b from-cinema-deck/95 via-cinema-card/90 to-cinema-deck/95 border border-cinema-border p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+            {/* Top Amber glow accent line */}
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              {/* Left: Status & Quality Metrics */}
-              <div className="space-y-3.5 flex-1">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                    <Film className="w-5 h-5 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-zinc-100 flex items-center gap-2">
-                      <span>Bảng điều khiển & Xuất bản Master Movie</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
-                        Quy trình duyệt tỉ mỉ
-                      </span>
-                    </h3>
-                    <p className="text-xs text-zinc-400 mt-0.5">
-                      Kiểm duyệt từng phân cảnh, xuất từng clip riêng lẻ và hoàn thiện phim chiếu rạp
-                    </p>
-                  </div>
+            {/* Header: Title, Description & Badge */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-cinema-border/70">
+              <div className="flex items-start sm:items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5 sm:mt-0">
+                  <Film className="w-5 h-5 stroke-[2.2]" />
                 </div>
-
-                {/* Visual Progress Gauges */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                  {/* Gauge 1: Images */}
-                  <div className="px-3 py-2 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-400 font-medium">Ảnh Flux</span>
-                      <span className={`font-mono font-bold ${readyImages === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {readyImages}/{totalShots}
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${readyImages === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                        style={{ width: `${totalShots ? (readyImages / totalShots) * 100 : 0}%` }}
-                      />
-                    </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-zinc-100 break-words">
+                      Bảng điều khiển & Xuất bản Master Movie
+                    </h3>
+                    <span className="text-[10px] whitespace-nowrap font-mono px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
+                      Quy trình duyệt tỉ mỉ
+                    </span>
                   </div>
-
-                  {/* Gauge 2: Audio TTS */}
-                  <div className="px-3 py-2 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-400 font-medium">Giọng TTS</span>
-                      <span className={`font-mono font-bold ${readyAudios === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {readyAudios}/{totalShots}
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${readyAudios === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                        style={{ width: `${totalShots ? (readyAudios / totalShots) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Gauge 3: Video Clips */}
-                  <div className="px-3 py-2 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-400 font-medium">Clips MP4</span>
-                      <span className={`font-mono font-bold ${readyClips === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {readyClips}/{totalShots}
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${readyClips === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                        style={{ width: `${totalShots ? (readyClips / totalShots) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Gauge 4: Approval Status */}
-                  <div className="px-3 py-2 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-400 font-medium">Đã Duyệt</span>
-                      <span className={`font-mono font-bold ${approvedShots === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
-                        {approvedShots}/{totalShots}
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 ${approvedShots === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
-                        style={{ width: `${totalShots ? (approvedShots / totalShots) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </div>
+                  <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                    Kiểm duyệt từng phân cảnh, xuất từng clip riêng lẻ và ghép nối hoàn thiện phim chiếu rạp
+                  </p>
                 </div>
               </div>
 
-              {/* Right: Actions */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+              {/* Status pill on header right */}
+              <div className="flex items-center gap-2 shrink-0 self-start sm:self-center font-mono text-xs">
+                {readyClips === totalShots && totalShots > 0 ? (
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1.5 shadow-sm">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Đủ {totalShots}/{totalShots} Clips</span>
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                    <span>Tiến độ: {readyClips}/{totalShots} Clips</span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Visual Progress Gauges: Responsive 4-column Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 my-4">
+              {/* Gauge 1: Images */}
+              <div className="p-3 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs gap-1">
+                  <span className="text-zinc-400 font-medium truncate">Ảnh minh họa (Flux)</span>
+                  <span className={`font-mono font-bold shrink-0 ${readyImages === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {readyImages}/{totalShots}
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${readyImages === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                    style={{ width: `${totalShots ? (readyImages / totalShots) * 100 : 0}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                  <span>Tiến độ</span>
+                  <span>{totalShots ? Math.round((readyImages / totalShots) * 100) : 0}%</span>
+                </div>
+              </div>
+
+              {/* Gauge 2: Audio TTS */}
+              <div className="p-3 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs gap-1">
+                  <span className="text-zinc-400 font-medium truncate">Giọng đọc (TTS + SFX)</span>
+                  <span className={`font-mono font-bold shrink-0 ${readyAudios === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {readyAudios}/{totalShots}
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${readyAudios === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                    style={{ width: `${totalShots ? (readyAudios / totalShots) * 100 : 0}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                  <span>Tiến độ</span>
+                  <span>{totalShots ? Math.round((readyAudios / totalShots) * 100) : 0}%</span>
+                </div>
+              </div>
+
+              {/* Gauge 3: Video Clips */}
+              <div className="p-3 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs gap-1">
+                  <span className="text-zinc-400 font-medium truncate">Video Clips (MP4)</span>
+                  <span className={`font-mono font-bold shrink-0 ${readyClips === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {readyClips}/{totalShots}
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${readyClips === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                    style={{ width: `${totalShots ? (readyClips / totalShots) * 100 : 0}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                  <span>Tiến độ</span>
+                  <span>{totalShots ? Math.round((readyClips / totalShots) * 100) : 0}%</span>
+                </div>
+              </div>
+
+              {/* Gauge 4: Approval Status */}
+              <div className="p-3 rounded-xl bg-cinema-canvas/80 border border-cinema-border flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs gap-1">
+                  <span className="text-zinc-400 font-medium truncate">Phê duyệt phân cảnh</span>
+                  <span className={`font-mono font-bold shrink-0 ${approvedShots === totalShots ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {approvedShots}/{totalShots}
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-cinema-deck overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${approvedShots === totalShots ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                    style={{ width: `${totalShots ? (approvedShots / totalShots) * 100 : 0}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-mono">
+                  <span>Tiến độ</span>
+                  <span>{totalShots ? Math.round((approvedShots / totalShots) * 100) : 0}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3.5 border-t border-cinema-border/70">
+              <div className="text-xs text-zinc-400 flex items-center gap-2">
+                {readyClips === totalShots ? (
+                  <span className="text-emerald-400 flex items-center gap-1.5 font-medium">
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Toàn bộ {totalShots} phân cảnh đã sẵn sàng để ghép thành phim hoàn chỉnh!</span>
+                  </span>
+                ) : (
+                  <span className="text-zinc-400">
+                    Sẵn sàng ghép phim: <strong className="text-amber-300 font-mono">{readyClips}/{totalShots}</strong> clips
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
                 {/* Approve all button if not all approved */}
                 {approvedShots < totalShots && (
                   <button
@@ -1366,10 +1534,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       }
                     }}
                     disabled={approveShotMutation.isPending}
-                    className="px-4 py-3 rounded-xl bg-cinema-card hover:bg-cinema-deck text-zinc-300 hover:text-white border border-cinema-border hover:border-emerald-500/40 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95"
+                    className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-cinema-card hover:bg-cinema-deck text-zinc-200 hover:text-white border border-cinema-border hover:border-emerald-500/40 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
                     title="Xác nhận duyệt toàn bộ các phân cảnh hiện tại"
                   >
-                    <Check className="w-4 h-4 text-emerald-400" />
+                    <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                     <span>Duyệt tất cả ({totalShots - approvedShots} còn lại)</span>
                   </button>
                 )}
@@ -1379,17 +1547,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   type="button"
                   onClick={handleAssembleMaster}
                   disabled={assembleMasterMutation.isPending || readyClips === 0}
-                  className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-black text-xs sm:text-sm tracking-wide shadow-xl shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]"
+                  className="flex-1 sm:flex-initial px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold text-xs sm:text-sm tracking-wide shadow-xl shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98] whitespace-nowrap"
                 >
                   {assembleMasterMutation.isPending ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin text-zinc-950" />
-                      <span>ĐANG GHÉP NỐI & MIX NHẠC ĐIỆN ẢNH...</span>
+                      <Loader2 className="w-4 h-4 animate-spin text-zinc-950 shrink-0" />
+                      <span>Đang ghép nối & mix nhạc điện ảnh...</span>
                     </>
                   ) : (
                     <>
-                      <Film className="w-4 h-4 text-zinc-950 stroke-[2.5]" />
-                      <span>XUẤT BẢN VIDEO HOÀN CHỈNH ({readyClips}/{totalShots} CLIPS)</span>
+                      <Film className="w-4 h-4 text-zinc-950 stroke-[2.5] shrink-0" />
+                      <span>Xuất bản Master Movie ({readyClips}/{totalShots} Clips)</span>
                     </>
                   )}
                 </button>
@@ -1398,9 +1566,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
             {/* Quick status notice if clips missing */}
             {readyClips < totalShots && (
-              <div className="mt-4 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping shrink-0" />
-                <span>
+              <div className="mt-3.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 flex items-start gap-2.5 leading-relaxed">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0 mt-1" />
+                <span className="break-words">
                   Lưu ý: Đang có <strong>{totalShots - readyClips}</strong> phân cảnh chưa render video clip. Bạn có thể bấm nút tạo clip trên từng thẻ cảnh hoặc bấm xuất bản video để hệ thống tự động sinh các clip còn thiếu.
                 </span>
               </div>
@@ -1557,7 +1725,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         )}
       </AnimatePresence>
 
-      {/* Shot Edit Modal */}
+      {/* Unified Shot Studio Inspector Modal */}
       <AnimatePresence>
         {editingShot && (
           <motion.div
@@ -1565,43 +1733,53 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => !updateShotMutation.isPending && setEditingShot(null)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md cursor-pointer"
           >
             <motion.div
-              initial={{ scale: 0.98, opacity: 0, y: 10 }}
+              initial={{ scale: 0.97, opacity: 0, y: 15 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.98, opacity: 0, y: 10 }}
+              exit={{ scale: 0.97, opacity: 0, y: 15 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-xl max-h-[92vh] flex flex-col rounded-2xl bg-studio-deck border border-studio-border p-5 sm:p-6 shadow-2xl text-left cursor-default overflow-hidden"
+              className="relative w-full max-w-5xl max-h-[94vh] flex flex-col rounded-2xl bg-studio-deck border border-studio-border shadow-2xl text-left cursor-default overflow-hidden"
             >
-              <div className="flex items-center justify-between pb-4 border-b border-studio-border shrink-0">
+              {/* TOP HEADER */}
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-studio-border bg-studio-deck/95 backdrop-blur-sm shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="relative w-16 h-10 rounded-lg overflow-hidden bg-studio-input border border-studio-border shrink-0 flex items-center justify-center">
-                    {(editingShot.has_image || cacheBuster[editingShot.id]) ? (
-                      <img
-                        src={`/api/outputs/images/${editingShot.id}.png?t=${cacheBuster[editingShot.id] || ''}`}
-                        alt={editingShot.id}
-                        onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                          e.currentTarget.style.display = 'none'
-                        }}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center justify-center gap-0.5 text-zinc-500">
-                        <Film className="w-3.5 h-3.5 text-zinc-600" />
-                        <span className="text-[7px] font-mono tracking-wider text-zinc-500">CHƯA ẢNH</span>
-                      </div>
-                    )}
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center font-bold shrink-0">
+                    <Sliders className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-mono text-xs font-bold border border-amber-500/20">
                         {editingShot.id}
                       </span>
-                      <h3 className="text-sm font-bold text-zinc-100">Chỉnh sửa phân cảnh</h3>
+                      <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                        Hồi {editingShot.act || 1}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 font-mono">
+                        ⏱️ {editingShot.duration ? Number(editingShot.duration).toFixed(1) + 's' : '5.0s'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleApprove(editingShot.id, Boolean(editingShot.is_approved))}
+                        disabled={approvingShotId === editingShot.id}
+                        className={`text-xs px-2.5 py-0.5 rounded-lg border font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
+                          editingShot.is_approved
+                            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
+                            : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white border-zinc-700'
+                        }`}
+                        title="Bấm để bật/tắt duyệt phân cảnh này"
+                      >
+                        {approvingShotId === editingShot.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
+                        ) : (
+                          <Check className={`w-3 h-3 ${editingShot.is_approved ? 'text-emerald-400' : 'text-zinc-500'}`} />
+                        )}
+                        <span>{editingShot.is_approved ? 'Đã duyệt' : 'Chưa duyệt'}</span>
+                      </button>
                     </div>
                     <span className="text-[11px] text-zinc-400 mt-0.5 block">
-                      Tùy chỉnh lời thoại, nhân vật phát ngôn và mô tả hình ảnh AI
+                      Shot Studio • Xem trước Live Media, tinh chỉnh lời thoại, giọng đọc, âm thanh môi trường và thông số máy quay
                     </span>
                   </div>
                 </div>
@@ -1610,145 +1788,535 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   type="button"
                   disabled={updateShotMutation.isPending}
                   onClick={() => setEditingShot(null)}
-                  className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer"
+                  title="Đóng cửa sổ"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSaveShot} className="mt-4 space-y-4 overflow-y-auto pr-1 flex-1">
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                    Lời thoại nhân vật (Dialogue):
-                  </label>
-                  <textarea
-                    value={editDialogue}
-                    onChange={(e) => setEditDialogue(e.target.value)}
-                    rows={3}
-                    placeholder="Nhập lời thoại của nhân vật trong phân cảnh này..."
-                    className="w-full rounded-xl bg-studio-input border border-studio-border p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 transition-colors font-sans leading-relaxed"
-                  />
-                  <p className="text-[10px] text-zinc-400 mt-1">
-                    * Khi thay đổi lời thoại, hệ thống sẽ tự động tổng hợp lại giọng nói TTS cho phân cảnh này.
-                  </p>
+              {/* MAIN CONTENT: 2-COLUMN GRID */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+                {/* LEFT COLUMN: LIVE MEDIA & AUDIO MIXER (lg:col-span-5) */}
+                <div className="lg:col-span-5 flex flex-col gap-3.5">
+                  {/* Media Switcher & Player */}
+                  <div className="bg-studio-card/60 rounded-2xl border border-studio-border p-3 flex flex-col gap-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                        <Film className="w-3.5 h-3.5 text-amber-400" />
+                        Live Media Preview
+                      </span>
+                      <div className="flex items-center gap-1 bg-studio-input p-0.5 rounded-lg border border-studio-border text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setActiveMediaTab('video')}
+                          className={`px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                            activeMediaTab === 'video'
+                              ? 'bg-amber-400 text-zinc-950 font-bold shadow-sm'
+                              : 'text-zinc-400 hover:text-zinc-200'
+                          }`}
+                        >
+                          <Video className="w-3 h-3" />
+                          <span>Video Clip</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveMediaTab('image')}
+                          className={`px-2 py-0.5 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
+                            activeMediaTab === 'image'
+                              ? 'bg-amber-400 text-zinc-950 font-bold shadow-sm'
+                              : 'text-zinc-400 hover:text-zinc-200'
+                          }`}
+                        >
+                          <Camera className="w-3 h-3" />
+                          <span>Ảnh tĩnh</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 16:9 Live Preview Box */}
+                    <div className="relative aspect-video rounded-xl overflow-hidden bg-black/90 border border-studio-border flex items-center justify-center group shadow-inner">
+                      {activeMediaTab === 'video' ? (
+                        editingShot.has_video ? (
+                          <video
+                            key={`modal-vid-${editingShot.id}-${cacheBuster[editingShot.id] || ''}`}
+                            controls
+                            playsInline
+                            className="w-full h-full object-contain"
+                            src={`/api/outputs/videos/${editingShot.id}.mp4?t=${cacheBuster[editingShot.id] || Date.now()}`}
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center p-4 text-center gap-2">
+                            <Video className="w-8 h-8 text-zinc-600" />
+                            <p className="text-xs text-zinc-400">Chưa render video clip cho phân cảnh này.</p>
+                            <button
+                              type="button"
+                              onClick={() => handleRenderVideo(editingShot.id)}
+                              disabled={renderingVideoShotId === editingShot.id}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-95"
+                            >
+                              {renderingVideoShotId === editingShot.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Play className="w-3.5 h-3.5 fill-current" />
+                              )}
+                              <span>Render Video Clip Ngay</span>
+                            </button>
+                          </div>
+                        )
+                      ) : (
+                        editingShot.has_image || cacheBuster[editingShot.id] ? (
+                          <img
+                            key={`modal-img-${editingShot.id}-${cacheBuster[editingShot.id] || ''}`}
+                            src={`/api/outputs/images/${editingShot.id}.png?t=${cacheBuster[editingShot.id] || Date.now()}`}
+                            alt={editingShot.id}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center p-4 text-center gap-2">
+                            <Film className="w-8 h-8 text-zinc-600" />
+                            <p className="text-xs text-zinc-400">Chưa có ảnh phân cảnh.</p>
+                            <button
+                              type="button"
+                              onClick={() => handleRerollShot(editingShot.id)}
+                              disabled={rerollingShotId === editingShot.id}
+                              className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md"
+                            >
+                              <Sparkles className="w-3.5 h-3.5" />
+                              <span>Vẽ ảnh AI bằng Flux</span>
+                            </button>
+                          </div>
+                        )
+                      )}
+                    </div>
+
+                    {/* Media Actions Toolbar */}
+                    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleRerollShot(editingShot.id)}
+                        disabled={rerollingShotId === editingShot.id}
+                        className="px-2.5 py-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-amber-400 border border-studio-border text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Tạo lại hình ảnh AI cho phân cảnh này"
+                      >
+                        {rerollingShotId === editingShot.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                        ) : (
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        )}
+                        <span>Tạo lại ảnh</span>
+                      </button>
+
+                      <label
+                        className="px-2.5 py-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-white border border-studio-border text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Tải ảnh tùy chỉnh từ máy tính"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Tải ảnh lên</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleUploadImage(editingShot.id, e)}
+                          disabled={uploadingShotId === editingShot.id}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRenderVideo(editingShot.id)}
+                        disabled={renderingVideoShotId === editingShot.id}
+                        className="px-2.5 py-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-emerald-400 border border-studio-border text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Tạo video chuyển động (Ken Burns)"
+                      >
+                        {renderingVideoShotId === editingShot.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                        ) : (
+                          <Video className="w-3.5 h-3.5 text-emerald-400" />
+                        )}
+                        <span>{editingShot.has_video ? 'Render lại Video' : 'Render Video'}</span>
+                      </button>
+
+                      {editingShot.has_video && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemuxVideo(editingShot.id)}
+                          disabled={remuxingShotId === editingShot.id}
+                          className="px-2.5 py-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Ghép ngay âm thanh mới vào video đã render mà không phải render lại hình ảnh (chỉ 0.1s)"
+                        >
+                          {remuxingShotId === editingShot.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-sky-400" />
+                          ) : (
+                            <Zap className="w-3.5 h-3.5 text-sky-400" />
+                          )}
+                          <span>Ghép lại Audio (Fast Remux)</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Audio Mixing Rack (Phòng Thu Âm & Hòa Âm) */}
+                  <div className="bg-gradient-to-br from-studio-card to-studio-deck rounded-2xl border border-studio-border p-3.5 flex flex-col gap-3 shadow-lg">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-studio-border">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                        <Volume2 className="w-4 h-4 text-amber-400" />
+                        Phòng Hòa Âm & Trộn Âm Lượng (Audio Mixer)
+                      </span>
+                      {editingShot.has_audio && (
+                        <span className="text-[9px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-mono">
+                          Audio Sẵn Sàng
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Track 1: Voice / Speech Audio */}
+                    <div className="bg-studio-input/80 rounded-xl border border-studio-border p-2.5 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
+                          <span>🗣️ Giọng đọc thoại</span>
+                          <span className="text-[10px] font-mono text-amber-400">({Math.round(editVoiceVolume * 100)}%)</span>
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleRenderAudio(editingShot.id)}
+                            disabled={renderingAudioShotId === editingShot.id}
+                            className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-semibold flex items-center gap-1 cursor-pointer transition-colors"
+                            title="Tạo giọng đọc TTS trực tiếp"
+                          >
+                            {renderingAudioShotId === editingShot.id ? (
+                              <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
+                            ) : (
+                              <Volume2 className="w-3 h-3" />
+                            )}
+                            <span>Tạo TTS</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Voice Volume Slider */}
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-[10px] text-zinc-400 font-mono w-9">
+                          {editVoiceVolume <= 0.01 ? 'Tắt' : `${Math.round(editVoiceVolume * 100)}%`}
+                        </span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="2"
+                          step="0.05"
+                          value={editVoiceVolume}
+                          onChange={(e) => setEditVoiceVolume(parseFloat(e.target.value))}
+                          className="flex-1 accent-amber-400 h-1.5 bg-zinc-700 rounded-lg cursor-pointer"
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditVoiceVolume(1.0)}
+                            className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                              Math.abs(editVoiceVolume - 1.0) < 0.01
+                                ? 'bg-amber-400 text-zinc-950 font-bold border-amber-400'
+                                : 'bg-studio-card text-zinc-400 hover:text-white border-studio-border'
+                            }`}
+                            title="Đặt về chuẩn 100%"
+                          >
+                            100%
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditVoiceVolume(1.5)}
+                            className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                              Math.abs(editVoiceVolume - 1.5) < 0.01
+                                ? 'bg-amber-400 text-zinc-950 font-bold border-amber-400'
+                                : 'bg-studio-card text-zinc-400 hover:text-white border-studio-border'
+                            }`}
+                            title="Tăng âm lượng 150%"
+                          >
+                            150%
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Track 2: Ambient SFX Audio */}
+                    <div className="bg-studio-input/80 rounded-xl border border-studio-border p-2.5 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
+                          <span>🍃 Âm thanh môi trường (SFX)</span>
+                          <span className="text-[10px] font-mono text-sky-400">({Math.round(editSfxVolume * 100)}%)</span>
+                        </span>
+                        {editSfx && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handlePlaySfx(editSfx)}
+                              className={`text-[10px] px-2 py-0.5 rounded-md flex items-center gap-1 transition-colors cursor-pointer ${
+                                playingSfx === editSfx
+                                  ? 'bg-sky-500/30 text-sky-200 border border-sky-400'
+                                  : 'bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/20'
+                              }`}
+                              title="Nghe thử âm thanh SFX"
+                            >
+                              <Volume2 className="w-3 h-3" />
+                              <span>{playingSfx === editSfx ? 'Dừng' : 'Nghe SFX'}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditSfx('')}
+                              className="text-[10px] px-1.5 py-0.5 rounded-md text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                              title="Tắt âm thanh môi trường"
+                            >
+                              ✕ Tắt
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <input
+                        type="text"
+                        value={editSfx}
+                        onChange={(e) => setEditSfx(e.target.value)}
+                        placeholder="Chọn preset bên dưới hoặc nhập SFX (rain, wind, thunder, waves...)"
+                        className="w-full rounded-xl bg-studio-deck border border-studio-border p-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
+                      />
+
+                      {/* Preset Chips */}
+                      <div className="flex flex-wrap gap-1">
+                        {SFX_PRESETS.map((preset) => (
+                          <button
+                            key={preset.key}
+                            type="button"
+                            onClick={() => setEditSfx(preset.key)}
+                            className={`text-[10px] px-1.5 py-0.5 rounded-md border transition-all cursor-pointer flex items-center gap-1 ${
+                              editSfx.toLowerCase().trim() === preset.key
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-bold'
+                                : 'bg-studio-deck hover:bg-studio-card text-zinc-400 hover:text-zinc-200 border-studio-border'
+                            }`}
+                          >
+                            <span>{preset.label}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* SFX Volume Slider */}
+                      <div className="flex items-center gap-2.5 pt-0.5">
+                        <span className="text-[10px] text-zinc-400 font-mono w-9">
+                          {editSfxVolume <= 0.01 ? 'Tắt' : `${Math.round(editSfxVolume * 100)}%`}
+                        </span>
+                        <input
+                          type="range"
+                          min="0"
+                          max="2"
+                          step="0.05"
+                          value={editSfxVolume}
+                          onChange={(e) => setEditSfxVolume(parseFloat(e.target.value))}
+                          className="flex-1 accent-sky-400 h-1.5 bg-zinc-700 rounded-lg cursor-pointer"
+                        />
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setEditSfxVolume(0.5)}
+                            className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                              Math.abs(editSfxVolume - 0.5) < 0.01
+                                ? 'bg-sky-400 text-zinc-950 font-bold border-sky-400'
+                                : 'bg-studio-card text-zinc-400 hover:text-white border-studio-border'
+                            }`}
+                            title="Âm lượng nền 50%"
+                          >
+                            50%
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditSfxVolume(1.0)}
+                            className={`text-[9px] px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                              Math.abs(editSfxVolume - 1.0) < 0.01
+                                ? 'bg-sky-400 text-zinc-950 font-bold border-sky-400'
+                                : 'bg-studio-card text-zinc-400 hover:text-white border-studio-border'
+                            }`}
+                            title="Chuẩn 100%"
+                          >
+                            100%
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Master Mixed Audio Player */}
+                    <div className="flex items-center justify-between pt-1 border-t border-studio-border/60">
+                      <span className="text-[11px] font-semibold text-zinc-300">
+                        🎵 Nghe Audio tổng hợp:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handlePlayShotAudio(editingShot.id)}
+                        className={`text-xs px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                          playingShotAudio === editingShot.id
+                            ? 'bg-amber-400 text-zinc-950 border-amber-300 shadow-md font-bold'
+                            : 'bg-studio-input hover:bg-studio-card text-zinc-200 border-studio-border'
+                        }`}
+                      >
+                        <Play className={`w-3 h-3 ${playingShotAudio === editingShot.id ? 'fill-zinc-950' : 'fill-current'}`} />
+                        <span>{playingShotAudio === editingShot.id ? 'Dừng phát' : 'Nghe Audio Shot'}</span>
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                    Mô tả hình ảnh điện ảnh (Flux Prompt):
-                  </label>
-                  <textarea
-                    value={editPrompt}
-                    onChange={(e) => setEditPrompt(e.target.value)}
-                    rows={3}
-                    placeholder="Prompt tạo hình ảnh (tiếng Anh hoặc tiếng Việt)..."
-                    className="w-full rounded-xl bg-studio-input border border-studio-border p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 transition-colors font-mono leading-relaxed"
-                  />
-                  <p className="text-[10px] text-zinc-400 mt-1">
-                    * Khi thay đổi prompt, hình ảnh của phân cảnh này sẽ tự động được vẽ lại bằng Flux.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* RIGHT COLUMN: SCRIPT & CINEMATOGRAPHY (lg:col-span-7) */}
+                <form onSubmit={handleSaveShot} className="lg:col-span-7 flex flex-col gap-3.5">
+                  {/* Dialogue */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                      Nhân vật phát ngôn:
-                    </label>
-                    <CustomSelect
-                      value={editCharacterId}
-                      onChange={setEditCharacterId}
-                      options={characterOptions}
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[11px] font-semibold uppercase tracking-wider text-zinc-300">
+                        Lời thoại nhân vật (Dialogue):
+                      </label>
+                      <span className="text-[10px] text-zinc-400 font-mono">
+                        {editDialogue.length} ký tự
+                      </span>
+                    </div>
+                    <textarea
+                      value={editDialogue}
+                      onChange={(e) => setEditDialogue(e.target.value)}
+                      rows={3}
+                      placeholder="Nhập lời thoại của nhân vật trong phân cảnh này..."
+                      className="w-full rounded-xl bg-studio-input border border-studio-border p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 transition-colors font-sans leading-relaxed"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                      Chuyển động Camera (Ease-In-Out):
-                    </label>
-                    <CustomSelect
-                      value={editMotion}
-                      onChange={setEditMotion}
-                      options={MOTION_OPTIONS}
-                    />
-                  </div>
-                </div>
+                  {/* Character & Motion */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
+                        Nhân vật phát ngôn:
+                      </label>
+                      <CustomSelect
+                        value={editCharacterId}
+                        onChange={setEditCharacterId}
+                        options={characterOptions}
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                      Khung hình (Shot Size):
-                    </label>
-                    <CustomSelect
-                      value={editShotSize}
-                      onChange={setEditShotSize}
-                      options={SHOT_SIZE_OPTIONS}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                      Góc máy (Angle):
-                    </label>
-                    <CustomSelect
-                      value={editCameraAngle}
-                      onChange={setEditCameraAngle}
-                      options={CAMERA_ANGLE_OPTIONS}
-                    />
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
+                        Chuyển động Camera (Ease-In-Out):
+                      </label>
+                      <CustomSelect
+                        value={editMotion}
+                        onChange={setEditMotion}
+                        options={MOTION_OPTIONS}
+                      />
+                    </div>
                   </div>
 
+                  {/* Visual Prompt */}
                   <div>
-                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                      Ánh sáng (Lighting):
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
+                      Mô tả hình ảnh điện ảnh (Flux Prompt):
                     </label>
-                    <CustomSelect
-                      value={editLighting}
-                      onChange={setEditLighting}
-                      options={LIGHTING_OPTIONS}
+                    <textarea
+                      value={editPrompt}
+                      onChange={(e) => setEditPrompt(e.target.value)}
+                      rows={3}
+                      placeholder="Mô tả bối cảnh, ánh sáng, góc chụp chi tiết cho AI (tiếng Anh hoặc tiếng Việt)..."
+                      className="w-full rounded-xl bg-studio-input border border-studio-border p-3 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 transition-colors font-mono leading-relaxed"
                     />
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                    Âm thanh môi trường (SFX):
-                  </label>
-                  <input
-                    type="text"
-                    value={editSfx}
-                    onChange={(e) => setEditSfx(e.target.value)}
-                    placeholder="e.g. rain, thunder, wind, waves..."
-                    className="w-full rounded-xl bg-studio-input border border-studio-border p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
-                  />
-                </div>
+                  {/* Cinematography Parameters */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
+                        Khung hình (Shot Size):
+                      </label>
+                      <CustomSelect
+                        value={editShotSize}
+                        onChange={setEditShotSize}
+                        options={SHOT_SIZE_OPTIONS}
+                      />
+                    </div>
 
-                <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-studio-border">
-                  <button
-                    type="button"
-                    disabled={updateShotMutation.isPending}
-                    onClick={() => setEditingShot(null)}
-                    className="px-3.5 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer"
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={updateShotMutation.isPending}
-                    className="px-5 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-zinc-950 flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors shadow-md shadow-amber-500/20 active:scale-[0.98]"
-                  >
-                    {updateShotMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Đang lưu...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-3.5 h-3.5" />
-                        <span>Lưu Thay Đổi</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
+                        Góc máy (Angle):
+                      </label>
+                      <CustomSelect
+                        value={editCameraAngle}
+                        onChange={setEditCameraAngle}
+                        options={CAMERA_ANGLE_OPTIONS}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
+                        Ánh sáng (Lighting):
+                      </label>
+                      <CustomSelect
+                        value={editLighting}
+                        onChange={setEditLighting}
+                        options={LIGHTING_OPTIONS}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
+                        Cảm xúc phân cảnh (Mood):
+                      </label>
+                      <CustomSelect
+                        value={editMood}
+                        onChange={setEditMood}
+                        options={MOOD_OPTIONS}
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
+                        Tâm lý nhân vật (Emotion):
+                      </label>
+                      <CustomSelect
+                        value={editEmotion}
+                        onChange={setEditEmotion}
+                        options={EMOTION_OPTIONS}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-studio-input/40 border border-studio-border/60 text-[11px] text-zinc-400 flex items-start gap-2 mt-auto">
+                    <span className="text-amber-400 text-sm leading-none shrink-0">💡</span>
+                    <span>
+                      <strong>Bảo toàn video:</strong> Khi đổi lời thoại, giọng đọc, âm thanh môi trường hoặc âm lượng, hệ thống sẽ tự động hòa âm và ghép lại vào video clip chỉ trong 0.1s mà không phải render lại khung hình video!
+                    </span>
+                  </div>
+
+                  {/* Modal Footer Actions */}
+                  <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-studio-border">
+                    <button
+                      type="button"
+                      disabled={updateShotMutation.isPending}
+                      onClick={() => setEditingShot(null)}
+                      className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer"
+                    >
+                      Đóng
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={updateShotMutation.isPending}
+                      className="px-6 py-2 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 text-zinc-950 flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-all shadow-md shadow-amber-500/20 active:scale-[0.98]"
+                    >
+                      {updateShotMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Đang lưu & hòa âm...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>Lưu Thay Đổi (Save Changes)</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1876,12 +2444,85 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       options={LIGHTING_OPTIONS}
                     />
                   </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Cảm xúc (Mood):
+                    </label>
+                    <CustomSelect
+                      value={newShotMood}
+                      onChange={setNewShotMood}
+                      options={MOOD_OPTIONS}
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Tâm lý nhân vật (Emotion):
+                    </label>
+                    <CustomSelect
+                      value={newShotEmotion}
+                      onChange={setNewShotEmotion}
+                      options={EMOTION_OPTIONS}
+                    />
+                  </div>
+                </div>
+
+                {/* Volumes in Add Shot */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-studio-input/50 rounded-xl border border-studio-border">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-semibold text-zinc-300">Âm lượng giọng đọc:</span>
+                      <span className="text-[10px] font-mono text-amber-400">{Math.round(newShotVoiceVolume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="2"
+                      step="0.05"
+                      value={newShotVoiceVolume}
+                      onChange={(e) => setNewShotVoiceVolume(parseFloat(e.target.value))}
+                      className="w-full accent-amber-400 h-1.5 bg-zinc-700 rounded-lg cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[11px] font-semibold text-zinc-300">Âm lượng SFX:</span>
+                      <span className="text-[10px] font-mono text-sky-400">{Math.round(newShotSfxVolume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="2"
+                      step="0.05"
+                      value={newShotSfxVolume}
+                      onChange={(e) => setNewShotSfxVolume(parseFloat(e.target.value))}
+                      className="w-full accent-sky-400 h-1.5 bg-zinc-700 rounded-lg cursor-pointer"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1.5">
-                    Âm thanh môi trường (SFX):
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300">
+                      Âm thanh môi trường (SFX):
+                    </label>
+                    {newShotSfx && (
+                      <button
+                        type="button"
+                        onClick={() => handlePlaySfx(newShotSfx)}
+                        className={`text-[11px] px-2 py-0.5 rounded flex items-center gap-1 transition-colors cursor-pointer ${
+                          playingSfx === newShotSfx
+                            ? 'bg-sky-500/30 text-sky-200 border border-sky-400'
+                            : 'bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border border-sky-500/20'
+                        }`}
+                        title="Nghe thử âm thanh hiện tại"
+                      >
+                        <Volume2 className="w-3 h-3" />
+                        <span>{playingSfx === newShotSfx ? 'Dừng phát' : 'Nghe thử'}</span>
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={newShotSfx}
@@ -1889,6 +2530,33 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     placeholder="e.g. rain, thunder, wind, waves..."
                     className="w-full rounded-xl bg-studio-input border border-studio-border p-2.5 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-mono"
                   />
+                  {/* Preset chips */}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {SFX_PRESETS.map((preset) => (
+                      <button
+                        key={preset.key}
+                        type="button"
+                        onClick={() => setNewShotSfx(preset.key)}
+                        className={`text-[10px] px-2 py-1 rounded-lg border transition-all cursor-pointer flex items-center gap-1 ${
+                          newShotSfx.toLowerCase().trim() === preset.key
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 font-medium'
+                            : 'bg-studio-input hover:bg-studio-card text-zinc-400 hover:text-zinc-200 border-studio-border'
+                        }`}
+                      >
+                        <span>{preset.label}</span>
+                      </button>
+                    ))}
+                    {newShotSfx && (
+                      <button
+                        type="button"
+                        onClick={() => setNewShotSfx('')}
+                        className="text-[10px] px-2 py-1 rounded-lg border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 text-red-300 transition-colors cursor-pointer"
+                        title="Xóa âm thanh ngoại cảnh"
+                      >
+                        ✕ Xóa SFX
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-studio-border">

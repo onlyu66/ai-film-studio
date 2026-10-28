@@ -122,6 +122,72 @@ def match_target_amplitude(sound: AudioSegment, target_dBFS: float = -20.0) -> A
     gain = target_dBFS - sound.dBFS
     return sound.apply_gain(gain)
 
+def mix_sfx_into_shot_audio(
+    speech_audio_path: Optional[Path],
+    sfx_str: Optional[str],
+    shot_duration: float,
+    output_path: Path,
+    voice_volume: float = 1.0,
+    sfx_volume: float = 1.0,
+) -> Path:
+    """Mix speech audio with ambient/environmental SFX into a high-quality audio file for shot preview.
+    Supports independent volume scaling (0.0 to 2.0).
+    """
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    shot_dur_ms = max(1000, int(round(shot_duration * 1000)))
+
+    has_speech = False
+    if speech_audio_path and Path(speech_audio_path).exists() and Path(speech_audio_path).stat().st_size > 0:
+        try:
+            segment = AudioSegment.from_file(str(speech_audio_path))
+            has_speech = True
+
+            v_vol = max(0.0, float(voice_volume))
+            if v_vol <= 0.001:
+                segment = AudioSegment.silent(duration=len(segment))
+            elif abs(v_vol - 1.0) > 0.001:
+                import math
+                gain = 20 * math.log10(v_vol)
+                segment = segment.apply_gain(gain)
+
+            if len(segment) < shot_dur_ms:
+                silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
+                segment = segment + silence_gap
+            else:
+                segment = segment[:shot_dur_ms]
+        except Exception:
+            segment = AudioSegment.silent(duration=shot_dur_ms)
+    else:
+        segment = AudioSegment.silent(duration=shot_dur_ms)
+
+    sfx_vol = max(0.0, float(sfx_volume))
+    if sfx_vol > 0.001:
+        sfx_file = resolve_sfx_path(sfx_str)
+        if sfx_file and sfx_file.exists():
+            try:
+                import math
+                sfx_seg = AudioSegment.from_file(str(sfx_file))
+                base_target_dbfs = -22.0 if has_speech else -17.0
+                sfx_gain = 20 * math.log10(sfx_vol)
+                target_sfx_dbfs = max(-60.0, min(-5.0, base_target_dbfs + sfx_gain))
+                sfx_seg = match_target_amplitude(sfx_seg, target_dBFS=target_sfx_dbfs)
+
+                if len(sfx_seg) < shot_dur_ms:
+                    loops = (shot_dur_ms // len(sfx_seg)) + 1
+                    sfx_seg = (sfx_seg * loops)[:shot_dur_ms]
+                else:
+                    sfx_seg = sfx_seg[:shot_dur_ms]
+                segment = segment.overlay(sfx_seg)
+            except Exception as e:
+                print(f"  [SFX Warning] Failed to overlay SFX '{sfx_str}': {e}")
+
+    segment.export(str(output_path), format="mp3", bitrate="192k")
+    return output_path
+
+    segment.export(str(output_path), format="mp3", bitrate="192k")
+    return output_path
+
 def build_master_audio(
     storyboard: Storyboard,
     audio_dir: Path,
@@ -148,12 +214,27 @@ def build_master_audio(
         shot_dur = durations.get(shot.id, shot.duration or 5.0)
         shot_dur_ms = int(round(shot_dur * 1000))
 
-        has_speech = False
-        audio_file = audio_dir / f"{shot.id}.mp3"
-        if audio_file.exists() and shot.dialogue and shot.dialogue.strip():
-            segment = AudioSegment.from_file(str(audio_file))
-            has_speech = True
-            # Pad or trim narration to match shot duration
+        normal_audio_file = audio_dir / f"{shot.id}.mp3"
+        raw_audio_file = audio_dir / f"raw_{shot.id}.mp3"
+
+        if normal_audio_file.exists() and normal_audio_file.stat().st_size > 0:
+            segment = AudioSegment.from_file(str(normal_audio_file))
+            if len(segment) < shot_dur_ms:
+                silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
+                segment = segment + silence_gap
+            else:
+                segment = segment[:shot_dur_ms]
+        elif raw_audio_file.exists() or (shot.dialogue and shot.dialogue.strip()) or getattr(shot, "sfx", None):
+            speech_path = raw_audio_file if raw_audio_file.exists() else None
+            mix_sfx_into_shot_audio(
+                speech_audio_path=speech_path,
+                sfx_str=getattr(shot, "sfx", None),
+                shot_duration=shot_dur,
+                output_path=normal_audio_file,
+                voice_volume=getattr(shot, "voice_volume", 1.0),
+                sfx_volume=getattr(shot, "sfx_volume", 1.0),
+            )
+            segment = AudioSegment.from_file(str(normal_audio_file))
             if len(segment) < shot_dur_ms:
                 silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
                 segment = segment + silence_gap
@@ -161,24 +242,6 @@ def build_master_audio(
                 segment = segment[:shot_dur_ms]
         else:
             segment = AudioSegment.silent(duration=shot_dur_ms)
-
-        # Mix environmental SFX if specified
-        sfx_file = resolve_sfx_path(getattr(shot, "sfx", None))
-        if sfx_file and sfx_file.exists():
-            try:
-                sfx_seg = AudioSegment.from_file(str(sfx_file))
-                # Target SFX volume: -22 dBFS during speech (subtle backdrop), -17 dBFS when no speech
-                target_sfx_dbfs = -22.0 if has_speech else -17.0
-                sfx_seg = match_target_amplitude(sfx_seg, target_dBFS=target_sfx_dbfs)
-
-                if len(sfx_seg) < shot_dur_ms:
-                    loops = (shot_dur_ms // len(sfx_seg)) + 1
-                    sfx_seg = (sfx_seg * loops)[:shot_dur_ms]
-                else:
-                    sfx_seg = sfx_seg[:shot_dur_ms]
-                segment = segment.overlay(sfx_seg)
-            except Exception:
-                pass
 
         master += segment
 

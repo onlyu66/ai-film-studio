@@ -98,7 +98,9 @@ def generate_audio_for_shot(
     shot: Shot,
     characters: Dict[str, Character],
     output_dir: Path,
-    lang: str = "en"
+    lang: str = "en",
+    default_lang: Optional[str] = None,
+    overwrite: bool = False,
 ) -> Optional[Path]:
     """Generate audio file for a single shot dialogue with robust retry and fallback."""
     if not shot.dialogue or not shot.dialogue.strip():
@@ -109,12 +111,13 @@ def generate_audio_for_shot(
     output_dir.mkdir(parents=True, exist_ok=True)
     out_file = output_dir / f"{shot.id}.mp3"
 
-    # Reuse if already generated and non-empty
-    if out_file.exists() and out_file.stat().st_size > 0:
+    # Reuse if already generated and non-empty unless overwrite is requested
+    if not overwrite and out_file.exists() and out_file.stat().st_size > 0:
         return out_file
 
-    primary_voice = resolve_voice(shot, characters, default_lang=lang)
-    lang_key = (lang or "en").lower().split("-")[0]
+    effective_lang = default_lang or lang or "en"
+    primary_voice = resolve_voice(shot, characters, default_lang=effective_lang)
+    lang_key = (effective_lang or "en").lower().split("-")[0]
 
     # Ordered candidate voices to try
     candidate_voices = [primary_voice]

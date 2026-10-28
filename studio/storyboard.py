@@ -33,6 +33,8 @@ class Shot:
     camera_angle: Optional[str] = None
     lighting: Optional[str] = None
     is_approved: bool = False
+    voice_volume: float = 1.0
+    sfx_volume: float = 1.0
 
 @dataclass
 class Storyboard:
@@ -73,6 +75,8 @@ class Storyboard:
                     "camera_angle": s.camera_angle,
                     "lighting": s.lighting,
                     "is_approved": s.is_approved,
+                    "voice_volume": getattr(s, "voice_volume", 1.0),
+                    "sfx_volume": getattr(s, "sfx_volume", 1.0),
                 }
                 for s in self.shots
             ],
@@ -160,6 +164,8 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                     camera_angle=str(s["camera_angle"]).strip().lower() if s.get("camera_angle") else None,
                     lighting=str(s["lighting"]).strip().lower() if s.get("lighting") else None,
                     is_approved=bool(s.get("is_approved", False)),
+                    voice_volume=float(s.get("voice_volume", 1.0)) if s.get("voice_volume") is not None else 1.0,
+                    sfx_volume=float(s.get("sfx_volume", 1.0)) if s.get("sfx_volume") is not None else 1.0,
                 )
             )
 

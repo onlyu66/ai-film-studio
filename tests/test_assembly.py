@@ -64,3 +64,23 @@ def test_resolve_sfx_path():
     wind_path = resolve_sfx_path("tiếng gió rít")
     if wind_path:
         assert "wind" in str(wind_path).lower()
+
+def test_mix_sfx_volume_controls(tmp_path):
+    from pydub import AudioSegment
+    from studio.assembly import mix_sfx_into_shot_audio
+
+    # Create dummy speech audio
+    speech_path = tmp_path / "speech.mp3"
+    AudioSegment.silent(duration=1500).export(str(speech_path), format="mp3")
+
+    out_path = tmp_path / "mixed.mp3"
+    res = mix_sfx_into_shot_audio(
+        speech_audio_path=speech_path,
+        sfx_str="wind",
+        shot_duration=2.0,
+        output_path=out_path,
+        voice_volume=1.5,
+        sfx_volume=0.5,
+    )
+    assert res.exists()
+    assert res.stat().st_size > 0

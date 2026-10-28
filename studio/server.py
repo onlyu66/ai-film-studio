@@ -518,6 +518,8 @@ def get_storyboard():
                 s["has_audio"] = bool(sid and sid in valid_audios)
                 s["has_video"] = bool(sid and sid in valid_vids)
                 s["is_approved"] = bool(s.get("is_approved", False))
+                s["voice_volume"] = float(s.get("voice_volume", 1.0) if s.get("voice_volume") is not None else 1.0)
+                s["sfx_volume"] = float(s.get("sfx_volume", 1.0) if s.get("sfx_volume") is not None else 1.0)
                 s["image_url"] = f"/api/outputs/images/{sid}.png" if s["has_image"] else None
                 s["audio_url"] = f"/api/outputs/audio/{sid}.mp3" if s["has_audio"] else None
                 s["video_url"] = f"/api/outputs/videos/{sid}.mp4" if s["has_video"] else None
@@ -596,6 +598,33 @@ def update_character_voice(req: UpdateVoiceRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+def fast_remux_video_audio(vid_file: Path, audio_file: Path) -> bool:
+    """Mux new audio into existing video clip in ~50ms using -c:v copy without re-rendering visual frames."""
+    if not vid_file.exists() or not audio_file.exists() or audio_file.stat().st_size == 0:
+        return False
+    temp_vid = vid_file.parent / f"temp_remux_{vid_file.name}"
+    try:
+        vid_file.rename(temp_vid)
+        mux_cmd = [
+            "ffmpeg", "-y",
+            "-i", str(temp_vid),
+            "-i", str(audio_file),
+            "-c:v", "copy",
+            "-c:a", "aac",
+            "-b:a", "192k",
+            "-shortest",
+            "-movflags", "+faststart",
+            str(vid_file)
+        ]
+        subprocess.run(mux_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        temp_vid.unlink(missing_ok=True)
+        return True
+    except Exception as exc:
+        log_message(f"[FastRemux Warning] Không thể ghép lại audio vào video clip: {exc}")
+        if temp_vid.exists() and not vid_file.exists():
+            temp_vid.rename(vid_file)
+        return False
+
 class UpdateShotRequest(BaseModel):
     shot_id: str
     dialogue: Optional[str] = None
@@ -608,6 +637,8 @@ class UpdateShotRequest(BaseModel):
     shot_size: Optional[str] = None
     camera_angle: Optional[str] = None
     lighting: Optional[str] = None
+    voice_volume: Optional[float] = None
+    sfx_volume: Optional[float] = None
 
 @app.post("/api/storyboard/update-shot")
 def update_shot(req: UpdateShotRequest):
@@ -638,30 +669,43 @@ def update_shot(req: UpdateShotRequest):
             except Exception:
                 state = None
 
+        audio_setting_changed = False
+        speech_text_or_char_changed = False
+
         if req.dialogue is not None:
-            target_shot["dialogue"] = req.dialogue
-            audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
-            audio_file.unlink(missing_ok=True)
-            vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
-            vid_file.unlink(missing_ok=True)
-            if state:
-                state.reset_shot(req.shot_id, "audio")
-                state.reset_shot(req.shot_id, "video")
+            if req.dialogue != target_shot.get("dialogue"):
+                target_shot["dialogue"] = req.dialogue
+                speech_text_or_char_changed = True
+                audio_setting_changed = True
 
         if req.character_id is not None:
             old_char = target_shot.get("character_id")
             new_char = req.character_id if req.character_id else None
-            target_shot["character_id"] = new_char
             if old_char != new_char:
-                audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
-                audio_file.unlink(missing_ok=True)
-                vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
-                vid_file.unlink(missing_ok=True)
-                if state:
-                    state.reset_shot(req.shot_id, "audio")
-                    state.reset_shot(req.shot_id, "video")
+                target_shot["character_id"] = new_char
+                speech_text_or_char_changed = True
+                audio_setting_changed = True
 
-        if req.image_prompt is not None:
+        if req.sfx is not None:
+            new_sfx = req.sfx if req.sfx else None
+            if new_sfx != target_shot.get("sfx"):
+                target_shot["sfx"] = new_sfx
+                audio_setting_changed = True
+
+        if req.voice_volume is not None:
+            v_vol = round(max(0.0, min(2.0, float(req.voice_volume))), 2)
+            if v_vol != target_shot.get("voice_volume"):
+                target_shot["voice_volume"] = v_vol
+                audio_setting_changed = True
+
+        if req.sfx_volume is not None:
+            s_vol = round(max(0.0, min(2.0, float(req.sfx_volume))), 2)
+            if s_vol != target_shot.get("sfx_volume"):
+                target_shot["sfx_volume"] = s_vol
+                audio_setting_changed = True
+
+        # Visual changes reset video; audio changes PRESERVE existing video
+        if req.image_prompt is not None and req.image_prompt != target_shot.get("image_prompt"):
             target_shot["image_prompt"] = req.image_prompt
             image_file = Path(f"outputs/images/{req.shot_id}.png")
             image_file.unlink(missing_ok=True)
@@ -671,15 +715,12 @@ def update_shot(req: UpdateShotRequest):
                 state.reset_shot(req.shot_id, "image")
                 state.reset_shot(req.shot_id, "video")
 
-        if req.motion is not None:
+        if req.motion is not None and req.motion != target_shot.get("motion"):
             target_shot["motion"] = req.motion
             vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
             vid_file.unlink(missing_ok=True)
             if state:
                 state.reset_shot(req.shot_id, "video")
-
-        if req.sfx is not None:
-            target_shot["sfx"] = req.sfx if req.sfx else None
 
         if req.mood is not None:
             target_shot["mood"] = req.mood if req.mood else None
@@ -698,6 +739,38 @@ def update_shot(req: UpdateShotRequest):
 
         # Reset approval when a shot's content or visuals are modified
         target_shot["is_approved"] = False
+
+        # If audio settings changed (volumes or sfx) and speech raw exists, auto re-mix and fast remux into video!
+        audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
+        raw_audio_file = Path(f"outputs/audio/raw_{req.shot_id}.mp3")
+        vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
+
+        if audio_setting_changed:
+            if speech_text_or_char_changed:
+                # Text/character changed: invalidate raw speech so next audio generation fetches fresh TTS
+                raw_audio_file.unlink(missing_ok=True)
+                audio_file.unlink(missing_ok=True)
+                if state:
+                    state.reset_shot(req.shot_id, "audio")
+            elif raw_audio_file.exists() or audio_file.exists():
+                # Only volume or SFX changed: auto re-mix immediately without calling Edge TTS!
+                try:
+                    from studio.assembly import mix_sfx_into_shot_audio
+                    dur = float(target_shot.get("duration") or 5.0)
+                    speech_src = raw_audio_file if raw_audio_file.exists() else audio_file
+                    mix_sfx_into_shot_audio(
+                        speech_audio_path=speech_src,
+                        sfx_str=target_shot.get("sfx"),
+                        shot_duration=dur,
+                        output_path=audio_file,
+                        voice_volume=float(target_shot.get("voice_volume", 1.0) or 1.0),
+                        sfx_volume=float(target_shot.get("sfx_volume", 1.0) or 1.0),
+                    )
+                    # Video is PRESERVED and remuxed with new audio in ~50ms
+                    if vid_file.exists():
+                        fast_remux_video_audio(vid_file, audio_file)
+                except Exception as remux_err:
+                    log_message(f"[Auto-Remux Warning] {remux_err}")
 
         if state:
             state.save()
@@ -725,6 +798,8 @@ class AddShotRequest(BaseModel):
     shot_size: Optional[str] = None
     camera_angle: Optional[str] = None
     lighting: Optional[str] = None
+    voice_volume: Optional[float] = 1.0
+    sfx_volume: Optional[float] = 1.0
 
 @app.post("/api/storyboard/add-shot")
 def add_shot(req: AddShotRequest):
@@ -762,6 +837,9 @@ def add_shot(req: AddShotRequest):
             "shot_size": req.shot_size or "medium",
             "camera_angle": req.camera_angle or "eye_level",
             "lighting": req.lighting or "chiaroscuro",
+            "voice_volume": float(req.voice_volume if req.voice_volume is not None else 1.0),
+            "sfx_volume": float(req.sfx_volume if req.sfx_volume is not None else 1.0),
+            "is_approved": False,
         }
 
         shots.insert(insert_idx, new_shot)
@@ -892,6 +970,35 @@ def preview_voice(req: VoicePreviewRequest):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+AVAILABLE_SFX = [
+    {"key": "rain", "name": "Mưa rào (Rain)", "category": "Thời tiết", "desc": "Tiếng mưa rơi rải rác"},
+    {"key": "wind", "name": "Gió rít (Wind)", "category": "Thời tiết", "desc": "Tiếng gió hú lạnh lẽo"},
+    {"key": "thunder", "name": "Sấm sét (Thunder)", "category": "Thời tiết", "desc": "Tiếng sấm nổ vang trời"},
+    {"key": "waves", "name": "Sóng biển (Waves)", "category": "Tự nhiên", "desc": "Tiếng sóng biển rì rào"},
+    {"key": "campfire", "name": "Lửa trại (Campfire)", "category": "Tự nhiên", "desc": "Tiếng củi cháy tí tách"},
+    {"key": "birds", "name": "Chim hót (Birds)", "category": "Tự nhiên", "desc": "Tiếng chim hót trong rừng"},
+    {"key": "city", "name": "Phố xá (City)", "category": "Đô thị", "desc": "Âm thanh phố phường đông đúc"},
+    {"key": "traffic", "name": "Giao thông (Traffic)", "category": "Đô thị", "desc": "Tiếng còi xe và động cơ"},
+    {"key": "cyberpunk", "name": "Tàu không gian (Cyberpunk)", "category": "Sci-Fi", "desc": "Âm hưởng viễn tưởng, không gian"},
+]
+
+@app.get("/api/sfx/list")
+def list_sfx():
+    return {"sfx": AVAILABLE_SFX}
+
+@app.get("/api/assets/sfx/{file_name}")
+def serve_sfx_asset(file_name: str):
+    clean_name = file_name.replace(".mp3", "").lower().strip()
+    from studio.assembly import resolve_sfx_path
+    sfx_path = resolve_sfx_path(clean_name)
+    if not sfx_path or not sfx_path.exists():
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy âm thanh SFX '{clean_name}'.")
+    return FileResponse(
+        str(sfx_path),
+        media_type="audio/mpeg",
+        headers={"Cache-Control": "public, max-age=86400"}
+    )
 
 class RerollShotRequest(BaseModel):
     shot_id: str
@@ -1120,12 +1227,42 @@ def render_shot_audio(req: RenderShotAudioRequest):
         audio_dir.mkdir(parents=True, exist_ok=True)
 
         log_message(f"[Audio] Đang tạo giọng đọc riêng cho phân cảnh '{req.shot_id}'...")
-        path, dur = generate_audio_for_shot(
+        audio_path = generate_audio_for_shot(
             shot=target_shot,
             characters=sb.characters,
             output_dir=audio_dir,
-            default_lang=sb.language or "vi",
+            lang=sb.language or "vi",
+            overwrite=True,
         )
+
+        dur = 5.0
+        if audio_path and audio_path.exists():
+            from studio.tts import get_audio_duration
+            try:
+                dur = get_audio_duration(audio_path)
+            except Exception:
+                dur = target_shot.duration or 5.0
+        else:
+            dur = target_shot.duration or 5.0
+
+        # Backup raw speech and mix ambient SFX & custom volume gains
+        raw_copy = audio_dir / f"raw_{req.shot_id}.mp3"
+        if audio_path and audio_path.exists():
+            shutil.copy2(str(audio_path), str(raw_copy))
+
+        from studio.assembly import mix_sfx_into_shot_audio
+        v_vol = float(getattr(target_shot, "voice_volume", 1.0) or 1.0)
+        s_vol = float(getattr(target_shot, "sfx_volume", 1.0) or 1.0)
+        log_message(f"[Audio] Hòa âm giọng đọc (Vol {int(v_vol*100)}%) & SFX '{getattr(target_shot, 'sfx', None)}' (Vol {int(s_vol*100)}%) vào '{req.shot_id}'...")
+        mix_sfx_into_shot_audio(
+            speech_audio_path=raw_copy if (audio_path and raw_copy.exists()) else None,
+            sfx_str=getattr(target_shot, "sfx", None),
+            shot_duration=dur,
+            output_path=audio_dir / f"{req.shot_id}.mp3",
+            voice_volume=v_vol,
+            sfx_volume=s_vol,
+        )
+        audio_path = audio_dir / f"{req.shot_id}.mp3"
 
         with open(sb_file, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -1136,12 +1273,17 @@ def render_shot_audio(req: RenderShotAudioRequest):
         with open(sb_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
+        # If a video clip exists, fast-remux with the new audio so video preview is updated in ~50ms
+        vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
+        if vid_file.exists() and audio_path and audio_path.exists():
+            fast_remux_video_audio(vid_file, audio_path)
+
         invalidate_storyboard_cache()
         log_message(f"[Audio] Hoàn thành giọng đọc '{req.shot_id}' ({dur:.1f}s).")
         return {
             "success": True,
             "shot_id": req.shot_id,
-            "audio_url": f"/api/outputs/audio/{req.shot_id}.mp3?t={int(time.time())}",
+            "audio_url": f"/api/outputs/audio/{req.shot_id}.mp3?t={int(time.time())}" if (audio_path and audio_path.exists()) else None,
             "duration": dur,
         }
     except HTTPException:
@@ -1149,6 +1291,30 @@ def render_shot_audio(req: RenderShotAudioRequest):
     except Exception as e:
         log_message(f"[Audio Error] {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+class RemuxShotVideoRequest(BaseModel):
+    shot_id: str
+
+@app.post("/api/storyboard/remux-shot-video")
+def remux_shot_video(req: RemuxShotVideoRequest):
+    vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
+    audio_file = Path(f"outputs/audio/{req.shot_id}.mp3")
+    if not vid_file.exists():
+        raise HTTPException(status_code=404, detail=f"Phân cảnh '{req.shot_id}' chưa có video để ghép lại audio.")
+    if not audio_file.exists() or audio_file.stat().st_size == 0:
+        raise HTTPException(status_code=404, detail=f"Phân cảnh '{req.shot_id}' chưa có file audio hợp lệ để ghép vào video.")
+
+    success = fast_remux_video_audio(vid_file, audio_file)
+    if not success:
+        raise HTTPException(status_code=500, detail="Không thể ghép lại audio vào video clip.")
+
+    invalidate_storyboard_cache()
+    log_message(f"[FastRemux] Đã ghép lại âm thanh vào video clip '{req.shot_id}'.")
+    return {
+        "success": True,
+        "shot_id": req.shot_id,
+        "video_url": f"/api/outputs/videos/{req.shot_id}.mp4?t={int(time.time())}"
+    }
 
 class RenderShotVideoRequest(BaseModel):
     shot_id: str
@@ -1202,7 +1368,28 @@ def render_shot_video(req: RenderShotVideoRequest):
 
         audio_path = audio_dir / f"{target_shot.id}.mp3"
         dur = target_shot.duration or 5.0
-        if audio_path.exists():
+        if not audio_path.exists() or audio_path.stat().st_size == 0:
+            from studio.tts import generate_audio_for_shot, get_audio_duration
+            speech_path = generate_audio_for_shot(
+                shot=target_shot,
+                characters=sb.characters,
+                output_dir=audio_dir,
+                lang=sb.language or "vi",
+            )
+            if speech_path and speech_path.exists():
+                dur = get_audio_duration(speech_path)
+            raw_copy = audio_dir / f"raw_{target_shot.id}.mp3"
+            if speech_path and speech_path.exists():
+                shutil.copy2(str(speech_path), str(raw_copy))
+            if getattr(target_shot, "sfx", None):
+                from studio.assembly import mix_sfx_into_shot_audio
+                mix_sfx_into_shot_audio(
+                    speech_audio_path=raw_copy if raw_copy.exists() else None,
+                    sfx_str=target_shot.sfx,
+                    shot_duration=dur,
+                    output_path=audio_path,
+                )
+        elif audio_path.exists():
             try:
                 from pydub import AudioSegment
                 seg = AudioSegment.from_file(str(audio_path))
