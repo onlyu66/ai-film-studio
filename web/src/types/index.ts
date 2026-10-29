@@ -335,6 +335,62 @@ export interface SceneTransitionItem {
   default_duration: number
 }
 
+export interface VoiceProfileItem {
+  id: string
+  name: string
+  provider: 'elevenlabs' | 'local' | 'edge'
+  sample_audio_path?: string
+  gender: 'male' | 'female' | 'neutral'
+  lang: string
+  description?: string
+  created_at?: string
+  meta?: Record<string, any>
+}
+
+export interface CloneVoicePayload {
+  name: string
+  provider: 'elevenlabs' | 'local'
+  audio_base64: string
+  audio_filename?: string
+  description?: string
+  api_key?: string
+  api_url?: string
+  lang?: string
+  gender?: 'male' | 'female' | 'neutral'
+}
+
+export interface VoicePreviewPayload {
+  text: string
+  voice_id: string
+  provider?: 'elevenlabs' | 'local' | 'edge'
+  lang?: string
+  api_key?: string
+  api_url?: string
+}
+
+export interface DubbingRequestPayload {
+  project_id: string
+  target_lang: string
+  voice_mapping?: Record<string, string>
+}
+
+export interface DubbingResultResponse {
+  project_id: string
+  target_lang: string
+  language_name: string
+  status: string
+  translated_shots: Array<{
+    shot_id: string
+    original_text: string
+    translated_text: string
+    voice_id: string
+    audio_file: string
+  }>
+  subtitle_path: string
+  audio_dir: string
+}
+
+
 
 
 

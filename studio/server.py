@@ -2667,6 +2667,117 @@ def delete_project(project_id: str):
     shutil.rmtree(p_dir, ignore_errors=True)
     return {"success": True, "message": f"Đã xóa dự án {project_id}"}
 
+
+class CloneVoiceRequest(BaseModel):
+    name: str
+    provider: str = "local"  # "elevenlabs" | "local"
+    audio_base64: str
+    audio_filename: Optional[str] = "sample.mp3"
+    description: Optional[str] = None
+    api_key: Optional[str] = None
+    api_url: Optional[str] = None
+    lang: str = "vi"
+    gender: str = "neutral"
+
+
+class VoicePreviewRequest(BaseModel):
+    text: str
+    voice_id: str
+    provider: str = "edge"
+    lang: str = "vi"
+    api_key: Optional[str] = None
+    api_url: Optional[str] = None
+
+
+class CreateDubbingRequest(BaseModel):
+    project_id: str
+    target_lang: str
+    voice_mapping: Optional[Dict[str, str]] = None
+
+
+@app.get("/api/voice/list")
+def api_get_voice_list():
+    from studio.voice_clone import get_all_voices
+    voices = get_all_voices()
+    return [v.to_dict() for v in voices]
+
+
+@app.post("/api/voice/clone")
+def api_clone_voice(req: CloneVoiceRequest):
+    import base64
+    import uuid
+    from studio.voice_clone import clone_voice
+
+    b64 = req.audio_base64
+    if "," in b64:
+        b64 = b64.split(",", 1)[1]
+    raw_bytes = base64.b64decode(b64)
+
+    temp_dir = Path("outputs/temp")
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    fname = req.audio_filename or "sample.mp3"
+    tmp_file = temp_dir / f"upload_{uuid.uuid4().hex[:8]}_{fname}"
+    tmp_file.write_bytes(raw_bytes)
+
+    try:
+        profile = clone_voice(
+            provider=req.provider,
+            name=req.name,
+            audio_path=tmp_file,
+            api_key=req.api_key,
+            api_url=req.api_url,
+            description=req.description,
+            lang=req.lang,
+            gender=req.gender,
+        )
+        return profile.to_dict()
+    finally:
+        if tmp_file.exists():
+            tmp_file.unlink(missing_ok=True)
+
+
+@app.post("/api/voice/preview")
+def api_preview_voice(req: VoicePreviewRequest):
+    import uuid
+    from studio.voice_clone import synthesize_speech
+
+    temp_dir = Path("outputs/temp")
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    preview_file = temp_dir / f"prev_{uuid.uuid4().hex[:8]}.mp3"
+
+    try:
+        synthesize_speech(
+            text=req.text,
+            voice_id=req.voice_id,
+            provider=req.provider,
+            output_path=preview_file,
+            lang=req.lang,
+            api_key=req.api_key,
+            api_url=req.api_url,
+        )
+        return {
+            "success": True,
+            "audio_url": f"/api/outputs/temp/{preview_file.name}",
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Lỗi thử giọng: {exc}")
+
+
+@app.post("/api/dubbing/create")
+def api_create_dubbing(req: CreateDubbingRequest):
+    from studio.dubbing import run_dubbing_pipeline
+
+    try:
+        result = run_dubbing_pipeline(
+            project_id=req.project_id,
+            target_lang=req.target_lang,
+            voice_mapping=req.voice_mapping,
+        )
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi lồng tiếng: {exc}")
+
+
 @app.get("/api/outputs/{file_path:path}")
 def serve_output_file(file_path: str):
     full_path = Path("outputs") / file_path

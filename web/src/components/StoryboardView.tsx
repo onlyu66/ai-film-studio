@@ -26,6 +26,8 @@ import {
   Sliders,
   Zap,
   Palette,
+  Mic,
+  Languages,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -33,6 +35,8 @@ import { CustomSelect } from './ui/select'
 import TimelineScrubber from './TimelineScrubber'
 import CameraDirectorModal from './CameraDirectorModal'
 import ColorInspectorModal from './ColorInspectorModal'
+import VoiceCloneModal from './VoiceCloneModal'
+import DubbingModal from './DubbingModal'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
@@ -252,6 +256,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [approvingShotId, setApprovingShotId] = useState<string | null>(null)
   const [directorModalShot, setDirectorModalShot] = useState<any | null>(null)
   const [colorInspectorShot, setColorInspectorShot] = useState<{ shot: any; index: number } | null>(null)
+  const [isVoiceCloneOpen, setIsVoiceCloneOpen] = useState(false)
+  const [selectedCharForVoice, setSelectedCharForVoice] = useState<{ id: string; name: string } | null>(null)
+  const [isDubbingOpen, setIsDubbingOpen] = useState(false)
 
   const handleApplyLutToProject = (lutId: string) => {
     localStorage.setItem('studio_color_lut', lutId)
@@ -919,6 +926,18 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         ) : (
                           <Play className="w-4 h-4" />
                         )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedCharForVoice({ id, name: char.name || id })
+                          setIsVoiceCloneOpen(true)
+                        }}
+                        className="p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-medium transition-all flex items-center justify-center cursor-pointer shrink-0 active:scale-95"
+                        title="Nhân bản giọng AI (Tải audio hoặc thu âm mic trực tiếp)"
+                      >
+                        <Mic className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -1642,6 +1661,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     <span>Tải ASS</span>
                   </a>
                 </div>
+
+                {/* Multilingual Dubbing Studio CTA */}
+                <button
+                  type="button"
+                  onClick={() => setIsDubbingOpen(true)}
+                  className="px-4 py-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 hover:border-cyan-400/50 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap"
+                  title="Mở xưởng lồng tiếng đa ngôn ngữ (English, Japanese, French, Spanish, Chinese...)"
+                >
+                  <Languages className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span>Lồng Tiếng Đa Ngữ</span>
+                </button>
 
                 {/* Primary Master Assembly CTA */}
                 <button
@@ -2751,6 +2781,30 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
           currentProjectLut={localStorage.getItem('studio_color_lut') || 'none'}
         />
       )}
+
+      {/* AI Voice Clone Modal */}
+      <VoiceCloneModal
+        isOpen={isVoiceCloneOpen}
+        onClose={() => {
+          setIsVoiceCloneOpen(false)
+          setSelectedCharForVoice(null)
+        }}
+        characterId={selectedCharForVoice?.id}
+        characterName={selectedCharForVoice?.name}
+        onVoiceCloned={(clonedVoice) => {
+          if (selectedCharForVoice?.id) {
+            handleVoiceChange(selectedCharForVoice.id, clonedVoice.id)
+          }
+        }}
+      />
+
+      {/* Multilingual Dubbing Studio Modal */}
+      <DubbingModal
+        isOpen={isDubbingOpen}
+        onClose={() => setIsDubbingOpen(false)}
+        projectId="current"
+        characters={characters}
+      />
     </Card>
   )
 }

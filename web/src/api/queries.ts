@@ -43,6 +43,10 @@ import {
   applyMultiAngleShot,
   fetchColorLuts,
   fetchSceneTransitions,
+  fetchVoiceList,
+  cloneVoice,
+  previewVoiceSpeech,
+  createDubbing,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -502,6 +506,41 @@ export function useSceneTransitions() {
     staleTime: 10 * 60_000,
   })
 }
+
+export function useVoiceList() {
+  return useQuery({
+    queryKey: ['system', 'voice-list'],
+    queryFn: fetchVoiceList,
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useCloneVoice() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: cloneVoice,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['system', 'voice-list'] })
+    },
+  })
+}
+
+export function usePreviewVoiceSpeech() {
+  return useMutation({
+    mutationFn: previewVoiceSpeech,
+  })
+}
+
+export function useCreateDubbing() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: createDubbing,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
 
 
 

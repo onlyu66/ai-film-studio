@@ -421,6 +421,27 @@ export async function fetchSceneTransitions(): Promise<import('../types').SceneT
   return response.data
 }
 
+export async function fetchVoiceList(): Promise<import('../types').VoiceProfileItem[]> {
+  const response = await apiClient.get<import('../types').VoiceProfileItem[]>('/api/voice/list')
+  return response.data
+}
+
+export async function cloneVoice(payload: import('../types').CloneVoicePayload): Promise<import('../types').VoiceProfileItem> {
+  const response = await apiClient.post<import('../types').VoiceProfileItem>('/api/voice/clone', payload)
+  return response.data
+}
+
+export async function previewVoiceSpeech(payload: import('../types').VoicePreviewPayload): Promise<{ success: boolean; audio_url: string }> {
+  const response = await apiClient.post<{ success: boolean; audio_url: string }>('/api/voice/preview', payload)
+  return response.data
+}
+
+export async function createDubbing(payload: import('../types').DubbingRequestPayload): Promise<import('../types').DubbingResultResponse> {
+  const response = await apiClient.post<import('../types').DubbingResultResponse>('/api/dubbing/create', payload)
+  return response.data
+}
+
+
 
 
 

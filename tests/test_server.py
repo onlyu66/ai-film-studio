@@ -812,6 +812,73 @@ def test_get_lut_and_transition_presets_endpoints():
     assert "dissolve" in trans_ids
 
 
+def test_voice_clone_and_dubbing_endpoints(tmp_path, monkeypatch):
+    import base64
+    from unittest.mock import patch
+
+    # 1. GET /api/voice/list
+    resp_list = client.get("/api/voice/list")
+    assert resp_list.status_code == 200
+    voices = resp_list.json()
+    assert isinstance(voices, list)
+    assert len(voices) >= 8
+
+    # 2. POST /api/voice/clone
+    dummy_audio_b64 = base64.b64encode(b"dummy mp3 data").decode("utf-8")
+    resp_clone = client.post(
+        "/api/voice/clone",
+        json={
+            "name": "Giọng Thuyết Minh Test",
+            "provider": "local",
+            "audio_base64": dummy_audio_b64,
+            "description": "Giọng trầm điện ảnh",
+            "lang": "vi",
+            "gender": "male",
+        },
+    )
+    assert resp_clone.status_code == 200
+    cloned = resp_clone.json()
+    assert cloned["name"] == "Giọng Thuyết Minh Test"
+    assert cloned["provider"] == "local"
+    assert "id" in cloned
+
+    # 3. POST /api/voice/preview
+    with patch("studio.voice_clone.synthesize_speech", return_value=tmp_path / "preview.mp3"):
+        resp_prev = client.post(
+            "/api/voice/preview",
+            json={
+                "text": "Kiểm tra chất lượng giọng nói",
+                "voice_id": cloned["id"],
+                "provider": "local",
+                "lang": "vi",
+            },
+        )
+        assert resp_prev.status_code == 200
+        assert "audio_url" in resp_prev.json()
+
+    # 4. POST /api/dubbing/create
+    mock_dub_result = {
+        "project_id": "proj_123",
+        "target_lang": "en",
+        "status": "completed",
+        "translated_shots": [],
+        "subtitle_path": "/fake/sub.srt",
+    }
+    with patch("studio.dubbing.run_dubbing_pipeline", return_value=mock_dub_result):
+        resp_dub = client.post(
+            "/api/dubbing/create",
+            json={
+                "project_id": "proj_123",
+                "target_lang": "en",
+            },
+        )
+        assert resp_dub.status_code == 200
+        dub_data = resp_dub.json()
+        assert dub_data["status"] == "completed"
+        assert dub_data["target_lang"] == "en"
+
+
+
 
 
 
