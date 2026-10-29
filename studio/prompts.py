@@ -65,7 +65,8 @@ def get_storyboard_user_prompt(
     max_shots: int | None = None,
     series_title: str | None = None,
     episode: int = 1,
-    parent_context: str | None = None
+    parent_context: str | None = None,
+    template_id: str | None = None,
 ) -> str:
     # Scale number of shots based on duration (for test/short durations ~5-10 shots; for full long-form ~100-150 shots)
     estimated_shots = max(5, min(int(duration_minutes * 5), 150))
@@ -84,9 +85,18 @@ IMPORTANT INSTRUCTIONS FOR THIS EPISODE:
 - Continue the narrative arc directly from previous events while delivering a fresh conflict and climax.
 """
 
+    template_instruction = ""
+    if template_id:
+        try:
+            from studio.templates import build_template_story_instruction
+            template_instruction = build_template_story_instruction(template_id)
+        except Exception:
+            pass
+
     return f"""Topic: {topic}
 Language: {lang}
 Target duration: {duration_minutes} minutes (Aim for approximately {estimated_shots} detailed narrative shots across Acts 1, 2, and 3)
 Visual Style: {style}
 {series_instruction}
+{template_instruction}
 Generate the complete storyboard JSON now:"""

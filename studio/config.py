@@ -28,6 +28,7 @@ class StudioConfig:
     tts_concurrency: Optional[int] = None
     hardware_accel: str = "auto"
     hardware_profile: Optional[str] = None
+    template_id: Optional[str] = None
 
 def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) -> StudioConfig:
     """Load configuration from config.yaml merged with CLI kwargs."""

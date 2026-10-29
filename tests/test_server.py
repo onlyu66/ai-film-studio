@@ -568,6 +568,28 @@ def test_get_system_hardware_endpoint():
     assert "recommended_profile" in data
     assert data["recommended_profile"] in ("eco", "balanced", "turbo")
 
+def test_get_storyboard_templates_endpoints():
+    # 1. List all templates
+    resp = client.get("/api/storyboard/templates")
+    assert resp.status_code == 200
+    templates = resp.json()
+    assert isinstance(templates, list)
+    assert len(templates) >= 6
+    ids = [t["id"] for t in templates]
+    assert "cyberpunk_2077" in ids
+
+    # 2. Get single template
+    resp_single = client.get("/api/storyboard/templates/cyberpunk_2077")
+    assert resp_single.status_code == 200
+    t = resp_single.json()
+    assert t["id"] == "cyberpunk_2077"
+    assert t["name"] == "Cyberpunk Viễn Tưởng 2077"
+    assert "kael_zen" in t["characters"]
+
+    # 3. 404 for invalid template
+    resp_404 = client.get("/api/storyboard/templates/non_existent")
+    assert resp_404.status_code == 404
+
 
 
 

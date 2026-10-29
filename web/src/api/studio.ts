@@ -295,6 +295,17 @@ export async function fetchHardwareInfo(): Promise<import('../types').HardwareIn
   return response.data
 }
 
+export async function fetchStoryTemplates(): Promise<import('../types').StoryTemplate[]> {
+  const response = await apiClient.get<import('../types').StoryTemplate[]>('/api/storyboard/templates')
+  return response.data
+}
+
+export async function fetchStoryTemplate(templateId: string): Promise<import('../types').StoryTemplate> {
+  const response = await apiClient.get<import('../types').StoryTemplate>(`/api/storyboard/templates/${templateId}`)
+  return response.data
+}
+
+
 
 
 

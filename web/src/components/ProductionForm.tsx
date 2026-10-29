@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, lazy, Suspense } from 'react'
 import {
   Sparkles,
   Settings2,
@@ -31,7 +31,9 @@ import {
 } from 'lucide-react'
 import { CustomSelect } from './ui/select'
 import { useTestWebhook, useFetchLlmModels, useHardwareInfo } from '../api/queries'
-import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem } from '../types'
+import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem, StoryTemplate } from '../types'
+
+const StoryTemplateModal = lazy(() => import('./StoryTemplateModal'))
 
 const LANG_OPTIONS: SelectOption[] = [
   { value: 'vi', label: 'Tiếng Việt', subtext: 'Giọng AI tự nhiên, truyền cảm', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-studio-card border border-studio-border text-amber-300">VI</span> },
@@ -174,6 +176,15 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   const [testWebhookSuccess, setTestWebhookSuccess] = useState(false)
   const [hardwareProfile, setHardwareProfile] = useState('auto')
   const [hardwareAccel, setHardwareAccel] = useState('auto')
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<StoryTemplate | null>(null)
+
+  const handleSelectTemplate = (tmpl: StoryTemplate) => {
+    setSelectedTemplate(tmpl)
+    setTopic(tmpl.default_topic)
+    if (tmpl.style) setStyle(tmpl.style)
+    if (tmpl.aspect_ratio) setAspectRatio(tmpl.aspect_ratio)
+  }
 
   const { data: hardwareInfo } = useHardwareInfo()
   const testWebhookMutation = useTestWebhook()
@@ -233,6 +244,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       webhook_url: webhookUrl.trim() || undefined,
       hardware_profile: hardwareProfile === 'auto' ? undefined : hardwareProfile,
       hardware_accel: hardwareAccel,
+      template_id: selectedTemplate?.id || undefined,
     })
   }
 
@@ -280,10 +292,46 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               <Sparkles className="w-4 h-4 text-amber-400" />
               <span>Ý tưởng kịch bản & Đề tài bộ phim</span>
             </label>
-            <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider hidden sm:inline">
-              Flux 8K • Cinematic Script
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsTemplateModalOpen(true)}
+                className="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                title="Mở thư viện kịch bản điện ảnh mẫu"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>✨ Kịch Bản Mẫu (Templates)</span>
+              </button>
+            </div>
           </div>
+
+          {/* Active Template Banner (if selected) */}
+          {selectedTemplate && (
+            <div className="flex items-center justify-between p-2.5 px-3.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-zinc-900 to-zinc-900 border border-amber-500/30 text-xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="text-lg shrink-0">{selectedTemplate.icon || '🎬'}</span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-amber-300 truncate">{selectedTemplate.name}</span>
+                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30 shrink-0">
+                      {selectedTemplate.aspect_ratio}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-zinc-400 block truncate">
+                    Thể loại: {selectedTemplate.category} • Style: {selectedTemplate.style} • Đã nạp {Object.keys(selectedTemplate.characters || {}).length} nhân vật Visual DNA
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedTemplate(null)}
+                className="p-1 rounded-md text-zinc-400 hover:text-rose-400 hover:bg-zinc-800 transition-colors cursor-pointer shrink-0 ml-2"
+                title="Bỏ dùng template này"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
 
           {/* Prompt Textarea */}
           <div className="relative group">
@@ -919,6 +967,17 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
           </button>
         </div>
       </form>
+
+      {isTemplateModalOpen && (
+        <Suspense fallback={null}>
+          <StoryTemplateModal
+            isOpen={isTemplateModalOpen}
+            onClose={() => setIsTemplateModalOpen(false)}
+            onSelectTemplate={handleSelectTemplate}
+            currentTemplateId={selectedTemplate?.id}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

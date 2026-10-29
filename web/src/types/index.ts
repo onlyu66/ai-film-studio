@@ -68,6 +68,7 @@ export interface ProductionFormData {
   hardware_accel?: string
   image_concurrency?: number
   motion_concurrency?: number
+  template_id?: string
 }
 
 export interface StudioStatus {
@@ -183,3 +184,26 @@ export interface ProjectSeoData {
   hashtags: string
   thumbnail_url?: string | null
 }
+
+export interface TemplateCharacter {
+  name: string
+  visual_anchor: string
+  voice: string
+  seed: number
+}
+
+export interface StoryTemplate {
+  id: string
+  name: string
+  tagline: string
+  category: string
+  icon: string
+  style: string
+  aspect_ratio: '16:9' | '9:16'
+  recommended_mood: string
+  recommended_bgm: string
+  default_topic: string
+  characters: Record<string, TemplateCharacter>
+  genre_blueprint: string
+}
+

@@ -219,6 +219,7 @@ def generate_storyboard(config: StudioConfig, llm: LLMProvider) -> Storyboard:
         series_title=config.series_title,
         episode=config.episode,
         parent_context=parent_context,
+        template_id=getattr(config, "template_id", None),
     )
     raw_response = llm.generate(STORYBOARD_SYSTEM_PROMPT, user_prompt)
     return parse_storyboard_json(raw_response)

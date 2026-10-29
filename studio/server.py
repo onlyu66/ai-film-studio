@@ -76,6 +76,7 @@ class ProduceRequest(BaseModel):
     tts_concurrency: Optional[int] = None
     hardware_accel: str = "auto"
     hardware_profile: Optional[str] = None
+    template_id: Optional[str] = None
 
 # Global pipeline execution state & cancel event
 _cancel_event = threading.Event()
@@ -334,6 +335,7 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             tts_concurrency=getattr(req, "tts_concurrency", None),
             hardware_accel=getattr(req, "hardware_accel", "auto") or "auto",
             hardware_profile=getattr(req, "hardware_profile", None),
+            template_id=getattr(req, "template_id", None),
         )
 
         def _on_progress(stage: int, stage_name: str, progress: int, log_msg: str, **kwargs):
@@ -545,6 +547,21 @@ def cancel_pipeline():
     pipeline_state["stage_name"] = "Đang dừng quy trình..."
     broadcast_ws("status", get_status())
     return {"success": True, "message": "Đã gửi tín hiệu dừng tiến trình thành công."}
+
+@app.get("/api/storyboard/templates")
+def get_storyboard_templates():
+    """Return all available cinematic story templates."""
+    from studio.templates import list_story_templates
+    return list_story_templates()
+
+@app.get("/api/storyboard/templates/{template_id}")
+def get_single_storyboard_template(template_id: str):
+    """Return a single story template by ID or 404."""
+    from studio.templates import get_story_template
+    tmpl = get_story_template(template_id)
+    if not tmpl:
+        raise HTTPException(status_code=404, detail=f"Template '{template_id}' không tồn tại.")
+    return tmpl
 
 @app.get("/api/storyboard")
 def get_storyboard():

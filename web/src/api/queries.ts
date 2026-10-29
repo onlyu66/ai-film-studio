@@ -30,6 +30,7 @@ import {
   fetchLlmModels,
   cancelPipeline,
   fetchHardwareInfo,
+  fetchStoryTemplates,
   type UpdateShotParams,
   type AddShotParams,
   type DubProjectParams,
@@ -367,5 +368,14 @@ export function useHardwareInfo() {
     staleTime: 60_000,
   })
 }
+
+export function useStoryTemplates() {
+  return useQuery({
+    queryKey: ['storyboard', 'templates'],
+    queryFn: fetchStoryTemplates,
+    staleTime: 5 * 60_000,
+  })
+}
+
 
 
