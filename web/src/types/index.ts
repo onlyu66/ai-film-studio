@@ -137,6 +137,7 @@ export interface Shot {
   is_approved?: boolean
   voice_volume?: number
   sfx_volume?: number
+  sfx_offset_ms?: number
   sfx?: string
   act?: number
   mood?: string
@@ -408,6 +409,50 @@ export interface ReframeResultResponse {
   video_url: string
   mode: string
 }
+
+export interface SfxCatalogItem {
+  id: string
+  name: string
+  category: 'action' | 'nature' | 'horror' | 'scifi' | 'urban' | string
+  description: string
+  stream_url: string
+  default_volume: number
+  default_offset_ms: number
+  tags: string[]
+}
+
+export interface SfxSuggestRequestPayload {
+  prompt: string
+  dialogue?: string
+  genre?: string
+}
+
+export interface SfxSuggestResponse {
+  sfx_id: string
+  name: string
+  category: string
+  volume: number
+  offset_ms: number
+  reasoning: string
+}
+
+export interface BatchSfxSuggestRequestPayload {
+  project_id: string
+  overwrite_existing?: boolean
+}
+
+export interface BatchSfxSuggestResponse {
+  success: boolean
+  assigned_count: number
+  total_shots: number
+  shots: Array<{
+    id: string
+    sfx: string | null
+    sfx_volume: number
+    sfx_offset_ms: number
+  }>
+}
+
 
 
 

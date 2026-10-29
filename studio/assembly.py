@@ -85,7 +85,7 @@ def resolve_sfx_path(sfx_str: Optional[str]) -> Optional[Path]:
         Path(f"assets/sfx/{clean}.wav"),
     ]
     for c in candidates:
-        if c.exists() and c.stat().st_size > 1000:
+        if c.exists() and c.stat().st_size > 500:
             return c
 
     # 2. Keyword aliases (English & Vietnamese)
@@ -113,6 +113,15 @@ def resolve_sfx_path(sfx_str: Optional[str]) -> Optional[Path]:
             except Exception:
                 pass
 
+    # 3. Try SFX module asset resolver
+    try:
+        from studio.sfx import resolve_sfx_asset
+        resolved = resolve_sfx_asset(clean)
+        if resolved and resolved.exists() and resolved.stat().st_size > 500:
+            return resolved
+    except Exception:
+        pass
+
     return None
 
 def match_target_amplitude(sound: AudioSegment, target_dBFS: float = -20.0) -> AudioSegment:
@@ -129,9 +138,10 @@ def mix_sfx_into_shot_audio(
     output_path: Path,
     voice_volume: float = 1.0,
     sfx_volume: float = 1.0,
+    sfx_offset_ms: int = 0,
 ) -> Path:
     """Mix speech audio with ambient/environmental SFX into a high-quality audio file for shot preview.
-    Supports independent volume scaling (0.0 to 2.0).
+    Supports independent volume scaling (0.0 to 2.0) and custom start timing offset.
     """
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -173,17 +183,24 @@ def mix_sfx_into_shot_audio(
                 target_sfx_dbfs = max(-60.0, min(-5.0, base_target_dbfs + sfx_gain))
                 sfx_seg = match_target_amplitude(sfx_seg, target_dBFS=target_sfx_dbfs)
 
-                if len(sfx_seg) < shot_dur_ms:
-                    loops = (shot_dur_ms // len(sfx_seg)) + 1
-                    sfx_seg = (sfx_seg * loops)[:shot_dur_ms]
+                # Apply 50ms micro-fade to avoid audio clicks
+                if len(sfx_seg) > 100:
+                    sfx_seg = sfx_seg.fade_in(50).fade_out(50)
+
+                offset = max(0, min(max(0, shot_dur_ms - 200), int(sfx_offset_ms)))
+                available_dur = max(100, shot_dur_ms - offset)
+
+                if len(sfx_seg) < available_dur:
+                    # Loop if it's an ambient sound (longer than 5s)
+                    if len(sfx_seg) > 5000:
+                        loops = (available_dur // len(sfx_seg)) + 1
+                        sfx_seg = (sfx_seg * loops)[:available_dur]
                 else:
-                    sfx_seg = sfx_seg[:shot_dur_ms]
-                segment = segment.overlay(sfx_seg)
+                    sfx_seg = sfx_seg[:available_dur]
+
+                segment = segment.overlay(sfx_seg, position=offset)
             except Exception as e:
                 print(f"  [SFX Warning] Failed to overlay SFX '{sfx_str}': {e}")
-
-    segment.export(str(output_path), format="mp3", bitrate="192k")
-    return output_path
 
     segment.export(str(output_path), format="mp3", bitrate="192k")
     return output_path
@@ -222,6 +239,7 @@ def build_master_audio(
 
         effective_voice_vol = getattr(shot, "voice_volume", 1.0) * voice_volume
         effective_sfx_vol = getattr(shot, "sfx_volume", 1.0)
+        effective_sfx_offset = getattr(shot, "sfx_offset_ms", 0)
 
         if normal_audio_file.exists() and normal_audio_file.stat().st_size > 0:
             segment = AudioSegment.from_file(str(normal_audio_file))
@@ -242,6 +260,7 @@ def build_master_audio(
                 output_path=normal_audio_file,
                 voice_volume=effective_voice_vol,
                 sfx_volume=effective_sfx_vol,
+                sfx_offset_ms=effective_sfx_offset,
             )
             segment = AudioSegment.from_file(str(normal_audio_file))
             if len(segment) < shot_dur_ms:

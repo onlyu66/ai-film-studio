@@ -39,9 +39,11 @@ import ColorInspectorModal from './ColorInspectorModal'
 import VoiceCloneModal from './VoiceCloneModal'
 import DubbingModal from './DubbingModal'
 import AutoReframeModal from './AutoReframeModal'
+import SFXSoundboardModal from './SFXSoundboardModal'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
+  useBatchSuggestSfx,
   usePreviewVoice,
   useRerollShot,
   useUploadShotImage,
@@ -262,6 +264,32 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [selectedCharForVoice, setSelectedCharForVoice] = useState<{ id: string; name: string } | null>(null)
   const [isDubbingOpen, setIsDubbingOpen] = useState(false)
   const [isReframeOpen, setIsReframeOpen] = useState(false)
+  const [sfxModalShot, setSfxModalShot] = useState<any | null>(null)
+  const batchSfxMutation = useBatchSuggestSfx()
+
+  const handleSaveShotSfx = (shotId: string, sfxId: string | null, volume: number, offsetMs: number) => {
+    updateShotMutation.mutate({
+      shot_id: shotId,
+      sfx: sfxId || undefined,
+      sfx_volume: volume,
+      sfx_offset_ms: offsetMs,
+    })
+    if (editingShot && editingShot.id === shotId) {
+      setEditSfx(sfxId || '')
+      setEditSfxVolume(volume)
+    }
+  }
+
+  const handleBatchSuggestSfx = async () => {
+    try {
+      await batchSfxMutation.mutateAsync({
+        project_id: 'current',
+        overwrite_existing: true,
+      })
+    } catch (err) {
+      console.error('Batch SFX suggestion failed', err)
+    }
+  }
 
   const handleApplyLutToProject = (lutId: string) => {
     localStorage.setItem('studio_color_lut', lutId)
@@ -1320,32 +1348,29 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           </div>
                         </div>
 
-                        {/* Row 2: Volumes & SFX with preview button */}
+                        {/* Row 2: Volumes & SFX with soundboard button */}
                         <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-cinema-border/50 text-zinc-400">
                           <div className="flex items-center gap-2">
                             <span>Thoại: <strong className="text-amber-300 font-bold">{Math.round((shot.voice_volume ?? 1.0) * 100)}%</strong></span>
                             <span>SFX: <strong className="text-sky-300 font-bold">{Math.round((shot.sfx_volume ?? 1.0) * 100)}%</strong></span>
                           </div>
 
-                          {shot.sfx && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handlePlaySfx(shot.sfx)
-                              }}
-                              className={`px-2 py-0.5 rounded border flex items-center gap-1 cursor-pointer transition-all ${
-                                playingSfx === shot.sfx
-                                  ? 'bg-sky-500/25 text-sky-200 border-sky-400 ring-1 ring-sky-400/50'
-                                  : 'bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 border-sky-500/25'
-                              }`}
-                              title={`Nghe thử âm thanh môi trường: ${shot.sfx}`}
-                            >
-                              <Volume2 className="w-2.5 h-2.5 text-sky-400" />
-                              <span>{shot.sfx}</span>
-                              {playingSfx === shot.sfx && <span className="text-[8px] text-sky-400 font-bold">▶</span>}
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSfxModalShot(shot)
+                            }}
+                            className={`px-2 py-0.5 rounded border flex items-center gap-1 cursor-pointer transition-all ${
+                              shot.sfx
+                                ? 'bg-violet-500/20 text-violet-300 border-violet-500/40 hover:bg-violet-500/30'
+                                : 'bg-zinc-800/60 text-zinc-400 border-zinc-700/60 hover:text-zinc-200 hover:bg-zinc-800'
+                            }`}
+                            title="Mở thư viện SFX Soundboard để chọn hoặc đổi hiệu ứng âm thanh"
+                          >
+                            <Volume2 className="w-2.5 h-2.5 text-violet-400" />
+                            <span className="truncate max-w-[100px]">{shot.sfx ? shot.sfx : '+ SFX'}</span>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -1674,6 +1699,22 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                 >
                   <Languages className="w-4 h-4 text-cyan-400 shrink-0" />
                   <span>Lồng Tiếng Đa Ngữ</span>
+                </button>
+
+                {/* AI Foley & SFX Auto-cue CTA */}
+                <button
+                  type="button"
+                  onClick={handleBatchSuggestSfx}
+                  disabled={batchSfxMutation.isPending}
+                  className="px-4 py-3 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:border-violet-400/50 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap"
+                  title="Tự động phân tích kịch bản và gán toàn bộ tiếng động SFX (Foley) cho toàn bộ các phân cảnh"
+                >
+                  {batchSfxMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 text-violet-400 animate-spin shrink-0" />
+                  ) : (
+                    <Sparkles className="w-4 h-4 text-violet-400 shrink-0" />
+                  )}
+                  <span>AI Gợi Ý SFX</span>
                 </button>
 
                 {/* Smart Auto-Reframe 9:16 Shorts CTA */}
@@ -2227,11 +2268,20 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     <div className="bg-studio-input/80 rounded-xl border border-studio-border p-2.5 flex flex-col gap-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
-                          <span>🍃 Âm thanh môi trường (SFX)</span>
-                          <span className="text-[10px] font-mono text-sky-400">({Math.round(editSfxVolume * 100)}%)</span>
+                          <span>🍃 Âm thanh môi trường & SFX</span>
+                          <span className="text-[10px] font-mono text-violet-400">({Math.round(editSfxVolume * 100)}%)</span>
                         </span>
-                        {editSfx && (
-                          <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSfxModalShot(editingShot)}
+                            className="text-[11px] px-2.5 py-1 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30 hover:bg-violet-600/30 flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Mở thư viện Soundboard 25+ âm thanh & gợi ý AI"
+                          >
+                            <Sparkles className="w-3 h-3 text-amber-300" />
+                            <span>Mở SFX Studio</span>
+                          </button>
+                          {editSfx && (
                             <button
                               type="button"
                               onClick={() => handlePlaySfx(editSfx)}
@@ -2243,18 +2293,20 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                               title="Nghe thử âm thanh SFX"
                             >
                               <Volume2 className="w-3 h-3" />
-                              <span>{playingSfx === editSfx ? 'Dừng' : 'Nghe SFX'}</span>
+                              <span>{playingSfx === editSfx ? 'Dừng' : 'Nghe'}</span>
                             </button>
+                          )}
+                          {editSfx && (
                             <button
                               type="button"
                               onClick={() => setEditSfx('')}
                               className="text-[10px] px-1.5 py-0.5 rounded-md text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
                               title="Tắt âm thanh môi trường"
                             >
-                              ✕ Tắt
+                              ✕
                             </button>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
 
                       <input
@@ -2826,6 +2878,15 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         onClose={() => setIsReframeOpen(false)}
         projectId="current"
         sourceVideoUrl="/api/outputs/master_movie.mp4"
+      />
+
+      {/* AI Foley & SFX Soundboard Modal */}
+      <SFXSoundboardModal
+        isOpen={!!sfxModalShot}
+        onClose={() => setSfxModalShot(null)}
+        shot={sfxModalShot}
+        genre={typeof (storyboard as any)?.genre === 'string' ? (storyboard as any).genre : ''}
+        onSaveSfx={handleSaveShotSfx}
       />
     </Card>
   )

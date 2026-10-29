@@ -53,6 +53,7 @@ export interface UpdateShotParams {
   camera_motion?: string
   voice_volume?: number
   sfx_volume?: number
+  sfx_offset_ms?: number
 }
 
 export async function updateShot(params: UpdateShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
@@ -111,6 +112,7 @@ export interface AddShotParams {
   camera_motion?: string
   voice_volume?: number
   sfx_volume?: number
+  sfx_offset_ms?: number
 }
 
 export async function addShot(params: AddShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
@@ -450,6 +452,22 @@ export async function createAutoReframe(payload: import('../types').ReframeReque
   const response = await apiClient.post<import('../types').ReframeResultResponse>('/api/reframe/create', payload)
   return response.data
 }
+
+export async function fetchSfxCatalog(): Promise<import('../types').SfxCatalogItem[]> {
+  const response = await apiClient.get<import('../types').SfxCatalogItem[]>('/api/sfx/catalog')
+  return response.data
+}
+
+export async function suggestSfx(payload: import('../types').SfxSuggestRequestPayload): Promise<import('../types').SfxSuggestResponse> {
+  const response = await apiClient.post<import('../types').SfxSuggestResponse>('/api/sfx/suggest', payload)
+  return response.data
+}
+
+export async function batchSuggestSfx(payload: import('../types').BatchSfxSuggestRequestPayload): Promise<import('../types').BatchSfxSuggestResponse> {
+  const response = await apiClient.post<import('../types').BatchSfxSuggestResponse>('/api/sfx/batch-suggest', payload)
+  return response.data
+}
+
 
 
 

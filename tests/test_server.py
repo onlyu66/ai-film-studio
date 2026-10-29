@@ -918,6 +918,77 @@ def test_reframe_endpoints(tmp_path, monkeypatch):
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
 
+def test_sfx_endpoints(tmp_path):
+    # 1. GET /api/sfx/catalog
+    resp_cat = client.get("/api/sfx/catalog")
+    assert resp_cat.status_code == 200
+    catalog = resp_cat.json()
+    assert isinstance(catalog, list)
+    assert len(catalog) >= 24
+    cat_ids = [item["id"] for item in catalog]
+    assert "gunshot" in cat_ids
+    assert "thunder" in cat_ids
+    assert "heartbeat" in cat_ids
+
+    # 2. GET /api/assets/sfx/thunder
+    resp_audio = client.get("/api/assets/sfx/thunder")
+    assert resp_audio.status_code in (200, 206)
+
+    # 3. POST /api/sfx/suggest
+    resp_sug = client.post(
+        "/api/sfx/suggest",
+        json={
+            "prompt": "Sát thủ rút súng nổ vang trời",
+            "dialogue": "Đứng lại!",
+            "genre": "Hành động"
+        }
+    )
+    assert resp_sug.status_code == 200
+    sug = resp_sug.json()
+    assert sug["sfx_id"] in ("gunshot", "explosion")
+    assert sug["volume"] > 0
+    assert "offset_ms" in sug
+
+    # 4. POST /api/sfx/batch-suggest
+    import json
+    proj_dir = Path("outputs/projects/proj_test_sfx_batch")
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    sb_path = proj_dir / "storyboard.json"
+    sb_path.write_text(json.dumps({
+        "title": "SFX Batch Test",
+        "language": "vi",
+        "genre": "Hành động",
+        "characters": {},
+        "shots": [
+            {
+                "id": "s1",
+                "chapter": 1,
+                "character_id": None,
+                "dialogue": "Chạy mau!",
+                "image_prompt": "Chiếc xe ô tô phanh gấp lốp rít trên đường",
+                "motion": "zoom_in",
+                "duration": 3.0
+            }
+        ]
+    }), encoding="utf-8")
+
+    try:
+        resp_batch = client.post(
+            "/api/sfx/batch-suggest",
+            json={"project_id": "proj_test_sfx_batch", "overwrite_existing": True}
+        )
+        assert resp_batch.status_code == 200
+        batch_data = resp_batch.json()
+        assert batch_data["success"] is True
+        assert batch_data["assigned_count"] >= 1
+        assert len(batch_data["shots"]) >= 1
+        assert batch_data["shots"][0]["sfx"] in ("car_skid", "city", "traffic")
+    finally:
+        import shutil
+        if proj_dir.exists():
+            shutil.rmtree(proj_dir, ignore_errors=True)
+
+
 
 
 

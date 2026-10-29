@@ -830,6 +830,7 @@ class UpdateShotRequest(BaseModel):
     camera_motion: Optional[str] = None
     voice_volume: Optional[float] = None
     sfx_volume: Optional[float] = None
+    sfx_offset_ms: Optional[int] = None
 
 @app.post("/api/storyboard/update-shot")
 def update_shot(req: UpdateShotRequest):
@@ -893,6 +894,12 @@ def update_shot(req: UpdateShotRequest):
             s_vol = round(max(0.0, min(2.0, float(req.sfx_volume))), 2)
             if s_vol != target_shot.get("sfx_volume"):
                 target_shot["sfx_volume"] = s_vol
+                audio_setting_changed = True
+
+        if req.sfx_offset_ms is not None:
+            s_off = max(0, min(10000, int(req.sfx_offset_ms)))
+            if s_off != target_shot.get("sfx_offset_ms"):
+                target_shot["sfx_offset_ms"] = s_off
                 audio_setting_changed = True
 
         # Visual changes reset video; audio changes PRESERVE existing video
@@ -1181,6 +1188,81 @@ AVAILABLE_SFX = [
 @app.get("/api/sfx/list")
 def list_sfx():
     return {"sfx": AVAILABLE_SFX}
+
+@app.get("/api/sfx/catalog")
+def api_get_sfx_catalog():
+    from studio.sfx import get_sfx_catalog
+    return get_sfx_catalog()
+
+class SfxSuggestRequest(BaseModel):
+    prompt: str
+    dialogue: Optional[str] = ""
+    genre: Optional[str] = ""
+
+@app.post("/api/sfx/suggest")
+def api_suggest_sfx(req: SfxSuggestRequest):
+    from studio.sfx import suggest_sfx_for_shot
+    return suggest_sfx_for_shot(
+        prompt=req.prompt or "",
+        dialogue=req.dialogue or "",
+        genre=req.genre or "",
+    )
+
+class BatchSfxSuggestRequest(BaseModel):
+    project_id: str
+    overwrite_existing: bool = False
+
+@app.post("/api/sfx/batch-suggest")
+def api_batch_suggest_sfx(req: BatchSfxSuggestRequest):
+    from studio.storage import safe_read_json, atomic_write_json
+    from studio.sfx import suggest_sfx_for_shot
+
+    if req.project_id in ("current", "", None):
+        sb_path = Path("outputs/storyboard.json")
+    else:
+        sb_path = Path(f"outputs/projects/{req.project_id}/storyboard.json")
+
+    if not sb_path.exists():
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy dự án {req.project_id}")
+
+    sb_data = safe_read_json(sb_path)
+    if not sb_data or not isinstance(sb_data, dict):
+        raise HTTPException(status_code=400, detail="Tệp storyboard bị lỗi hoặc không thể đọc.")
+
+    assigned_count = 0
+    genre = sb_data.get("genre", "")
+    shots = sb_data.get("shots", [])
+
+    for shot in shots:
+        current_sfx = shot.get("sfx")
+        if not current_sfx or req.overwrite_existing:
+            suggestion = suggest_sfx_for_shot(
+                prompt=shot.get("image_prompt", "") or "",
+                dialogue=shot.get("dialogue", "") or "",
+                genre=genre,
+            )
+            shot["sfx"] = suggestion["sfx_id"]
+            shot["sfx_volume"] = suggestion["volume"]
+            shot["sfx_offset_ms"] = suggestion["offset_ms"]
+            assigned_count += 1
+
+    sb_data["shots"] = shots
+    atomic_write_json(sb_path, sb_data)
+
+    return {
+        "success": True,
+        "assigned_count": assigned_count,
+        "total_shots": len(shots),
+        "shots": [
+            {
+                "id": s.get("id"),
+                "sfx": s.get("sfx"),
+                "sfx_volume": s.get("sfx_volume", 1.0),
+                "sfx_offset_ms": s.get("sfx_offset_ms", 0),
+            }
+            for s in shots
+        ],
+    }
 
 @app.api_route("/api/assets/sfx/{file_name}", methods=["GET", "HEAD"])
 def serve_sfx_asset(file_name: str):

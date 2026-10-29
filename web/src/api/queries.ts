@@ -49,6 +49,9 @@ import {
   createDubbing,
   fetchReframePresets,
   createAutoReframe,
+  fetchSfxCatalog,
+  suggestSfx,
+  batchSuggestSfx,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -560,6 +563,31 @@ export function useCreateAutoReframe() {
     },
   })
 }
+
+export function useSfxCatalog() {
+  return useQuery({
+    queryKey: ['system', 'sfx-catalog'],
+    queryFn: fetchSfxCatalog,
+    staleTime: 10 * 60_000,
+  })
+}
+
+export function useSuggestSfx() {
+  return useMutation({
+    mutationFn: suggestSfx,
+  })
+}
+
+export function useBatchSuggestSfx() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: batchSuggestSfx,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
 
 
 
