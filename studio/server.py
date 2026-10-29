@@ -2778,6 +2778,66 @@ def api_create_dubbing(req: CreateDubbingRequest):
         raise HTTPException(status_code=500, detail=f"Lỗi khi lồng tiếng: {exc}")
 
 
+class ReframeRequest(BaseModel):
+    project_id: str
+    mode: str = "blur_padding"  # "blur_padding" | "pan_scan" | "fit_center"
+    burn_subtitles: bool = True
+
+
+@app.get("/api/reframe/presets")
+def api_get_reframe_presets():
+    from studio.reframe import get_reframe_presets
+    return get_reframe_presets()
+
+
+@app.post("/api/reframe/create")
+def api_create_reframe(req: ReframeRequest):
+    from studio.reframe import reframe_video
+
+    project_dir = Path("outputs/projects") / req.project_id
+    if not project_dir.exists():
+        project_dir = Path("outputs")
+
+    # Locate input video (master_movie.mp4 or first mp4)
+    input_video = project_dir / "master_movie.mp4"
+    if not input_video.exists():
+        input_video = Path("outputs/master_movie.mp4")
+    if not input_video.exists():
+        candidates = [f for f in project_dir.glob("*.mp4") if "9_16" not in f.name]
+        if candidates:
+            input_video = sorted(candidates, key=lambda f: f.stat().st_size, reverse=True)[0]
+
+    if not input_video.exists():
+        raise HTTPException(status_code=404, detail="Không tìm thấy tệp video 16:9 để chuyển đổi.")
+
+    # Locate subtitle if requested
+    subtitle_path = None
+    if req.burn_subtitles:
+        sub_candidates = list(project_dir.glob("*.srt")) or list(Path("outputs").glob("*.srt"))
+        if sub_candidates:
+            subtitle_path = sub_candidates[0]
+
+    out_file = project_dir / f"master_movie_9_16_{req.mode}.mp4"
+
+    try:
+        reframe_video(
+            input_path=input_video,
+            output_path=out_file,
+            mode=req.mode,
+            subtitle_path=subtitle_path,
+        )
+        rel_url = f"/api/outputs/projects/{req.project_id}/{out_file.name}" if req.project_id != "current" and "outputs/projects" in str(project_dir) else f"/api/outputs/{out_file.name}"
+        return {
+            "success": True,
+            "filename": out_file.name,
+            "video_url": rel_url,
+            "mode": req.mode,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Lỗi chuyển đổi video dọc 9:16: {exc}")
+
+
+
 @app.get("/api/outputs/{file_path:path}")
 def serve_output_file(file_path: str):
     full_path = Path("outputs") / file_path

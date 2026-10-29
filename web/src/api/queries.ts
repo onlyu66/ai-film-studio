@@ -47,6 +47,8 @@ import {
   cloneVoice,
   previewVoiceSpeech,
   createDubbing,
+  fetchReframePresets,
+  createAutoReframe,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -540,6 +542,25 @@ export function useCreateDubbing() {
     },
   })
 }
+
+export function useReframePresets() {
+  return useQuery({
+    queryKey: ['system', 'reframe-presets'],
+    queryFn: fetchReframePresets,
+    staleTime: 10 * 60_000,
+  })
+}
+
+export function useCreateAutoReframe() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: createAutoReframe,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
 
 
 

@@ -390,6 +390,26 @@ export interface DubbingResultResponse {
   audio_dir: string
 }
 
+export interface ReframePresetItem {
+  id: string
+  name: string
+  description: string
+}
+
+export interface ReframeRequestPayload {
+  project_id: string
+  mode: string
+  burn_subtitles?: boolean
+}
+
+export interface ReframeResultResponse {
+  success: boolean
+  filename: string
+  video_url: string
+  mode: string
+}
+
+
 
 
 

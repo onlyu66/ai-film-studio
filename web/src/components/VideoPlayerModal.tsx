@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
-import { X, Download, FileText, Film, Sparkles, Palette } from 'lucide-react'
+import { X, Download, FileText, Film, Sparkles, Palette, Smartphone } from 'lucide-react'
 import { Badge } from './ui/badge'
 import ColorCompareSlider from './ColorCompareSlider'
+import AutoReframeModal from './AutoReframeModal'
 
 export interface VideoPlayerModalProps {
   videoUrl: string | null
@@ -13,6 +14,7 @@ export interface VideoPlayerModalProps {
 
 export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPlayerModalProps) {
   const [isCompareMode, setIsCompareMode] = useState<boolean>(false)
+  const [isReframeOpen, setIsReframeOpen] = useState<boolean>(false)
   const [selectedLut, setSelectedLut] = useState<string>(
     localStorage.getItem('studio_color_lut') || 'teal_and_orange'
   )
@@ -136,6 +138,16 @@ export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPla
                 </a>
               )}
 
+              <button
+                type="button"
+                onClick={() => setIsReframeOpen(true)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-amber-500/20 to-rose-500/20 hover:from-amber-500/30 hover:to-rose-500/30 text-amber-300 border border-amber-500/40 transition-all shadow-sm cursor-pointer"
+                title="Chuyển đổi sang video dọc 9:16 cho TikTok / YouTube Shorts"
+              >
+                <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                <span>Xuất 9:16 Shorts/TikTok</span>
+              </button>
+
               <a
                 href={videoUrl}
                 download
@@ -148,6 +160,14 @@ export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPla
           </div>
         </motion.div>
       </div>
+
+      {/* Auto-Reframe Modal */}
+      <AutoReframeModal
+        isOpen={isReframeOpen}
+        onClose={() => setIsReframeOpen(false)}
+        projectId="current"
+        sourceVideoUrl={videoUrl}
+      />
     </AnimatePresence>
   )
 }

@@ -441,6 +441,17 @@ export async function createDubbing(payload: import('../types').DubbingRequestPa
   return response.data
 }
 
+export async function fetchReframePresets(): Promise<import('../types').ReframePresetItem[]> {
+  const response = await apiClient.get<import('../types').ReframePresetItem[]>('/api/reframe/presets')
+  return response.data
+}
+
+export async function createAutoReframe(payload: import('../types').ReframeRequestPayload): Promise<import('../types').ReframeResultResponse> {
+  const response = await apiClient.post<import('../types').ReframeResultResponse>('/api/reframe/create', payload)
+  return response.data
+}
+
+
 
 
 

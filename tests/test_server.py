@@ -878,6 +878,48 @@ def test_voice_clone_and_dubbing_endpoints(tmp_path, monkeypatch):
         assert dub_data["target_lang"] == "en"
 
 
+def test_reframe_endpoints(tmp_path, monkeypatch):
+    from unittest.mock import patch
+
+    # 1. GET /api/reframe/presets
+    resp_presets = client.get("/api/reframe/presets")
+    assert resp_presets.status_code == 200
+    presets = resp_presets.json()
+    assert isinstance(presets, list)
+    assert len(presets) >= 3
+    ids = [p["id"] for p in presets]
+    assert "blur_padding" in ids
+    assert "pan_scan" in ids
+
+    # 2. POST /api/reframe/create
+    proj_dir = Path("outputs/projects/proj_test_rf")
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    master_file = proj_dir / "master_movie.mp4"
+    master_file.write_bytes(b"dummy master video")
+
+    out_file = proj_dir / "master_movie_9_16_blur_padding.mp4"
+
+    try:
+        with patch("studio.reframe.reframe_video", return_value=out_file):
+            resp_create = client.post(
+                "/api/reframe/create",
+                json={
+                    "project_id": "proj_test_rf",
+                    "mode": "blur_padding",
+                    "burn_subtitles": False,
+                },
+            )
+            assert resp_create.status_code == 200
+            data = resp_create.json()
+            assert data["success"] is True
+            assert "master_movie_9_16_blur_padding.mp4" in data["filename"]
+    finally:
+        import shutil
+        if proj_dir.exists():
+            shutil.rmtree(proj_dir, ignore_errors=True)
+
+
+
 
 
 

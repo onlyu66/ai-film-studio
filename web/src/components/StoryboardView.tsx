@@ -28,6 +28,7 @@ import {
   Palette,
   Mic,
   Languages,
+  Smartphone,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -37,6 +38,7 @@ import CameraDirectorModal from './CameraDirectorModal'
 import ColorInspectorModal from './ColorInspectorModal'
 import VoiceCloneModal from './VoiceCloneModal'
 import DubbingModal from './DubbingModal'
+import AutoReframeModal from './AutoReframeModal'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
@@ -259,6 +261,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [isVoiceCloneOpen, setIsVoiceCloneOpen] = useState(false)
   const [selectedCharForVoice, setSelectedCharForVoice] = useState<{ id: string; name: string } | null>(null)
   const [isDubbingOpen, setIsDubbingOpen] = useState(false)
+  const [isReframeOpen, setIsReframeOpen] = useState(false)
 
   const handleApplyLutToProject = (lutId: string) => {
     localStorage.setItem('studio_color_lut', lutId)
@@ -1673,6 +1676,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   <span>Lồng Tiếng Đa Ngữ</span>
                 </button>
 
+                {/* Smart Auto-Reframe 9:16 Shorts CTA */}
+                <button
+                  type="button"
+                  onClick={() => setIsReframeOpen(true)}
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-rose-500/10 hover:from-amber-500/20 hover:to-rose-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-400/50 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap"
+                  title="Tự động reframe sang video dọc 9:16 (Shorts/TikTok/Reels)"
+                >
+                  <Smartphone className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Xuất 9:16 Shorts</span>
+                </button>
+
                 {/* Primary Master Assembly CTA */}
                 <button
                   type="button"
@@ -2804,6 +2818,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         onClose={() => setIsDubbingOpen(false)}
         projectId="current"
         characters={characters}
+      />
+
+      {/* Smart Auto-Reframe 9:16 Shorts Modal */}
+      <AutoReframeModal
+        isOpen={isReframeOpen}
+        onClose={() => setIsReframeOpen(false)}
+        projectId="current"
+        sourceVideoUrl="/api/outputs/master_movie.mp4"
       />
     </Card>
   )
