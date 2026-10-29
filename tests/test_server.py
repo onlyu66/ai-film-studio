@@ -918,6 +918,52 @@ def test_reframe_endpoints(tmp_path, monkeypatch):
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
 
+def test_split_shot_endpoint(tmp_path):
+    import json
+    proj_dir = Path("outputs/projects/proj_test_split")
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    sb_path = proj_dir / "storyboard.json"
+    sb_path.write_text(json.dumps({
+        "title": "Split Test",
+        "language": "vi",
+        "characters": {},
+        "shots": [
+            {
+                "id": "shot_orig",
+                "chapter": 1,
+                "character_id": None,
+                "dialogue": "Đây là câu thoại dài cần tách",
+                "image_prompt": "Cảnh quay phong cảnh",
+                "motion": "zoom_in",
+                "duration": 6.0
+            }
+        ]
+    }), encoding="utf-8")
+
+    try:
+        resp = client.post(
+            "/api/storyboard/split-shot",
+            json={
+                "shot_id": "shot_orig",
+                "split_at_sec": 2.5,
+                "project_id": "proj_test_split",
+            }
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["success"] is True
+        assert data["total_shots"] == 2
+        assert len(data["new_shots"]) == 2
+        assert data["new_shots"][0]["id"] == "shot_orig"
+        assert abs(data["new_shots"][0]["duration"] - 2.5) < 0.1
+        assert "shot_orig_b" in data["new_shots"][1]["id"]
+        assert abs(data["new_shots"][1]["duration"] - 3.5) < 0.1
+    finally:
+        import shutil
+        if proj_dir.exists():
+            shutil.rmtree(proj_dir, ignore_errors=True)
+
+
 def test_sfx_endpoints(tmp_path):
     # 1. GET /api/sfx/catalog
     resp_cat = client.get("/api/sfx/catalog")
@@ -987,6 +1033,52 @@ def test_sfx_endpoints(tmp_path):
         import shutil
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
+
+def test_split_shot_endpoint(tmp_path):
+    import json
+    proj_dir = Path("outputs/projects/proj_test_split")
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    sb_path = proj_dir / "storyboard.json"
+    sb_path.write_text(json.dumps({
+        "title": "Split Test",
+        "language": "vi",
+        "characters": {},
+        "shots": [
+            {
+                "id": "shot_orig",
+                "chapter": 1,
+                "character_id": None,
+                "dialogue": "Đây là câu thoại dài cần tách",
+                "image_prompt": "Cảnh quay phong cảnh",
+                "motion": "zoom_in",
+                "duration": 6.0
+            }
+        ]
+    }), encoding="utf-8")
+
+    try:
+        resp = client.post(
+            "/api/storyboard/split-shot",
+            json={
+                "shot_id": "shot_orig",
+                "split_at_sec": 2.5,
+                "project_id": "proj_test_split",
+            }
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["success"] is True
+        assert data["total_shots"] == 2
+        assert len(data["new_shots"]) == 2
+        assert data["new_shots"][0]["id"] == "shot_orig"
+        assert abs(data["new_shots"][0]["duration"] - 2.5) < 0.1
+        assert "shot_orig_b" in data["new_shots"][1]["id"]
+        assert abs(data["new_shots"][1]["duration"] - 3.5) < 0.1
+    finally:
+        import shutil
+        if proj_dir.exists():
+            shutil.rmtree(proj_dir, ignore_errors=True)
+
 
 
 

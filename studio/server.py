@@ -831,6 +831,7 @@ class UpdateShotRequest(BaseModel):
     voice_volume: Optional[float] = None
     sfx_volume: Optional[float] = None
     sfx_offset_ms: Optional[int] = None
+    duration: Optional[float] = None
 
 @app.post("/api/storyboard/update-shot")
 def update_shot(req: UpdateShotRequest):
@@ -900,6 +901,12 @@ def update_shot(req: UpdateShotRequest):
             s_off = max(0, min(10000, int(req.sfx_offset_ms)))
             if s_off != target_shot.get("sfx_offset_ms"):
                 target_shot["sfx_offset_ms"] = s_off
+                audio_setting_changed = True
+
+        if req.duration is not None:
+            new_dur = round(max(1.0, min(30.0, float(req.duration))), 2)
+            if new_dur != target_shot.get("duration"):
+                target_shot["duration"] = new_dur
                 audio_setting_changed = True
 
         # Visual changes reset video; audio changes PRESERVE existing video
@@ -1135,6 +1142,74 @@ def reorder_shots(req: ReorderShotsRequest):
         invalidate_storyboard_cache()
         log_message("Đã cập nhật lại thứ tự các phân cảnh trên kịch bản.")
         return {"success": True, "message": "Đã sắp xếp lại thứ tự phân cảnh", "shots_count": len(reordered)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+class SplitShotRequest(BaseModel):
+    shot_id: str
+    split_at_sec: Optional[float] = None
+    project_id: Optional[str] = "current"
+
+@app.post("/api/storyboard/split-shot")
+def split_shot(req: SplitShotRequest):
+    if req.project_id and req.project_id not in ("current", ""):
+        sb_file = Path(f"outputs/projects/{req.project_id}/storyboard.json")
+    else:
+        sb_file = Path("outputs/storyboard.json")
+
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        from studio.storage import safe_read_json, atomic_write_json
+        data = safe_read_json(sb_file)
+        if not data or not isinstance(data, dict):
+            raise HTTPException(status_code=400, detail="Không thể đọc tệp storyboard.json")
+
+        shots = data.get("shots", [])
+        target_idx = None
+        target_shot = None
+        for i, s in enumerate(shots):
+            if s.get("id") == req.shot_id:
+                target_idx = i
+                target_shot = s
+                break
+
+        if target_shot is None or target_idx is None:
+            raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
+
+        total_dur = float(target_shot.get("duration", 5.0) or 5.0)
+        if req.split_at_sec is not None and 0.5 <= float(req.split_at_sec) <= total_dur - 0.5:
+            dur_a = round(float(req.split_at_sec), 2)
+            dur_b = round(total_dur - dur_a, 2)
+        else:
+            dur_a = round(total_dur / 2.0, 2)
+            dur_b = round(total_dur - dur_a, 2)
+
+        # Update Shot A
+        target_shot["duration"] = dur_a
+
+        # Create Shot B
+        shot_b = dict(target_shot)
+        shot_b["id"] = f"{target_shot['id']}_b"
+        shot_b["duration"] = dur_b
+        shot_b["is_approved"] = False
+        shot_b["has_video"] = False
+
+        shots.insert(target_idx + 1, shot_b)
+        data["shots"] = shots
+
+        atomic_write_json(sb_file, data, backup=True)
+        invalidate_storyboard_cache()
+
+        return {
+            "success": True,
+            "message": f"Đã chia phân cảnh {req.shot_id} thành 2 cảnh ({dur_a}s và {dur_b}s).",
+            "new_shots": [target_shot, shot_b],
+            "total_shots": len(shots),
+        }
     except HTTPException:
         raise
     except Exception as e:

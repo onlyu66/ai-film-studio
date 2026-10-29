@@ -44,6 +44,7 @@ import {
   useUpdateCharacterVoice,
   useUpdateShot,
   useBatchSuggestSfx,
+  useSplitShot,
   usePreviewVoice,
   useRerollShot,
   useUploadShotImage,
@@ -266,6 +267,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [isReframeOpen, setIsReframeOpen] = useState(false)
   const [sfxModalShot, setSfxModalShot] = useState<any | null>(null)
   const batchSfxMutation = useBatchSuggestSfx()
+  const splitShotMutation = useSplitShot()
 
   const handleSaveShotSfx = (shotId: string, sfxId: string | null, volume: number, offsetMs: number) => {
     updateShotMutation.mutate({
@@ -803,7 +805,26 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
       <CardContent className="pt-6 space-y-6">
         {/* Interactive Multi-track Timeline Scrubber */}
         {shots.length > 0 && (
-          <TimelineScrubber shots={shots as any} />
+          <TimelineScrubber
+            shots={shots as any}
+            onSelectShot={(shotId) => {
+              const s = shots.find((x) => x.id === shotId)
+              if (s) handleOpenEditShot(s)
+            }}
+            onUpdateShotDuration={(shotId, duration) => {
+              updateShotMutation.mutate({ shot_id: shotId, duration })
+            }}
+            onReorderShots={(newIds) => {
+              reorderShotsMutation.mutate(newIds)
+            }}
+            onSplitShot={(shotId, splitAtSec) => {
+              splitShotMutation.mutate({
+                shot_id: shotId,
+                split_at_sec: splitAtSec,
+                project_id: 'current',
+              })
+            }}
+          />
         )}
 
         {/* Characters Tab */}

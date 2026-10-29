@@ -54,6 +54,7 @@ export interface UpdateShotParams {
   voice_volume?: number
   sfx_volume?: number
   sfx_offset_ms?: number
+  duration?: number
 }
 
 export async function updateShot(params: UpdateShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
@@ -113,6 +114,7 @@ export interface AddShotParams {
   voice_volume?: number
   sfx_volume?: number
   sfx_offset_ms?: number
+  duration?: number
 }
 
 export async function addShot(params: AddShotParams): Promise<{ success: boolean; message: string; shot: unknown }> {
@@ -467,6 +469,12 @@ export async function batchSuggestSfx(payload: import('../types').BatchSfxSugges
   const response = await apiClient.post<import('../types').BatchSfxSuggestResponse>('/api/sfx/batch-suggest', payload)
   return response.data
 }
+
+export async function splitShot(payload: import('../types').SplitShotRequestPayload): Promise<import('../types').SplitShotResponse> {
+  const response = await apiClient.post<import('../types').SplitShotResponse>('/api/storyboard/split-shot', payload)
+  return response.data
+}
+
 
 
 

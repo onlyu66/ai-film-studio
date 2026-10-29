@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Play,
   Pause,
@@ -7,10 +7,13 @@ import {
   Mic,
   Music,
   Volume2,
+  VolumeX,
   ZoomIn,
   ZoomOut,
   Sparkles,
-  Download
+  Download,
+  Scissors,
+  GripVertical,
 } from 'lucide-react'
 import { Badge } from './ui/badge'
 import { getTimelineExportUrl } from '../api/studio'
@@ -20,30 +23,86 @@ export interface TimelineScrubberProps {
   shots: Shot[]
   onSelectShot?: (shotId: string) => void
   selectedShotId?: string | null
+  onUpdateShotDuration?: (shotId: string, duration: number) => void
+  onReorderShots?: (newShotIds: string[]) => void
+  onSplitShot?: (shotId: string, splitAtSec: number) => void
+}
+
+interface TrimmingState {
+  shotId: string
+  edge: 'left' | 'right'
+  startX: number
+  initialDuration: number
+  currentDuration: number
 }
 
 export default function TimelineScrubber({
   shots,
   onSelectShot,
   selectedShotId,
+  onUpdateShotDuration,
+  onReorderShots,
+  onSplitShot,
 }: TimelineScrubberProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
-  const [zoomScale, setZoomScale] = useState(1) // 1x, 1.5x, 2x
+  const [zoomScale, setZoomScale] = useState(1.0) // 0.6x - 2.5x
+
+  // Track Mute States
+  const [isVoiceMuted, setIsVoiceMuted] = useState(false)
+  const [isSfxMuted, setIsSfxMuted] = useState(false)
+  const [isBgmMuted, setIsBgmMuted] = useState(false)
+
+  // Drag & Drop reorder state
+  const [draggedShotId, setDraggedShotId] = useState<string | null>(null)
+  const [dragOverShotId, setDragOverShotId] = useState<string | null>(null)
+
+  // Trimming state
+  const [trimming, setTrimming] = useState<TrimmingState | null>(null)
+
   const animationFrameRef = useRef<number | null>(null)
   const lastTimeRef = useRef<number | null>(null)
+  const rulerRef = useRef<HTMLDivElement | null>(null)
+  const isScrubbingRef = useRef<boolean>(false)
+
+  // Pixels per second calculation
+  const pxPerSec = 28 * zoomScale
 
   // Calculate cumulative timestamps for each shot
+  let accumulatedTime = 0
   const shotTimeline = shots.map((s, idx) => {
-    const dur = s.duration || 5.0
+    const dur =
+      trimming && trimming.shotId === s.id
+        ? trimming.currentDuration
+        : Number(s.duration) || 5.0
+
+    const startSec = accumulatedTime
+    const endSec = accumulatedTime + dur
+    accumulatedTime += dur
+
     return {
       shot: s,
       index: idx,
       duration: dur,
+      startSec,
+      endSec,
     }
   })
 
-  const totalDuration = shotTimeline.reduce((acc, item) => acc + item.duration, 0) || 1
+  const totalDuration = Math.max(1, accumulatedTime)
+  const timelineWidth = Math.max(800, totalDuration * pxPerSec)
+  const playheadPositionPx = (currentTime / totalDuration) * timelineWidth
+
+  // Find active shot at playhead
+  const currentShotItem = shotTimeline.find(
+    (item) => currentTime >= item.startSec && currentTime < item.endSec
+  ) || shotTimeline[shotTimeline.length - 1]
+
+  const canSplitCurrentShot = Boolean(
+    currentShotItem &&
+      currentTime >= currentShotItem.startSec + 0.5 &&
+      currentTime <= currentShotItem.endSec - 0.5
+  )
 
   // Playback timer ticker
   useEffect(() => {
@@ -79,6 +138,135 @@ export default function TimelineScrubber({
     }
   }, [isPlaying, totalDuration])
 
+  // Mouse move and up listeners for clip trimming
+  useEffect(() => {
+    if (!trimming) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaPx = e.clientX - trimming.startX
+      const deltaSec = deltaPx / pxPerSec
+      let newDur: number
+
+      if (trimming.edge === 'right') {
+        newDur = Math.max(1.0, Math.min(15.0, trimming.initialDuration + deltaSec))
+      } else {
+        newDur = Math.max(1.0, Math.min(15.0, trimming.initialDuration - deltaSec))
+      }
+
+      setTrimming((prev) =>
+        prev ? { ...prev, currentDuration: Math.round(newDur * 10) / 10 } : null
+      )
+    }
+
+    const handleMouseUp = () => {
+      if (trimming) {
+        onUpdateShotDuration?.(trimming.shotId, trimming.currentDuration)
+      }
+      setTrimming(null)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [trimming, pxPerSec, onUpdateShotDuration])
+
+  // Start trimming clip duration
+  const startTrimming = (
+    shotId: string,
+    edge: 'left' | 'right',
+    e: React.MouseEvent
+  ) => {
+    e.stopPropagation()
+    const targetShot = shots.find((s) => s.id === shotId)
+    const initialDuration = Number(targetShot?.duration) || 5.0
+    setTrimming({
+      shotId,
+      edge,
+      startX: e.clientX,
+      initialDuration,
+      currentDuration: initialDuration,
+    })
+  }
+
+  // Handle Drag & Drop reorder
+  const handleDragStart = (shotId: string, e: React.DragEvent) => {
+    if (trimming) {
+      e.preventDefault()
+      return
+    }
+    e.dataTransfer.setData('text/plain', shotId)
+    setDraggedShotId(shotId)
+  }
+
+  const handleDragOver = (shotId: string, e: React.DragEvent) => {
+    e.preventDefault()
+    if (draggedShotId && draggedShotId !== shotId) {
+      setDragOverShotId(shotId)
+    }
+  }
+
+  const handleDragLeave = () => {
+    setDragOverShotId(null)
+  }
+
+  const handleDrop = (targetShotId: string, e: React.DragEvent) => {
+    e.preventDefault()
+    const sourceId = draggedShotId || e.dataTransfer.getData('text/plain')
+    if (sourceId && sourceId !== targetShotId) {
+      const sourceIndex = shots.findIndex((s) => s.id === sourceId)
+      const targetIndex = shots.findIndex((s) => s.id === targetShotId)
+
+      if (sourceIndex >= 0 && targetIndex >= 0) {
+        const reordered = [...shots]
+        const [moved] = reordered.splice(sourceIndex, 1)
+        reordered.splice(targetIndex, 0, moved)
+        onReorderShots?.(reordered.map((s) => s.id))
+      }
+    }
+    setDraggedShotId(null)
+    setDragOverShotId(null)
+  }
+
+  // Ruler Scrubbing
+  const handleRulerSeek = (clientX: number) => {
+    if (!rulerRef.current) return
+    const rect = rulerRef.current.getBoundingClientRect()
+    const clickX = Math.max(0, Math.min(rect.width, clientX - rect.left))
+    const targetSec = (clickX / timelineWidth) * totalDuration
+    setCurrentTime(Math.max(0, Math.min(totalDuration, targetSec)))
+  }
+
+  const handleRulerMouseDown = (e: React.MouseEvent) => {
+    isScrubbingRef.current = true
+    handleRulerSeek(e.clientX)
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (isScrubbingRef.current) {
+        handleRulerSeek(moveEvent.clientX)
+      }
+    }
+
+    const handleMouseUp = () => {
+      isScrubbingRef.current = false
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+  }
+
+  // Handle Split Shot action
+  const handleSplitShotClick = () => {
+    if (!canSplitCurrentShot || !currentShotItem) return
+    const splitAtSec = currentTime - currentShotItem.startSec
+    onSplitShot?.(currentShotItem.shot.id, Math.round(splitAtSec * 10) / 10)
+  }
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60)
     const s = Math.floor(seconds % 60)
@@ -86,25 +274,24 @@ export default function TimelineScrubber({
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms}`
   }
 
-  // Pixels per second base
-  const pxPerSec = 28 * zoomScale
-  const timelineWidth = Math.max(800, totalDuration * pxPerSec)
-
-  const playheadPositionPx = (currentTime / totalDuration) * timelineWidth
-
   return (
-    <div className="rounded-xl bg-cinema-card border border-cinema-border p-4 shadow-xl space-y-3">
+    <div className="rounded-2xl bg-cinema-card border border-cinema-border p-4 shadow-2xl space-y-3">
       {/* Top Scrubber Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cinema-border">
+        {/* Playback Controls & Timestamp */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => setIsPlaying(!isPlaying)}
-              className="w-8 h-8 rounded-lg bg-cinema-amber hover:bg-amber-400 text-zinc-950 flex items-center justify-center font-bold transition-colors cursor-pointer"
-              title={isPlaying ? 'Tạm dừng timeline' : 'Phát timeline thử nghiệm'}
+              className="w-8 h-8 rounded-lg bg-cinema-amber hover:bg-amber-400 text-zinc-950 flex items-center justify-center font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+              title={isPlaying ? 'Tạm dừng timeline' : 'Phát timeline'}
             >
-              {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+              {isPlaying ? (
+                <Pause className="w-4 h-4 fill-current" />
+              ) : (
+                <Play className="w-4 h-4 fill-current ml-0.5" />
+              )}
             </button>
 
             <button
@@ -120,18 +307,41 @@ export default function TimelineScrubber({
             </button>
           </div>
 
-          <div className="font-mono text-xs text-zinc-300 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cinema-canvas border border-cinema-border">
+          <div className="font-mono text-xs text-zinc-300 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cinema-canvas border border-cinema-border shadow-inner">
             <span className="text-cinema-amber font-bold">{formatTime(currentTime)}</span>
             <span className="text-zinc-600">/</span>
             <span className="text-zinc-400">{formatTime(totalDuration)}</span>
           </div>
+
+          {/* Split Shot CTA */}
+          <button
+            type="button"
+            onClick={handleSplitShotClick}
+            disabled={!canSplitCurrentShot}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              canSplitCurrentShot
+                ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30 hover:border-rose-400 shadow-sm active:scale-95 cursor-pointer'
+                : 'bg-zinc-800/40 text-zinc-600 border-zinc-800 cursor-not-allowed opacity-50'
+            }`}
+            title={
+              canSplitCurrentShot
+                ? `Cắt phân cảnh #${currentShotItem?.shot.id} tại giây ${(
+                    currentTime - (currentShotItem?.startSec || 0)
+                  ).toFixed(1)}s`
+                : 'Di chuyển playhead vào giữa một phân cảnh để cắt'
+            }
+          >
+            <Scissors className="w-3.5 h-3.5" />
+            <span>Cắt Phân Cảnh (Split)</span>
+          </button>
         </div>
 
+        {/* Right Tools: Export & Zoom */}
         <div className="flex items-center gap-2">
           <a
             href={getTimelineExportUrl()}
             download
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-cinema-amber text-xs font-medium border border-cinema-amber/30 transition-all hover:scale-[1.02] shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-cinema-amber text-xs font-medium border border-cinema-amber/30 transition-all hover:scale-[1.02] shadow-sm cursor-pointer"
             title="Xuất timeline FCPXML chuyên nghiệp cho Adobe Premiere / DaVinci Resolve"
           >
             <Download className="w-3.5 h-3.5" />
@@ -139,7 +349,7 @@ export default function TimelineScrubber({
             <span className="md:hidden">FCPXML</span>
           </a>
 
-          <div className="flex items-center gap-1 bg-cinema-canvas border border-cinema-border rounded-lg p-0.5">
+          <div className="flex items-center gap-1 bg-cinema-canvas border border-cinema-border rounded-lg p-0.5 shadow-inner">
             <button
               type="button"
               onClick={() => setZoomScale((z) => Math.max(0.6, z - 0.2))}
@@ -148,7 +358,9 @@ export default function TimelineScrubber({
             >
               <ZoomOut className="w-3.5 h-3.5" />
             </button>
-            <span className="text-[10px] font-mono text-zinc-300 px-1">{Math.round(zoomScale * 100)}%</span>
+            <span className="text-[10px] font-mono text-zinc-300 px-1">
+              {Math.round(zoomScale * 100)}%
+            </span>
             <button
               type="button"
               onClick={() => setZoomScale((z) => Math.min(2.5, z + 0.2))}
@@ -161,65 +373,208 @@ export default function TimelineScrubber({
         </div>
       </div>
 
-      {/* Timeline Multi-track View Container */}
-      <div className="overflow-x-auto pb-2 relative select-none">
-        <div style={{ width: `${timelineWidth}px` }} className="relative space-y-2 pt-5">
-          {/* Timeline Time Ruler */}
-          <div className="absolute top-0 left-0 right-0 h-4 border-b border-cinema-border flex items-end text-[9px] font-mono text-zinc-500">
-            {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }).map((_, idx) => {
-              const sec = idx * 5
-              const pos = (sec / totalDuration) * timelineWidth
-              return (
-                <div
-                  key={idx}
-                  style={{ left: `${pos}px` }}
-                  className="absolute bottom-0 flex flex-col items-center"
-                >
-                  <span className="text-[8px] -mb-0.5">{sec}s</span>
-                  <div className="w-[1px] h-1.5 bg-zinc-700" />
-                </div>
-              )
-            })}
+      {/* Main Multi-Track NLE Editor Layout (Track Headers + Scrollable Tracks) */}
+      <div className="flex items-start border border-cinema-border rounded-xl bg-cinema-canvas/80 overflow-hidden">
+        {/* Left Fixed Column: Track Headers */}
+        <div className="w-36 sm:w-44 shrink-0 bg-cinema-deck/90 border-r border-cinema-border flex flex-col select-none z-20">
+          {/* Header Spacer for Ruler */}
+          <div className="h-6 border-b border-cinema-border px-2 flex items-center text-[9px] font-mono font-semibold text-zinc-500 uppercase tracking-wider">
+            <span>Track Name</span>
           </div>
 
-          {/* Red Playhead Line */}
-          <div
-            style={{ transform: `translateX(${playheadPositionPx}px)` }}
-            className="absolute top-0 bottom-0 w-[2px] bg-rose-500 z-30 pointer-events-none transition-transform duration-75"
-          >
-            <div className="w-2.5 h-2.5 rounded-full bg-rose-500 -ml-[4px] -mt-[1px] shadow-sm shadow-rose-500/50" />
-          </div>
-
-          {/* Track 1: Video Shots Track */}
-          <div className="space-y-1">
-            <div className="text-[9px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-              <Film className="w-3 h-3 text-cinema-amber" />
-              <span>Track 1: Video Clips & Angles</span>
+          {/* Track 1 Header: Video */}
+          <div className="h-16 px-2.5 flex items-center justify-between border-b border-cinema-border/60">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Film className="w-3.5 h-3.5 text-cinema-amber shrink-0" />
+              <div className="truncate">
+                <span className="text-xs font-semibold text-zinc-200 block truncate">
+                  V1: Video
+                </span>
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  {shots.length} clips
+                </span>
+              </div>
             </div>
-            <div className="h-14 flex items-stretch gap-1">
+          </div>
+
+          {/* Track 2 Header: Dialogue */}
+          <div className="h-10 px-2.5 flex items-center justify-between border-b border-cinema-border/60">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Mic className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="text-xs font-medium text-zinc-300 truncate">
+                A1: Thoại
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsVoiceMuted(!isVoiceMuted)}
+              className={`p-1 rounded transition-colors ${
+                isVoiceMuted
+                  ? 'text-rose-400 hover:bg-rose-950/40'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+              title={isVoiceMuted ? 'Bật âm thoại' : 'Tắt âm thoại (Mute)'}
+            >
+              {isVoiceMuted ? (
+                <VolumeX className="w-3 h-3" />
+              ) : (
+                <Volume2 className="w-3 h-3" />
+              )}
+            </button>
+          </div>
+
+          {/* Track 3 Header: SFX */}
+          <div className="h-9 px-2.5 flex items-center justify-between border-b border-cinema-border/60">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Sparkles className="w-3.5 h-3.5 text-violet-400 shrink-0" />
+              <span className="text-xs font-medium text-zinc-300 truncate">
+                A2: SFX
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsSfxMuted(!isSfxMuted)}
+              className={`p-1 rounded transition-colors ${
+                isSfxMuted
+                  ? 'text-rose-400 hover:bg-rose-950/40'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+              title={isSfxMuted ? 'Bật âm SFX' : 'Tắt âm SFX (Mute)'}
+            >
+              {isSfxMuted ? (
+                <VolumeX className="w-3 h-3" />
+              ) : (
+                <Volume2 className="w-3 h-3" />
+              )}
+            </button>
+          </div>
+
+          {/* Track 4 Header: BGM */}
+          <div className="h-9 px-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Music className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+              <span className="text-xs font-medium text-zinc-300 truncate">
+                A3: BGM
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsBgmMuted(!isBgmMuted)}
+              className={`p-1 rounded transition-colors ${
+                isBgmMuted
+                  ? 'text-rose-400 hover:bg-rose-950/40'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+              }`}
+              title={isBgmMuted ? 'Bật nhạc nền' : 'Tắt nhạc nền (Mute)'}
+            >
+              {isBgmMuted ? (
+                <VolumeX className="w-3 h-3" />
+              ) : (
+                <Volume2 className="w-3 h-3" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Right Scrollable Timeline View */}
+        <div className="flex-1 overflow-x-auto relative select-none scrollbar-thin">
+          <div style={{ width: `${timelineWidth}px` }} className="relative">
+            {/* 1. Time Ruler Bar (Interactive click & scrub) */}
+            <div
+              ref={rulerRef}
+              onMouseDown={handleRulerMouseDown}
+              className="h-6 border-b border-cinema-border relative cursor-pointer bg-cinema-deck/50 hover:bg-cinema-deck/80 transition-colors"
+              title="Nhấp chuột hoặc kéo để tua playhead"
+            >
+              {Array.from({ length: Math.ceil(totalDuration / 5) + 1 }).map((_, idx) => {
+                const sec = idx * 5
+                const pos = (sec / totalDuration) * timelineWidth
+                return (
+                  <div
+                    key={idx}
+                    style={{ left: `${pos}px` }}
+                    className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none"
+                  >
+                    <span className="text-[8px] font-mono text-zinc-500 leading-tight">
+                      {sec}s
+                    </span>
+                    <div className="w-[1px] h-2 bg-zinc-700 mt-auto" />
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Red Playhead Line */}
+            <div
+              style={{ transform: `translateX(${playheadPositionPx}px)` }}
+              className="absolute top-0 bottom-0 w-[2px] bg-rose-500 z-30 pointer-events-none transition-transform duration-75"
+            >
+              <div className="w-3 h-3 rounded-full bg-rose-500 -ml-[5px] -mt-[1px] shadow-sm shadow-rose-500/80 flex items-center justify-center">
+                <div className="w-1 h-1 rounded-full bg-white" />
+              </div>
+            </div>
+
+            {/* Track 1: Video Shots (Trimmable & Draggable) */}
+            <div className="h-16 flex items-stretch border-b border-cinema-border/60 relative">
               {shotTimeline.map(({ shot, index, duration }) => {
                 const widthPx = duration * pxPerSec
                 const isSelected = selectedShotId === shot.id
+                const isTrimmingThis = trimming?.shotId === shot.id
+                const isDragOverThis = dragOverShotId === shot.id
 
                 return (
                   <div
                     key={shot.id}
+                    draggable={!trimming}
+                    onDragStart={(e) => handleDragStart(shot.id, e)}
+                    onDragOver={(e) => handleDragOver(shot.id, e)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(shot.id, e)}
                     onClick={() => onSelectShot?.(shot.id)}
                     style={{ width: `${widthPx}px` }}
-                    className={`rounded-lg border overflow-hidden p-1.5 flex flex-col justify-between transition-all cursor-pointer group shrink-0 ${
+                    className={`relative rounded-md border overflow-hidden p-1.5 flex flex-col justify-between transition-all group shrink-0 ${
                       isSelected
-                        ? 'bg-amber-500/15 border-cinema-amber'
+                        ? 'bg-amber-500/15 border-cinema-amber ring-1 ring-cinema-amber/40 shadow-md'
+                        : isDragOverThis
+                        ? 'bg-sky-500/20 border-sky-400 ring-2 ring-sky-400/50 scale-[0.99]'
                         : 'bg-cinema-deck border-cinema-border hover:border-cinema-border-hover'
                     }`}
-                    title={`Phân cảnh ${index + 1} (${duration}s): ${shot.dialogue || shot.image_prompt}`}
                   >
-                    <div className="flex items-center justify-between text-[9px] font-mono text-zinc-300">
-                      <span className="font-semibold text-cinema-amber truncate">#{index + 1} {shot.id}</span>
-                      <span className="text-[8px] text-zinc-500">{duration.toFixed(1)}s</span>
+                    {/* Floating Trimming Tooltip */}
+                    {isTrimmingThis && (
+                      <div className="absolute -top-7 left-1/2 -translate-x-1/2 z-40 px-2 py-0.5 rounded bg-amber-500 text-zinc-950 font-mono text-[10px] font-bold shadow-lg shadow-amber-500/30 whitespace-nowrap pointer-events-none animate-in fade-in">
+                        ⏱️ {duration.toFixed(1)}s
+                      </div>
+                    )}
+
+                    {/* Left Trim Handle */}
+                    <div
+                      onMouseDown={(e) => startTrimming(shot.id, 'left', e)}
+                      className="absolute top-0 bottom-0 left-0 w-2.5 bg-transparent hover:bg-amber-400/50 cursor-col-resize z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Kéo mép trái để cắt tỉa đầu phân cảnh"
+                    >
+                      <div className="w-[2px] h-4 bg-amber-400/80 rounded" />
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      <Badge variant="secondary" className="text-[8px] px-1 py-0 font-mono uppercase bg-zinc-800 text-zinc-300 truncate border-none">
+                    {/* Top Row: Title, Index & Drag Grip */}
+                    <div className="flex items-center justify-between text-[9px] font-mono text-zinc-300 pointer-events-none">
+                      <div className="flex items-center gap-1 min-w-0">
+                        <GripVertical className="w-2.5 h-2.5 text-zinc-500 opacity-60 shrink-0" />
+                        <span className="font-semibold text-cinema-amber truncate">
+                          #{index + 1} {shot.id}
+                        </span>
+                      </div>
+                      <span className="text-[8px] text-zinc-400 font-bold shrink-0">
+                        {duration.toFixed(1)}s
+                      </span>
+                    </div>
+
+                    {/* Bottom Row: Motion badge & Act */}
+                    <div className="flex items-center gap-1 pointer-events-none">
+                      <Badge
+                        variant="secondary"
+                        className="text-[8px] px-1 py-0 font-mono uppercase bg-zinc-800 text-zinc-300 truncate border-none"
+                      >
                         {String(shot.motion || 'zoom_in')}
                       </Badge>
                       {shot.act && (
@@ -228,19 +583,26 @@ export default function TimelineScrubber({
                         </span>
                       )}
                     </div>
+
+                    {/* Right Trim Handle */}
+                    <div
+                      onMouseDown={(e) => startTrimming(shot.id, 'right', e)}
+                      className="absolute top-0 bottom-0 right-0 w-2.5 bg-transparent hover:bg-amber-400/50 cursor-col-resize z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Kéo mép phải để co giãn thời lượng phân cảnh"
+                    >
+                      <div className="w-[2px] h-4 bg-amber-400/80 rounded" />
+                    </div>
                   </div>
                 )
               })}
             </div>
-          </div>
 
-          {/* Track 2: Dialogue & Voiceover Track */}
-          <div className="space-y-1 pt-1">
-            <div className="text-[9px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-              <Mic className="w-3 h-3 text-cyan-400" />
-              <span>Track 2: Voiceover & Dialogue</span>
-            </div>
-            <div className="h-9 flex items-stretch gap-1">
+            {/* Track 2: Dialogue Track with Waveform Simulation */}
+            <div
+              className={`h-10 flex items-stretch border-b border-cinema-border/60 transition-opacity ${
+                isVoiceMuted ? 'opacity-35 grayscale' : ''
+              }`}
+            >
               {shotTimeline.map(({ shot, duration }) => {
                 const widthPx = duration * pxPerSec
                 const hasDialogue = Boolean(shot.dialogue && String(shot.dialogue).trim())
@@ -252,65 +614,88 @@ export default function TimelineScrubber({
                     className={`rounded-md border px-2 py-1 flex items-center justify-between gap-1 overflow-hidden shrink-0 ${
                       hasDialogue
                         ? 'bg-cyan-950/30 border-cyan-800/40 text-cyan-200'
-                        : 'bg-cinema-canvas/50 border-dashed border-cinema-border text-zinc-600'
+                        : 'bg-cinema-canvas/30 border-dashed border-cinema-border/50 text-zinc-600'
                     }`}
                   >
                     {hasDialogue ? (
                       <>
-                        <span className="text-[9px] truncate font-normal">"{String(shot.dialogue)}"</span>
+                        <div className="flex items-center gap-1 min-w-0">
+                          {/* Simulated Waveform Bars */}
+                          <div className="flex items-end gap-0.5 h-4 shrink-0">
+                            {[6, 12, 16, 9, 14, 18, 10, 8, 15, 11, 7].map((h, i) => (
+                              <div
+                                key={i}
+                                style={{ height: `${h}px` }}
+                                className="w-[2px] bg-cyan-400/70 rounded-full"
+                              />
+                            ))}
+                          </div>
+                          <span className="text-[9px] truncate font-normal">
+                            "{String(shot.dialogue)}"
+                          </span>
+                        </div>
                         <Volume2 className="w-3 h-3 text-cyan-400 shrink-0 opacity-70" />
                       </>
                     ) : (
-                      <span className="text-[8px] italic text-zinc-600 truncate">(Tĩnh)</span>
+                      <span className="text-[8px] italic text-zinc-600 truncate">
+                        (Tĩnh)
+                      </span>
                     )}
                   </div>
                 )
               })}
             </div>
-          </div>
 
-          {/* Track 3: Foley SFX Track */}
-          <div className="space-y-1 pt-1">
-            <div className="text-[9px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-emerald-400" />
-              <span>Track 3: Foley & SFX Audio</span>
-            </div>
-            <div className="h-7 flex items-stretch gap-1">
+            {/* Track 3: Foley SFX Track with Offset Positioning */}
+            <div
+              className={`h-9 flex items-stretch border-b border-cinema-border/60 transition-opacity ${
+                isSfxMuted ? 'opacity-35 grayscale' : ''
+              }`}
+            >
               {shotTimeline.map(({ shot, duration }) => {
                 const widthPx = duration * pxPerSec
                 const hasSfx = Boolean(shot.sfx)
+                const offsetSec = (shot.sfx_offset_ms || 0) / 1000
+                const offsetLeftPercent = Math.min(
+                  80,
+                  Math.max(0, (offsetSec / duration) * 100)
+                )
 
                 return (
                   <div
                     key={shot.id}
                     style={{ width: `${widthPx}px` }}
-                    className={`rounded-md border px-1.5 py-0.5 flex items-center justify-center shrink-0 ${
-                      hasSfx
-                        ? 'bg-emerald-950/30 border-emerald-700/40 text-emerald-300 font-mono text-[9px] font-medium'
-                        : 'bg-cinema-canvas/30 border-cinema-border text-zinc-700'
-                    }`}
+                    className="rounded-md border border-cinema-border/50 bg-cinema-canvas/20 relative overflow-hidden shrink-0"
                   >
                     {hasSfx ? (
-                      <span className="flex items-center gap-1 truncate">
-                        <Volume2 className="w-2.5 h-2.5" />
-                        <span>{String(shot.sfx)}</span>
-                      </span>
+                      <div
+                        style={{ left: `${offsetLeftPercent}%` }}
+                        className="absolute top-1 bottom-1 px-1.5 rounded bg-violet-950/60 border border-violet-600/50 text-violet-300 font-mono text-[9px] font-medium flex items-center gap-1 shadow-sm max-w-[85%] truncate"
+                      >
+                        <Volume2 className="w-2.5 h-2.5 text-violet-400 shrink-0" />
+                        <span className="truncate">{String(shot.sfx)}</span>
+                        {offsetSec > 0 && (
+                          <span className="text-[8px] text-violet-400/80">
+                            @{offsetSec.toFixed(1)}s
+                          </span>
+                        )}
+                      </div>
                     ) : (
-                      <span className="text-[8px] opacity-40">-</span>
+                      <span className="text-[8px] opacity-25 flex items-center justify-center h-full">
+                        -
+                      </span>
                     )}
                   </div>
                 )
               })}
             </div>
-          </div>
 
-          {/* Track 4: BGM Mood Track */}
-          <div className="space-y-1 pt-1">
-            <div className="text-[9px] font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1">
-              <Music className="w-3 h-3 text-purple-400" />
-              <span>Track 4: Dynamic Mood BGM</span>
-            </div>
-            <div className="h-7 flex items-stretch gap-1">
+            {/* Track 4: Dynamic Mood BGM */}
+            <div
+              className={`h-9 flex items-stretch transition-opacity ${
+                isBgmMuted ? 'opacity-35 grayscale' : ''
+              }`}
+            >
               {shotTimeline.map(({ shot, duration }) => {
                 const widthPx = duration * pxPerSec
                 const mood = String(shot.mood || 'cinematic')
@@ -322,7 +707,7 @@ export default function TimelineScrubber({
                     className="rounded-md border border-purple-800/30 bg-purple-950/20 px-1.5 py-0.5 flex items-center justify-center text-purple-300 font-mono text-[9px] shrink-0 font-medium"
                   >
                     <span className="flex items-center gap-1 truncate">
-                      <Music className="w-2.5 h-2.5" />
+                      <Music className="w-2.5 h-2.5 text-purple-400" />
                       <span>{mood}</span>
                     </span>
                   </div>

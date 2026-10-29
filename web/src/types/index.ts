@@ -453,6 +453,20 @@ export interface BatchSfxSuggestResponse {
   }>
 }
 
+export interface SplitShotRequestPayload {
+  shot_id: string
+  split_at_sec?: number
+  project_id?: string
+}
+
+export interface SplitShotResponse {
+  success: boolean
+  message: string
+  new_shots: Shot[]
+  total_shots: number
+}
+
+
 
 
 

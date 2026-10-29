@@ -52,6 +52,7 @@ import {
   fetchSfxCatalog,
   suggestSfx,
   batchSuggestSfx,
+  splitShot,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -587,6 +588,17 @@ export function useBatchSuggestSfx() {
     },
   })
 }
+
+export function useSplitShot() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: splitShot,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
 
 
 
