@@ -520,6 +520,32 @@ export async function generateCharacterAngles(
   return response.data
 }
 
+// --- Video Enhancer API ---
+export async function fetchEnhancerPresets(): Promise<import('../types').VideoEnhancerPreset[]> {
+  const response = await apiClient.get<import('../types').VideoEnhancerPreset[]>('/api/video/enhancer/presets')
+  return response.data
+}
+
+export async function enhanceShotVideo(
+  payload: import('../types').EnhanceShotPayload
+): Promise<import('../types').EnhanceVideoResponse> {
+  const response = await apiClient.post<import('../types').EnhanceVideoResponse>(
+    '/api/video/enhancer/enhance-shot',
+    payload
+  )
+  return response.data
+}
+
+export async function enhanceMasterVideo(
+  payload: import('../types').EnhanceMasterPayload
+): Promise<import('../types').EnhanceVideoResponse> {
+  const response = await apiClient.post<import('../types').EnhanceVideoResponse>(
+    '/api/video/enhancer/enhance-master',
+    payload
+  )
+  return response.data
+}
+
 
 
 

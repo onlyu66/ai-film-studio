@@ -511,6 +511,40 @@ export interface GenerateAnglesResponse {
   profile_url?: string
 }
 
+// --- Video Enhancer Types ---
+export interface VideoEnhancerPreset {
+  id: string
+  name: string
+  description: string
+  target_resolution: string
+  target_fps: string
+  badge?: string
+  icon?: string
+}
+
+export interface EnhanceShotPayload {
+  shot_id: string
+  preset_id?: string
+  project_id?: string
+  custom_scale?: string
+  custom_fps?: number
+}
+
+export interface EnhanceMasterPayload {
+  preset_id?: string
+  project_id?: string
+  custom_scale?: string
+  custom_fps?: number
+}
+
+export interface EnhanceVideoResponse {
+  success: boolean
+  shot_id?: string
+  project_id?: string
+  enhanced_url: string
+  preset: string
+}
+
 
 
 

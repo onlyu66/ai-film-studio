@@ -58,6 +58,9 @@ import {
   deleteVaultCharacter,
   importVaultCharacter,
   generateCharacterAngles,
+  fetchEnhancerPresets,
+  enhanceShotVideo,
+  enhanceMasterVideo,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -70,6 +73,7 @@ export const QUERY_KEYS = {
   storyboard: ['studio', 'storyboard'] as const,
   projects: ['studio', 'projects'] as const,
   vault: ['characters', 'vault'] as const,
+  enhancerPresets: ['system', 'enhancer-presets'] as const,
 }
 
 export function useStudioStatus() {
@@ -647,6 +651,36 @@ export function useImportVaultCharacter() {
 export function useGenerateCharacterAngles() {
   return useMutation({
     mutationFn: generateCharacterAngles,
+  })
+}
+
+// --- Video Enhancer Queries & Mutations ---
+export function useEnhancerPresets() {
+  return useQuery({
+    queryKey: QUERY_KEYS.enhancerPresets,
+    queryFn: fetchEnhancerPresets,
+    staleTime: 10 * 60_000,
+  })
+}
+
+export function useEnhanceShotVideo() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: enhanceShotVideo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useEnhanceMasterVideo() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: enhanceMasterVideo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.status })
+    },
   })
 }
 

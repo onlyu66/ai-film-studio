@@ -32,6 +32,7 @@ import {
   Lock,
   BookmarkPlus,
   Eye,
+  Award,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -44,6 +45,7 @@ import DubbingModal from './DubbingModal'
 import AutoReframeModal from './AutoReframeModal'
 import SFXSoundboardModal from './SFXSoundboardModal'
 import { CharacterVaultModal } from './CharacterVaultModal'
+import { VideoEnhancerModal } from './VideoEnhancerModal'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
@@ -274,6 +276,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [isVaultModalOpen, setIsVaultModalOpen] = useState(false)
   const [savingToVaultCharId, setSavingToVaultCharId] = useState<string | null>(null)
   const [savedToVaultCharId, setSavedToVaultCharId] = useState<string | null>(null)
+  const [isEnhancerModalOpen, setIsEnhancerModalOpen] = useState(false)
+  const [enhancerTargetShot, setEnhancerTargetShot] = useState<any | null>(null)
+  const [isEnhancerMaster, setIsEnhancerMaster] = useState(false)
   const batchSfxMutation = useBatchSuggestSfx()
   const splitShotMutation = useSplitShot()
   const saveVaultMutation = useSaveVaultCharacter()
@@ -1521,6 +1526,22 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           )}
                         </button>
 
+                        {/* 4K & 60fps Video Enhancer */}
+                        {shot.has_video && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsEnhancerMaster(false)
+                              setEnhancerTargetShot(shot)
+                              setIsEnhancerModalOpen(true)
+                            }}
+                            className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-amber-300 hover:text-amber-200 border border-cinema-border hover:border-amber-400/50 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                            title="Nâng cấp phân cảnh này lên 4K UHD hoặc nội suy 60fps mượt mà"
+                          >
+                            <Award className="w-3.5 h-3.5 text-amber-400" />
+                          </button>
+                        )}
+
                         {/* AI Image Reroll */}
                         <button
                           type="button"
@@ -1830,6 +1851,21 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                 >
                   <Smartphone className="w-4 h-4 text-amber-400 shrink-0" />
                   <span>Xuất 9:16 Shorts</span>
+                </button>
+
+                {/* AI 4K Upscaler & 60fps Motion Interpolator CTA */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEnhancerMaster(true)
+                    setEnhancerTargetShot(null)
+                    setIsEnhancerModalOpen(true)
+                  }}
+                  className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 hover:from-amber-500/20 hover:to-orange-500/20 text-amber-300 border border-amber-500/30 hover:border-amber-400/50 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-[0.98] whitespace-nowrap"
+                  title="Nâng cấp toàn bộ phim lên chuẩn 4K UHD siêu nét và 60fps mượt mà"
+                >
+                  <Award className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Nâng Cấp 4K / 60fps</span>
                 </button>
 
                 {/* Primary Master Assembly CTA */}
@@ -2998,6 +3034,20 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         isOpen={isVaultModalOpen}
         onClose={() => setIsVaultModalOpen(false)}
         currentProjectId="current"
+      />
+
+      {/* AI Video 4K Upscaler & 60fps Frame Interpolator Modal */}
+      <VideoEnhancerModal
+        isOpen={isEnhancerModalOpen}
+        onClose={() => {
+          setIsEnhancerModalOpen(false)
+          setEnhancerTargetShot(null)
+          setIsEnhancerMaster(false)
+        }}
+        shot={enhancerTargetShot}
+        isMaster={isEnhancerMaster}
+        sourceVideoUrl="/api/outputs/master_movie.mp4"
+        projectId="current"
       />
     </Card>
   )

@@ -3061,7 +3061,77 @@ def api_create_reframe(req: ReframeRequest):
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Lỗi chuyển đổi video dọc 9:16: {exc}")
 
+# --- Video Enhancer Endpoints ---
+@app.get("/api/video/enhancer/presets")
+def api_get_enhancer_presets():
+    from studio.video_enhancer import get_enhancer_presets
+    return get_enhancer_presets()
 
+class EnhanceShotRequest(BaseModel):
+    shot_id: str
+    preset_id: Optional[str] = "4k_crisp"
+    project_id: Optional[str] = "current"
+    custom_scale: Optional[str] = None
+    custom_fps: Optional[int] = None
+
+@app.post("/api/video/enhancer/enhance-shot")
+def api_enhance_shot_video(req: EnhanceShotRequest):
+    from studio.video_enhancer import enhance_shot_video
+    try:
+        enhanced_path = enhance_shot_video(
+            shot_id=req.shot_id,
+            preset_id=req.preset_id or "4k_crisp",
+            project_id=req.project_id,
+            custom_scale=req.custom_scale,
+            custom_fps=req.custom_fps,
+        )
+        if req.project_id and req.project_id not in ("current", ""):
+            rel_url = f"/api/outputs/projects/{req.project_id}/videos/{enhanced_path.name}?t={int(time.time())}"
+        else:
+            rel_url = f"/api/outputs/videos/{enhanced_path.name}?t={int(time.time())}"
+
+        return {
+            "success": True,
+            "shot_id": req.shot_id,
+            "enhanced_url": rel_url,
+            "preset": req.preset_id or "4k_crisp",
+        }
+    except FileNotFoundError as fnf:
+        raise HTTPException(status_code=404, detail=str(fnf))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Lỗi nâng cấp video phân cảnh: {exc}")
+
+class EnhanceMasterRequest(BaseModel):
+    preset_id: Optional[str] = "ultra_master_4k_60fps"
+    project_id: Optional[str] = "current"
+    custom_scale: Optional[str] = None
+    custom_fps: Optional[int] = None
+
+@app.post("/api/video/enhancer/enhance-master")
+def api_enhance_master_video(req: EnhanceMasterRequest):
+    from studio.video_enhancer import enhance_master_video
+    try:
+        enhanced_path = enhance_master_video(
+            preset_id=req.preset_id or "ultra_master_4k_60fps",
+            project_id=req.project_id,
+            custom_scale=req.custom_scale,
+            custom_fps=req.custom_fps,
+        )
+        if req.project_id and req.project_id not in ("current", ""):
+            rel_url = f"/api/outputs/projects/{req.project_id}/{enhanced_path.name}?t={int(time.time())}"
+        else:
+            rel_url = f"/api/outputs/{enhanced_path.name}?t={int(time.time())}"
+
+        return {
+            "success": True,
+            "project_id": req.project_id,
+            "enhanced_url": rel_url,
+            "preset": req.preset_id or "ultra_master_4k_60fps",
+        }
+    except FileNotFoundError as fnf:
+        raise HTTPException(status_code=404, detail=str(fnf))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Lỗi nâng cấp video master: {exc}")
 
 @app.get("/api/outputs/{file_path:path}")
 def serve_output_file(file_path: str):

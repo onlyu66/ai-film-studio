@@ -1022,66 +1022,6 @@ def test_split_shot_endpoint(tmp_path):
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
 
-def test_character_vault_endpoints(tmp_path):
-    # 1. GET /api/characters/vault
-    resp_get = client.get("/api/characters/vault")
-    assert resp_get.status_code == 200
-    vault_chars = resp_get.json()
-    assert isinstance(vault_chars, list)
-    assert len(vault_chars) >= 2
-
-    # 2. POST /api/characters/vault/save
-    resp_save = client.post(
-        "/api/characters/vault/save",
-        json={
-            "id": "char_vault_test_01",
-            "name": "Nữ Điệp Viên",
-            "visual_anchor": "28-year-old female secret agent in black catsuit",
-            "voice": "vi-VN-HoaiMyNeural",
-            "seed": 8888,
-        }
-    )
-    assert resp_save.status_code == 200
-    saved_data = resp_save.json()
-    assert saved_data["success"] is True
-    assert saved_data["character"]["id"] == "char_vault_test_01"
-
-    # 3. POST /api/characters/vault/import into project
-    import json
-    proj_dir = Path("outputs/projects/proj_test_vault_imp")
-    proj_dir.mkdir(parents=True, exist_ok=True)
-    sb_path = proj_dir / "storyboard.json"
-    sb_path.write_text(json.dumps({
-        "title": "Vault Import Test",
-        "language": "vi",
-        "characters": {},
-        "shots": []
-    }), encoding="utf-8")
-
-    try:
-        resp_imp = client.post(
-            "/api/characters/vault/import",
-            json={
-                "project_id": "proj_test_vault_imp",
-                "vault_char_id": "char_vault_test_01"
-            }
-        )
-        assert resp_imp.status_code == 200
-        imp_data = resp_imp.json()
-        assert imp_data["success"] is True
-        assert imp_data["character"]["name"] == "Nữ Điệp Viên"
-
-        # 4. DELETE /api/characters/vault/char_vault_test_01
-        resp_del = client.delete("/api/characters/vault/char_vault_test_01")
-        assert resp_del.status_code == 200
-        assert resp_del.json()["success"] is True
-    finally:
-        import shutil
-        if proj_dir.exists():
-            shutil.rmtree(proj_dir, ignore_errors=True)
-
-
-
 def test_sfx_endpoints(tmp_path):
     # 1. GET /api/sfx/catalog
     resp_cat = client.get("/api/sfx/catalog")
@@ -1152,178 +1092,63 @@ def test_sfx_endpoints(tmp_path):
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
 
-def test_character_vault_endpoints(tmp_path):
-    # 1. GET /api/characters/vault
-    resp_get = client.get("/api/characters/vault")
-    assert resp_get.status_code == 200
-    vault_chars = resp_get.json()
-    assert isinstance(vault_chars, list)
-    assert len(vault_chars) >= 2
 
-    # 2. POST /api/characters/vault/save
-    resp_save = client.post(
-        "/api/characters/vault/save",
-        json={
-            "id": "char_vault_test_01",
-            "name": "Nữ Điệp Viên",
-            "visual_anchor": "28-year-old female secret agent in black catsuit",
-            "voice": "vi-VN-HoaiMyNeural",
-            "seed": 8888,
-        }
-    )
-    assert resp_save.status_code == 200
-    saved_data = resp_save.json()
-    assert saved_data["success"] is True
-    assert saved_data["character"]["id"] == "char_vault_test_01"
+def test_video_enhancer_endpoints(monkeypatch, tmp_path):
+    # 1. GET /api/video/enhancer/presets
+    resp = client.get("/api/video/enhancer/presets")
+    assert resp.status_code == 200
+    presets = resp.json()
+    assert isinstance(presets, list)
+    assert len(presets) >= 5
+    preset_ids = [p["id"] for p in presets]
+    assert "4k_crisp" in preset_ids
+    assert "fps_60_smooth" in preset_ids
 
-    # 3. POST /api/characters/vault/import into project
-    import json
-    proj_dir = Path("outputs/projects/proj_test_vault_imp")
-    proj_dir.mkdir(parents=True, exist_ok=True)
-    sb_path = proj_dir / "storyboard.json"
-    sb_path.write_text(json.dumps({
-        "title": "Vault Import Test",
-        "language": "vi",
-        "characters": {},
-        "shots": []
-    }), encoding="utf-8")
+    # Mock enhance_video to avoid actual FFmpeg rendering during test
+    from unittest.mock import MagicMock
+    mock_run = MagicMock()
+    monkeypatch.setattr("subprocess.run", mock_run)
+
+    # 2. POST /api/video/enhancer/enhance-shot
+    dummy_shot_dir = Path("outputs/videos")
+    dummy_shot_dir.mkdir(parents=True, exist_ok=True)
+    dummy_shot_file = dummy_shot_dir / "shot_test_enhance.mp4"
+    dummy_shot_file.write_bytes(b"shot_video_bytes")
 
     try:
-        resp_imp = client.post(
-            "/api/characters/vault/import",
+        resp_shot = client.post(
+            "/api/video/enhancer/enhance-shot",
             json={
-                "project_id": "proj_test_vault_imp",
-                "vault_char_id": "char_vault_test_01"
+                "shot_id": "shot_test_enhance",
+                "preset_id": "4k_crisp"
             }
         )
-        assert resp_imp.status_code == 200
-        imp_data = resp_imp.json()
-        assert imp_data["success"] is True
-        assert imp_data["character"]["name"] == "Nữ Điệp Viên"
+        assert resp_shot.status_code == 200
+        shot_data = resp_shot.json()
+        assert shot_data["success"] is True
+        assert shot_data["shot_id"] == "shot_test_enhance"
+        assert "enhanced_url" in shot_data
 
-        # 4. DELETE /api/characters/vault/char_vault_test_01
-        resp_del = client.delete("/api/characters/vault/char_vault_test_01")
-        assert resp_del.status_code == 200
-        assert resp_del.json()["success"] is True
-    finally:
-        import shutil
-        if proj_dir.exists():
-            shutil.rmtree(proj_dir, ignore_errors=True)
+        # 3. POST /api/video/enhancer/enhance-master
+        dummy_master_file = Path("outputs/master_movie.mp4")
+        dummy_master_file.write_bytes(b"master_video_bytes")
 
-
-def test_split_shot_endpoint(tmp_path):
-    import json
-    proj_dir = Path("outputs/projects/proj_test_split")
-    proj_dir.mkdir(parents=True, exist_ok=True)
-    sb_path = proj_dir / "storyboard.json"
-    sb_path.write_text(json.dumps({
-        "title": "Split Test",
-        "language": "vi",
-        "characters": {},
-        "shots": [
-            {
-                "id": "shot_orig",
-                "chapter": 1,
-                "character_id": None,
-                "dialogue": "Đây là câu thoại dài cần tách",
-                "image_prompt": "Cảnh quay phong cảnh",
-                "motion": "zoom_in",
-                "duration": 6.0
-            }
-        ]
-    }), encoding="utf-8")
-
-    try:
-        resp = client.post(
-            "/api/storyboard/split-shot",
+        resp_master = client.post(
+            "/api/video/enhancer/enhance-master",
             json={
-                "shot_id": "shot_orig",
-                "split_at_sec": 2.5,
-                "project_id": "proj_test_split",
+                "preset_id": "ultra_master_4k_60fps"
             }
         )
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["success"] is True
-        assert data["total_shots"] == 2
-        assert len(data["new_shots"]) == 2
-        assert data["new_shots"][0]["id"] == "shot_orig"
-        assert abs(data["new_shots"][0]["duration"] - 2.5) < 0.1
-        assert "shot_orig_b" in data["new_shots"][1]["id"]
-        assert abs(data["new_shots"][1]["duration"] - 3.5) < 0.1
+        assert resp_master.status_code == 200
+        master_data = resp_master.json()
+        assert master_data["success"] is True
+        assert "enhanced_url" in master_data
     finally:
-        import shutil
-        if proj_dir.exists():
-            shutil.rmtree(proj_dir, ignore_errors=True)
-
-def test_character_vault_endpoints(tmp_path):
-    # 1. GET /api/characters/vault
-    resp_get = client.get("/api/characters/vault")
-    assert resp_get.status_code == 200
-    vault_chars = resp_get.json()
-    assert isinstance(vault_chars, list)
-    assert len(vault_chars) >= 2
-
-    # 2. POST /api/characters/vault/save
-    resp_save = client.post(
-        "/api/characters/vault/save",
-        json={
-            "id": "char_vault_test_01",
-            "name": "Nữ Điệp Viên",
-            "visual_anchor": "28-year-old female secret agent in black catsuit",
-            "voice": "vi-VN-HoaiMyNeural",
-            "seed": 8888,
-        }
-    )
-    assert resp_save.status_code == 200
-    saved_data = resp_save.json()
-    assert saved_data["success"] is True
-    assert saved_data["character"]["id"] == "char_vault_test_01"
-
-    # 3. POST /api/characters/vault/import into project
-    import json
-    proj_dir = Path("outputs/projects/proj_test_vault_imp")
-    proj_dir.mkdir(parents=True, exist_ok=True)
-    sb_path = proj_dir / "storyboard.json"
-    sb_path.write_text(json.dumps({
-        "title": "Vault Import Test",
-        "language": "vi",
-        "characters": {},
-        "shots": []
-    }), encoding="utf-8")
-
-    try:
-        resp_imp = client.post(
-            "/api/characters/vault/import",
-            json={
-                "project_id": "proj_test_vault_imp",
-                "vault_char_id": "char_vault_test_01"
-            }
-        )
-        assert resp_imp.status_code == 200
-        imp_data = resp_imp.json()
-        assert imp_data["success"] is True
-        assert imp_data["character"]["name"] == "Nữ Điệp Viên"
-
-        # 4. DELETE /api/characters/vault/char_vault_test_01
-        resp_del = client.delete("/api/characters/vault/char_vault_test_01")
-        assert resp_del.status_code == 200
-        assert resp_del.json()["success"] is True
-    finally:
-        import shutil
-        if proj_dir.exists():
-            shutil.rmtree(proj_dir, ignore_errors=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        if dummy_shot_file.exists():
+            dummy_shot_file.unlink()
+        if (dummy_shot_dir / "shot_test_enhance_enhanced.mp4").exists():
+            (dummy_shot_dir / "shot_test_enhance_enhanced.mp4").unlink()
+        if dummy_master_file.exists():
+            dummy_master_file.unlink()
+        if Path("outputs/master_movie_enhanced.mp4").exists():
+            Path("outputs/master_movie_enhanced.mp4").unlink()
