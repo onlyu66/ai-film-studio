@@ -119,6 +119,11 @@ export interface Shot {
   visual_description?: string
   image_prompt?: string
   camera?: string
+  camera_angle?: string
+  camera_lens?: string
+  camera_motion?: string
+  lighting?: string
+  multi_angle_options?: Record<string, string>
   action?: string
   image_url?: string
   audio_url?: string
@@ -268,6 +273,49 @@ export interface BgmTrackItem {
   description: string
   stream_url: string
 }
+
+export interface CameraAngleItem {
+  id: string
+  name: string
+  category: string
+  description: string
+  keywords: string
+}
+
+export interface CameraMotionItem {
+  id: string
+  name: string
+  description: string
+  keywords: string
+}
+
+export interface LensPresetItem {
+  id: string
+  name: string
+  description: string
+  keywords: string
+}
+
+export interface LightingPresetItem {
+  id: string
+  name: string
+  description: string
+  keywords: string
+}
+
+export interface CameraPresetsResponse {
+  angles: CameraAngleItem[]
+  motions: CameraMotionItem[]
+  lenses: LensPresetItem[]
+  lightings: LightingPresetItem[]
+}
+
+export interface MultiAngleCoverageResponse {
+  success: boolean
+  shot_id: string
+  angles: Record<string, string>
+}
+
 
 
 

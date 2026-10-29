@@ -49,6 +49,8 @@ export interface UpdateShotParams {
   shot_size?: string
   camera_angle?: string
   lighting?: string
+  camera_lens?: string
+  camera_motion?: string
   voice_volume?: number
   sfx_volume?: number
 }
@@ -105,6 +107,8 @@ export interface AddShotParams {
   shot_size?: string
   camera_angle?: string
   lighting?: string
+  camera_lens?: string
+  camera_motion?: string
   voice_volume?: number
   sfx_volume?: number
 }
@@ -373,6 +377,37 @@ export async function uploadCustomBgm(
   )
   return response.data
 }
+
+export async function fetchCameraPresets(): Promise<import('../types').CameraPresetsResponse> {
+  const response = await apiClient.get<import('../types').CameraPresetsResponse>('/api/camera/presets')
+  return response.data
+}
+
+export async function generateMultiAngleCoverage(
+  shotId: string,
+  angles?: string[],
+  engine?: string,
+  apiUrl?: string
+): Promise<import('../types').MultiAngleCoverageResponse> {
+  const response = await apiClient.post<import('../types').MultiAngleCoverageResponse>(
+    `/api/shots/${shotId}/multi-angle`,
+    { angles, engine, api_url: apiUrl }
+  )
+  return response.data
+}
+
+export async function applyMultiAngleShot(
+  shotId: string,
+  angle: string,
+  reRenderMotion = false
+): Promise<{ success: boolean; shot_id: string; applied_angle: string; image_url: string }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; applied_angle: string; image_url: string }>(
+    `/api/shots/${shotId}/apply-angle`,
+    { angle, re_render_motion: reRenderMotion }
+  )
+  return response.data
+}
+
 
 
 

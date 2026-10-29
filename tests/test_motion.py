@@ -39,7 +39,10 @@ def test_build_ffmpeg_vfx_filter():
     assert "contrast" in joined
 
 def test_build_ffmpeg_all_cinematic_motions():
-    for motion in ["zoom_in", "zoom_out", "pan_left", "pan_right", "tilt_up", "tilt_down", "handheld"]:
+    for motion in [
+        "zoom_in", "zoom_out", "pan_left", "pan_right", "tilt_up", "tilt_down",
+        "handheld", "static", "dolly_in", "dolly_out", "orbit_left", "orbit_right", "fpv_drone"
+    ]:
         cmd = build_ffmpeg_command(Path("in.png"), Path("out.mp4"), 3.0, motion)
         assert "zoompan" in " ".join(cmd)
 

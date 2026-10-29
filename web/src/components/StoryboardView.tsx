@@ -30,6 +30,7 @@ import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
 import TimelineScrubber from './TimelineScrubber'
+import CameraDirectorModal from './CameraDirectorModal'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
@@ -247,6 +248,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [renderingAudioShotId, setRenderingAudioShotId] = useState<string | null>(null)
   const [renderingVideoShotId, setRenderingVideoShotId] = useState<string | null>(null)
   const [approvingShotId, setApprovingShotId] = useState<string | null>(null)
+  const [directorModalShot, setDirectorModalShot] = useState<any | null>(null)
   const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string; shotId?: string } | null>(null)
   const [videoError, setVideoError] = useState<boolean>(false)
   const [playingSfx, setPlayingSfx] = useState<string | null>(null)
@@ -1247,14 +1249,25 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
                       {/* Cinematography & Audio Specs — Modern 2-Row Structured Grid */}
                       <div className="p-2.5 rounded-xl bg-cinema-canvas/60 border border-cinema-border/70 text-[10px] font-mono space-y-2">
-                        {/* Row 1: Camera Angle, Shot Size, Lighting */}
+                        {/* Row 1: Camera Angle, Shot Size, Lighting, Lens */}
                         <div className="flex flex-wrap items-center justify-between gap-1 text-zinc-400">
-                          <span className="flex items-center gap-1.5 text-amber-300/90 font-medium">
-                            <Camera className="w-3 h-3 text-amber-400 shrink-0" />
+                          <button
+                            type="button"
+                            onClick={() => setDirectorModalShot(shot as any)}
+                            className="flex items-center gap-1.5 text-amber-300/90 hover:text-amber-300 font-medium cursor-pointer group/cam"
+                            title="Bấm để mở Đạo Diễn Góc Máy (3 góc máy & Visual Canvas)"
+                          >
+                            <Camera className="w-3 h-3 text-amber-400 shrink-0 group-hover/cam:scale-110 transition-transform" />
                             <span>{String(shot.shot_size || 'medium').replace('_', ' ')}</span>
                             <span className="text-zinc-600">•</span>
-                            <span>{String(shot.camera_angle || 'eye_level').replace('_', ' ')}</span>
-                          </span>
+                            <span className="underline decoration-dotted underline-offset-2">{String(shot.camera_angle || 'medium').replace('_', ' ')}</span>
+                            {Boolean(shot.camera_lens) && (
+                              <>
+                                <span className="text-zinc-600">•</span>
+                                <span className="text-sky-300">{String(shot.camera_lens).replace('_', ' ')}</span>
+                              </>
+                            )}
+                          </button>
 
                           <div className="flex items-center gap-2">
                             {shot.lighting && (
@@ -1372,6 +1385,16 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                             disabled={uploadingShotId === shot.id}
                           />
                         </label>
+
+                        {/* Camera Director & Multi-Camera */}
+                        <button
+                          type="button"
+                          onClick={() => setDirectorModalShot(shot as any)}
+                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-amber-500/20 text-zinc-300 hover:text-amber-400 border border-cinema-border hover:border-amber-400/50 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                          title="Đạo diễn góc máy & Visual Prompt Canvas (3 góc máy Wide/Medium/Close-up, ống kính & ánh sáng)"
+                        >
+                          <Camera className="w-3.5 h-3.5 text-amber-400" />
+                        </button>
                       </div>
 
                       {/* Right: Primary Sửa Shot & Delete */}
@@ -1990,6 +2013,16 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           disabled={uploadingShotId === editingShot.id}
                         />
                       </label>
+
+                      <button
+                        type="button"
+                        onClick={() => setDirectorModalShot(editingShot as any)}
+                        className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Đạo diễn 3 góc máy & Visual Prompt Canvas"
+                      >
+                        <Camera className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Đạo diễn góc máy</span>
+                      </button>
 
                       <button
                         type="button"
@@ -2675,6 +2708,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Camera Director & Multi-Camera Modal */}
+      <CameraDirectorModal
+        isOpen={!!directorModalShot}
+        onClose={() => setDirectorModalShot(null)}
+        shot={directorModalShot}
+        characters={characters}
+      />
     </Card>
   )
 }

@@ -38,6 +38,9 @@ import {
   fetchSubtitlePresets,
   fetchBgmTracks,
   uploadCustomBgm,
+  fetchCameraPresets,
+  generateMultiAngleCoverage,
+  applyMultiAngleShot,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -433,6 +436,52 @@ export function useUploadCustomBgm() {
   return useMutation({
     mutationFn: ({ filename, audioBase64 }: { filename: string; audioBase64: string }) =>
       uploadCustomBgm(filename, audioBase64),
+  })
+}
+
+export function useCameraPresets() {
+  return useQuery({
+    queryKey: ['system', 'camera-presets'],
+    queryFn: fetchCameraPresets,
+    staleTime: 10 * 60_000,
+  })
+}
+
+export function useGenerateMultiAngle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      shotId,
+      angles,
+      engine,
+      apiUrl,
+    }: {
+      shotId: string
+      angles?: string[]
+      engine?: string
+      apiUrl?: string
+    }) => generateMultiAngleCoverage(shotId, angles, engine, apiUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useApplyMultiAngle() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      shotId,
+      angle,
+      reRenderMotion,
+    }: {
+      shotId: string
+      angle: string
+      reRenderMotion?: boolean
+    }) => applyMultiAngleShot(shotId, angle, reRenderMotion),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
   })
 }
 

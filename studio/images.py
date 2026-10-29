@@ -44,7 +44,15 @@ def build_full_prompt(shot: Shot, characters: Dict[str, Character], style: str =
         parts.append(shot.image_prompt)
 
     # 4. Cinematic Lens, Optical Quality & Style DNA
-    lens_quality = "shot on 35mm anamorphic lens, f/1.8 aperture, shallow depth of field, photorealistic 8k, color graded, masterpiece"
+    camera_lens = getattr(shot, "camera_lens", None)
+    if camera_lens:
+        from studio.camera_director import LENS_PRESETS
+        if camera_lens in LENS_PRESETS:
+            lens_quality = LENS_PRESETS[camera_lens]["keywords"]
+        else:
+            lens_quality = f"shot on {camera_lens.replace('_', ' ')}, photorealistic 8k, color graded, masterpiece"
+    else:
+        lens_quality = "shot on 35mm anamorphic lens, f/1.8 aperture, shallow depth of field, photorealistic 8k, color graded, masterpiece"
     parts.append(lens_quality)
 
     style_suffix = STYLE_DNA.get(style.lower(), STYLE_DNA["cinematic"])

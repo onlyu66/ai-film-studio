@@ -39,9 +39,18 @@ def build_ffmpeg_command(
     ease = f"(0.5-0.5*cos(PI*on/{d}))"
     motion_clean = (motion_type or "zoom_in").lower().strip()
 
-    if motion_clean in ("zoom_out", "pull_out"):
+    if motion_clean in ("static", "none", "locked"):
+        # Pure locked off static frame
+        zoompan_expr = f"z='1.02':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+    elif motion_clean in ("zoom_out", "pull_out"):
         # Gentle dolly backwards from 1.15 to 1.0
         zoompan_expr = f"z='1.15-0.15*{ease}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+    elif motion_clean in ("dolly_in", "push_in_deep"):
+        # Deep cinematic push-in from 1.0 to 1.25
+        zoompan_expr = f"z='1.0+0.25*{ease}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+    elif motion_clean in ("dolly_out", "pull_out_deep"):
+        # Deep cinematic pull-out from 1.25 down to 1.0
+        zoompan_expr = f"z='1.25-0.25*{ease}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
     elif motion_clean in ("pan_left", "truck_left"):
         # Smooth truck left
         zoompan_expr = f"z='1.15':x='(iw-iw/zoom)*(1.0-{ease})':y='ih/2-(ih/zoom/2)'"
@@ -54,6 +63,15 @@ def build_ffmpeg_command(
     elif motion_clean == "tilt_down":
         # Smooth pedestal tilt downwards
         zoompan_expr = f"z='1.15':x='iw/2-(iw/zoom/2)':y='(ih-ih/zoom)*{ease}'"
+    elif motion_clean in ("orbit_left", "orbital_left"):
+        # Elliptical counter-clockwise orbit
+        zoompan_expr = f"z='1.14+0.04*sin(PI*on/{d})':x='iw/2-(iw/zoom/2)+(iw*0.06)*cos(PI*on/{d})':y='ih/2-(ih/zoom/2)+(ih*0.02)*sin(PI*on/{d})'"
+    elif motion_clean in ("orbit_right", "orbital_right"):
+        # Elliptical clockwise orbit
+        zoompan_expr = f"z='1.14+0.04*sin(PI*on/{d})':x='iw/2-(iw/zoom/2)-(iw*0.06)*cos(PI*on/{d})':y='ih/2-(ih/zoom/2)-(ih*0.02)*sin(PI*on/{d})'"
+    elif motion_clean in ("fpv_drone", "drone", "swoop"):
+        # Dynamic drone swoop with forward drive and bank
+        zoompan_expr = f"z='1.05+0.18*{ease}':x='iw/2-(iw/zoom/2)+12*sin(2*PI*on/{d})':y='(ih-ih/zoom)*(0.2+0.8*{ease})'"
     elif motion_clean in ("handheld", "action", "shake"):
         # Organic handheld breathing camera motion with subtle harmonic drift
         zoompan_expr = f"z='1.08+0.04*{ease}':x='iw/2-(iw/zoom/2)+6*sin(4*PI*on/{d})':y='ih/2-(ih/zoom/2)+4*cos(3*PI*on/{d})'"
@@ -142,10 +160,19 @@ def render_motion_for_shot(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if engine == "replicate":
+        ai_prompt = prompt
+        try:
+            from studio.camera_director import CAMERA_MOTIONS
+            if motion_type and motion_type in CAMERA_MOTIONS:
+                motion_desc = CAMERA_MOTIONS[motion_type]["keywords"]
+                ai_prompt = f"{ai_prompt}, {motion_desc}" if ai_prompt else motion_desc
+        except Exception:
+            pass
+
         res = _render_replicate_i2v(
             image_path=image_path,
             output_path=output_path,
-            prompt=prompt,
+            prompt=ai_prompt,
             api_token=video_api_token,
             model=video_model,
             duration=duration,

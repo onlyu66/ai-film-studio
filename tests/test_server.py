@@ -722,6 +722,77 @@ def test_upload_bgm_endpoint(tmp_path, monkeypatch):
     assert "stream_url" in data
     assert "id" in data
 
+def test_get_camera_presets_endpoint():
+    resp = client.get("/api/camera/presets")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "angles" in data
+    assert "motions" in data
+    assert "lenses" in data
+    assert "lightings" in data
+    assert len(data["angles"]) >= 6
+    assert len(data["motions"]) >= 8
+
+def test_multi_angle_coverage_endpoints(tmp_path, monkeypatch):
+    sb_data = {
+        "title": "Camera Test Film",
+        "language": "en",
+        "characters": {
+            "c1": {
+                "name": "Detective",
+                "visual_anchor": "detective in trench coat",
+                "voice": "en-US-GuyNeural",
+                "seed": 1234,
+            }
+        },
+        "shots": [
+            {
+                "id": "shot_cam_001",
+                "chapter": 1,
+                "character_id": "c1",
+                "dialogue": "Check the perimeter.",
+                "image_prompt": "Detective standing near an old warehouse",
+                "motion": "zoom_in",
+                "duration": 4.0,
+            }
+        ]
+    }
+    sb_file = Path("outputs/storyboard.json")
+    sb_file.parent.mkdir(parents=True, exist_ok=True)
+    sb_file.write_text(json.dumps(sb_data, ensure_ascii=False), encoding="utf-8")
+
+    from unittest.mock import patch
+    mock_render_res = {
+        "wide": "/outputs/images/shot_cam_001_wide.png",
+        "medium": "/outputs/images/shot_cam_001_medium.png",
+        "close_up": "/outputs/images/shot_cam_001_close_up.png",
+    }
+
+    with patch("studio.camera_director.render_multi_angle_coverage", return_value=mock_render_res):
+        resp = client.post("/api/shots/shot_cam_001/multi-angle", json={"angles": ["wide", "medium", "close_up"]})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["success"] is True
+        assert data["shot_id"] == "shot_cam_001"
+        assert "wide" in data["angles"]
+
+    # Mock candidate file for apply-angle
+    img_dir = Path("outputs/images")
+    img_dir.mkdir(parents=True, exist_ok=True)
+    wide_img = img_dir / "shot_cam_001_wide.png"
+    wide_img.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 2000)
+
+    resp_apply = client.post("/api/shots/shot_cam_001/apply-angle", json={"angle": "wide", "re_render_motion": False})
+    assert resp_apply.status_code == 200
+    data_apply = resp_apply.json()
+    assert data_apply["success"] is True
+    assert data_apply["applied_angle"] == "wide"
+
+    # Verify storyboard was updated
+    updated_sb = json.loads(sb_file.read_text(encoding="utf-8"))
+    assert updated_sb["shots"][0]["camera_angle"] == "wide"
+
+
 
 
 

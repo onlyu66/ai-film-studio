@@ -820,6 +820,8 @@ class UpdateShotRequest(BaseModel):
     shot_size: Optional[str] = None
     camera_angle: Optional[str] = None
     lighting: Optional[str] = None
+    camera_lens: Optional[str] = None
+    camera_motion: Optional[str] = None
     voice_volume: Optional[float] = None
     sfx_volume: Optional[float] = None
 
@@ -919,6 +921,14 @@ def update_shot(req: UpdateShotRequest):
 
         if req.lighting is not None:
             target_shot["lighting"] = req.lighting if req.lighting else None
+
+        if req.camera_lens is not None:
+            target_shot["camera_lens"] = req.camera_lens if req.camera_lens else None
+
+        if req.camera_motion is not None:
+            target_shot["camera_motion"] = req.camera_motion if req.camera_motion else None
+            if not req.motion:
+                target_shot["motion"] = req.camera_motion
 
         # Reset approval when a shot's content or visuals are modified
         target_shot["is_approved"] = False
@@ -1253,6 +1263,151 @@ def upload_custom_bgm(req: UploadBgmRequest):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi lưu file nhạc: {e}")
+
+@app.get("/api/camera/presets")
+def api_get_camera_presets():
+    from studio.camera_director import get_camera_presets
+    return get_camera_presets()
+
+class MultiAngleCoverageRequest(BaseModel):
+    angles: Optional[List[str]] = None
+    engine: Optional[str] = None
+    api_url: Optional[str] = None
+
+@app.post("/api/shots/{shot_id}/multi-angle")
+def generate_multi_angle_for_shot(shot_id: str, req: Optional[MultiAngleCoverageRequest] = None):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    with open(sb_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    target_shot = None
+    for s in data.get("shots", []):
+        if s.get("id") == shot_id:
+            target_shot = s
+            break
+    if not target_shot:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{shot_id}'")
+
+    from studio.storyboard import Shot, Character
+    shot = Shot(
+        id=target_shot["id"],
+        chapter=target_shot.get("chapter", 1),
+        character_id=target_shot.get("character_id"),
+        dialogue=target_shot.get("dialogue", ""),
+        image_prompt=target_shot.get("image_prompt", ""),
+        motion=target_shot.get("motion", "zoom_in"),
+        duration=target_shot.get("duration"),
+        shot_size=target_shot.get("shot_size"),
+        camera_angle=target_shot.get("camera_angle"),
+        lighting=target_shot.get("lighting"),
+        camera_lens=target_shot.get("camera_lens"),
+    )
+    characters = {
+        k: Character(
+            name=v.get("name", k),
+            visual_anchor=v.get("visual_anchor", ""),
+            voice=v.get("voice", ""),
+            seed=v.get("seed", 42),
+        )
+        for k, v in data.get("characters", {}).items()
+    }
+
+    style = getattr(last_produce_request, "style", "cinematic") if last_produce_request else "cinematic"
+    aspect_ratio = getattr(last_produce_request, "aspect_ratio", "16:9") if last_produce_request else "16:9"
+    engine = (req.engine if req and req.engine else None) or (getattr(last_produce_request, "image_engine", "pollinations") if last_produce_request else "pollinations")
+    api_url = (req.api_url if req and req.api_url else None) or (getattr(last_produce_request, "image_api_url", None) if last_produce_request else None)
+    target_angles = req.angles if (req and req.angles) else ["wide", "medium", "close_up"]
+
+    from studio.camera_director import render_multi_angle_coverage
+    results = render_multi_angle_coverage(
+        shot=shot,
+        characters=characters,
+        angles=target_angles,
+        output_dir=Path("outputs/images"),
+        style=style,
+        aspect_ratio=aspect_ratio,
+        engine=engine,
+        api_url=api_url,
+    )
+
+    # Persist multi_angle_options into storyboard.json
+    target_shot["multi_angle_options"] = results
+    with open(sb_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    return {
+        "success": True,
+        "shot_id": shot_id,
+        "angles": results,
+    }
+
+class ApplyAngleRequest(BaseModel):
+    angle: str
+    re_render_motion: bool = False
+
+@app.post("/api/shots/{shot_id}/apply-angle")
+def apply_multi_angle_for_shot(shot_id: str, req: ApplyAngleRequest):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    with open(sb_file, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    target_shot = None
+    for s in data.get("shots", []):
+        if s.get("id") == shot_id:
+            target_shot = s
+            break
+    if not target_shot:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{shot_id}'")
+
+    img_dir = Path("outputs/images")
+    candidate_img = img_dir / f"{shot_id}_{req.angle}.png"
+    main_img = img_dir / f"{shot_id}.png"
+
+    if not candidate_img.exists():
+        raise HTTPException(status_code=400, detail=f"Chưa có ảnh góc máy '{req.angle}' cho phân cảnh này.")
+
+    shutil.copyfile(candidate_img, main_img)
+
+    # Update camera_angle in shot
+    target_shot["camera_angle"] = req.angle
+    target_shot["is_approved"] = False
+
+    # Invalidate video or re-render
+    vid_file = Path(f"outputs/videos/{shot_id}.mp4")
+    if req.re_render_motion:
+        from studio.motion import render_motion_for_shot
+        duration = float(target_shot.get("duration") or 5.0)
+        style = getattr(last_produce_request, "style", "cinematic") if last_produce_request else "cinematic"
+        aspect_ratio = getattr(last_produce_request, "aspect_ratio", "16:9") if last_produce_request else "16:9"
+        motion_engine = getattr(last_produce_request, "motion", "kenburns") if last_produce_request else "kenburns"
+        render_motion_for_shot(
+            image_path=main_img,
+            output_path=vid_file,
+            duration=duration,
+            motion_type=target_shot.get("motion", "zoom_in"),
+            engine=motion_engine,
+            prompt=target_shot.get("image_prompt", ""),
+            aspect_ratio=aspect_ratio,
+            style=style,
+        )
+    else:
+        vid_file.unlink(missing_ok=True)
+
+    with open(sb_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    return {
+        "success": True,
+        "shot_id": shot_id,
+        "applied_angle": req.angle,
+        "image_url": f"/outputs/images/{shot_id}.png",
+    }
 
 class RerollShotRequest(BaseModel):
     shot_id: str
