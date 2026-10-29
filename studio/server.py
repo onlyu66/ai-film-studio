@@ -71,6 +71,11 @@ class ProduceRequest(BaseModel):
     episode: int = 1
     parent_project_id: Optional[str] = None
     webhook_url: Optional[str] = None
+    image_concurrency: Optional[int] = None
+    motion_concurrency: Optional[int] = None
+    tts_concurrency: Optional[int] = None
+    hardware_accel: str = "auto"
+    hardware_profile: Optional[str] = None
 
 # Global pipeline execution state & cancel event
 _cancel_event = threading.Event()
@@ -324,6 +329,11 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             episode=req.episode,
             parent_project_id=req.parent_project_id,
             webhook_url=req.webhook_url,
+            image_concurrency=getattr(req, "image_concurrency", None),
+            motion_concurrency=getattr(req, "motion_concurrency", None),
+            tts_concurrency=getattr(req, "tts_concurrency", None),
+            hardware_accel=getattr(req, "hardware_accel", "auto") or "auto",
+            hardware_profile=getattr(req, "hardware_profile", None),
         )
 
         def _on_progress(stage: int, stage_name: str, progress: int, log_msg: str, **kwargs):
@@ -459,6 +469,11 @@ def get_status():
         "shots_count": _status_shots_count_cache,
         "can_cancel": pipeline_state.get("status") == "running",
     }
+
+@app.get("/api/system/hardware")
+def get_system_hardware():
+    from studio.hardware import detect_hardware
+    return detect_hardware()
 
 class LLMModelsRequest(BaseModel):
     provider: str = "gemini"

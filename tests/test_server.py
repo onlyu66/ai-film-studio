@@ -559,6 +559,16 @@ def test_status_endpoint_includes_per_shot_metadata():
     srv.pipeline_state["shots_total"] = None
     srv.pipeline_state["active_action"] = None
 
+def test_get_system_hardware_endpoint():
+    resp = client.get("/api/system/hardware")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "cpu_cores" in data
+    assert "ram_total_gb" in data
+    assert "recommended_profile" in data
+    assert data["recommended_profile"] in ("eco", "balanced", "turbo")
+
+
 
 
 

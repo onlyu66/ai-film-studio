@@ -27,9 +27,10 @@ import {
   FileEdit,
   Smartphone,
   Monitor,
+  Zap,
 } from 'lucide-react'
 import { CustomSelect } from './ui/select'
-import { useTestWebhook, useFetchLlmModels } from '../api/queries'
+import { useTestWebhook, useFetchLlmModels, useHardwareInfo } from '../api/queries'
 import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem } from '../types'
 
 const LANG_OPTIONS: SelectOption[] = [
@@ -171,7 +172,10 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   const [parentProjectId, setParentProjectId] = useState<string | undefined>(undefined)
   const [webhookUrl, setWebhookUrl] = useState('')
   const [testWebhookSuccess, setTestWebhookSuccess] = useState(false)
+  const [hardwareProfile, setHardwareProfile] = useState('auto')
+  const [hardwareAccel, setHardwareAccel] = useState('auto')
 
+  const { data: hardwareInfo } = useHardwareInfo()
   const testWebhookMutation = useTestWebhook()
 
   useEffect(() => {
@@ -227,6 +231,8 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       episode: Number(episode) || 1,
       parent_project_id: parentProjectId,
       webhook_url: webhookUrl.trim() || undefined,
+      hardware_profile: hardwareProfile === 'auto' ? undefined : hardwareProfile,
+      hardware_accel: hardwareAccel,
     })
   }
 
@@ -797,6 +803,57 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   onChange={(e) => setEpisode(Math.max(1, parseInt(e.target.value) || 1))}
                   className="w-full px-3 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 focus:outline-none focus:border-amber-400 font-bold"
                 />
+              </div>
+
+              {/* Hardware & Concurrency Settings */}
+              <div className="sm:col-span-3 pt-3 border-t border-studio-border">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <label className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Tối Ưu Hóa Render & Luồng Xử Lý (Hardware & Concurrency)</span>
+                  </label>
+                  {hardwareInfo && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                      {hardwareInfo.cpu_cores} Cores • {hardwareInfo.ram_available_gb}/{hardwareInfo.ram_total_gb} GB RAM {hardwareInfo.has_gpu ? '• GPU NVENC' : '• CPU libx264'}
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-studio-card/80 p-3 rounded-xl border border-studio-border">
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-zinc-400 mb-1">
+                      Cấu hình tải (Profile đa luồng)
+                    </label>
+                    <select
+                      value={hardwareProfile}
+                      onChange={(e) => setHardwareProfile(e.target.value)}
+                      disabled={isRunning}
+                      className="w-full px-3 py-1.5 rounded-lg bg-studio-input border border-studio-border text-xs text-zinc-200 focus:outline-none focus:border-amber-400 font-medium cursor-pointer"
+                    >
+                      <option value="auto">⚡ Tự động tối ưu (Khuyến nghị: {hardwareInfo?.recommended_profile?.toUpperCase() || 'BALANCED'})</option>
+                      <option value="eco">🌱 Tiết kiệm RAM (1-2 luồng, máy nhẹ / VPS)</option>
+                      <option value="balanced">⚖️ Cân bằng điện ảnh (3-4 luồng, ổn định)</option>
+                      <option value="turbo">🚀 Turbo Max (6-8 luồng, tận dụng đa nhân)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-zinc-400 mb-1">
+                      Tăng tốc phần cứng (Video Encoder)
+                    </label>
+                    <select
+                      value={hardwareAccel}
+                      onChange={(e) => setHardwareAccel(e.target.value)}
+                      disabled={isRunning}
+                      className="w-full px-3 py-1.5 rounded-lg bg-studio-input border border-studio-border text-xs text-zinc-200 focus:outline-none focus:border-amber-400 font-medium cursor-pointer"
+                    >
+                      <option value="auto">Tự động phát hiện (Auto)</option>
+                      <option value="cpu">CPU phần mềm (libx264)</option>
+                      <option value="nvenc">NVIDIA GPU NVENC</option>
+                      <option value="vaapi">Linux VAAPI</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
               {/* Webhook */}

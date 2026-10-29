@@ -38,6 +38,15 @@ export interface LLMModelsResponse {
   error?: string
 }
 
+export interface HardwareInfo {
+  cpu_cores: number
+  ram_total_gb: number
+  ram_available_gb: number
+  has_gpu: boolean
+  available_encoders: string[]
+  recommended_profile: 'eco' | 'balanced' | 'turbo'
+}
+
 export interface ProductionFormData {
   topic: string
   lang: string
@@ -55,6 +64,10 @@ export interface ProductionFormData {
   episode?: number
   parent_project_id?: string
   webhook_url?: string
+  hardware_profile?: string
+  hardware_accel?: string
+  image_concurrency?: number
+  motion_concurrency?: number
 }
 
 export interface StudioStatus {

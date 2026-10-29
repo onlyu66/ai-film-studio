@@ -29,6 +29,7 @@ import {
   testWebhook,
   fetchLlmModels,
   cancelPipeline,
+  fetchHardwareInfo,
   type UpdateShotParams,
   type AddShotParams,
   type DubProjectParams,
@@ -356,6 +357,14 @@ export function useCancelPipeline() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.status })
     },
+  })
+}
+
+export function useHardwareInfo() {
+  return useQuery({
+    queryKey: ['system', 'hardware'],
+    queryFn: fetchHardwareInfo,
+    staleTime: 60_000,
   })
 }
 

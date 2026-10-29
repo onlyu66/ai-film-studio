@@ -24,6 +24,7 @@ def build_ffmpeg_command(
     aspect_ratio: str = "16:9",
     letterbox: bool = False,
     style: str = "cinematic",
+    accel: str = "auto",
 ) -> List[str]:
     """Construct the FFmpeg command line to generate smooth Ease-In-Out Ken Burns camera motion from a still image."""
     d = max(1, int(duration * fps))
@@ -80,6 +81,9 @@ def build_ffmpeg_command(
 
     vf_filter = ",".join(vf_filters)
 
+    from studio.hardware import get_ffmpeg_video_encoder
+    enc, flags = get_ffmpeg_video_encoder(accel)
+
     return [
         "ffmpeg",
         "-y",
@@ -87,9 +91,8 @@ def build_ffmpeg_command(
         "-i", str(image_path),
         "-vf", vf_filter,
         "-t", str(float(duration)),
-        "-c:v", "libx264",
-        "-preset", "veryfast",
-        "-tune", "stillimage",
+        "-c:v", enc,
+        *flags,
         "-threads", "0",
         "-pix_fmt", "yuv420p",
         "-movflags", "+faststart",
@@ -146,6 +149,7 @@ def render_motion_for_shot(
     aspect_ratio: str = "16:9",
     letterbox: bool = False,
     style: str = "cinematic",
+    accel: str = "auto",
 ) -> Path:
     """Execute motion rendering for a single shot according to selected engine."""
     if not shutil.which("ffmpeg"):
@@ -170,6 +174,7 @@ def render_motion_for_shot(
         aspect_ratio=aspect_ratio,
         letterbox=letterbox,
         style=style,
+        accel=accel,
     )
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode != 0:
@@ -247,11 +252,14 @@ def run_motion_stage(
                     aspect_ratio=getattr(config, "aspect_ratio", "16:9"),
                     letterbox=getattr(config, "letterbox", False),
                     style=getattr(config, "style", "cinematic"),
+                    accel=getattr(config, "hardware_accel", "auto"),
                 )
 
             return shot.id, out_file
 
-        max_workers = max(1, min(4, os.cpu_count() or 2, len(pending_shots)))
+        from studio.hardware import get_optimal_concurrency
+        optimal_workers = get_optimal_concurrency("motion", config)
+        max_workers = max(1, min(optimal_workers, len(pending_shots)))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(process_shot_motion, s) for s in pending_shots]
             for future in as_completed(futures):

@@ -290,6 +290,11 @@ export async function cancelPipeline(): Promise<{ success: boolean; message: str
   return response.data
 }
 
+export async function fetchHardwareInfo(): Promise<import('../types').HardwareInfo> {
+  const response = await apiClient.get<import('../types').HardwareInfo>('/api/system/hardware')
+  return response.data
+}
+
 
 
 

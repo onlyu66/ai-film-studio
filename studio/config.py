@@ -23,6 +23,11 @@ class StudioConfig:
     episode: int = 1
     parent_project_id: Optional[str] = None
     webhook_url: Optional[str] = None
+    image_concurrency: Optional[int] = None
+    motion_concurrency: Optional[int] = None
+    tts_concurrency: Optional[int] = None
+    hardware_accel: str = "auto"
+    hardware_profile: Optional[str] = None
 
 def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) -> StudioConfig:
     """Load configuration from config.yaml merged with CLI kwargs."""
@@ -58,6 +63,16 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
                 merged["episode"] = int(v)
             elif k in ("parent_project_id", "parent_id"):
                 merged["parent_project_id"] = str(v)
+            elif k in ("image_concurrency", "img_workers"):
+                merged["image_concurrency"] = int(v) if v else None
+            elif k in ("motion_concurrency", "vid_workers"):
+                merged["motion_concurrency"] = int(v) if v else None
+            elif k in ("tts_concurrency", "audio_workers"):
+                merged["tts_concurrency"] = int(v) if v else None
+            elif k in ("hardware_accel", "accel", "gpu"):
+                merged["hardware_accel"] = str(v)
+            elif k in ("hardware_profile", "hw_profile", "profile"):
+                merged["hardware_profile"] = str(v)
             elif k in ("webhook_url", "webhook"):
                 merged["webhook_url"] = str(v)
             elif k == "bgm":
@@ -106,4 +121,9 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
         episode=episode,
         parent_project_id=parent_project_id,
         webhook_url=webhook_url,
+        image_concurrency=int(merged["image_concurrency"]) if merged.get("image_concurrency") else None,
+        motion_concurrency=int(merged["motion_concurrency"]) if merged.get("motion_concurrency") else None,
+        tts_concurrency=int(merged["tts_concurrency"]) if merged.get("tts_concurrency") else None,
+        hardware_accel=str(merged.get("hardware_accel", "auto")),
+        hardware_profile=str(merged["hardware_profile"]) if merged.get("hardware_profile") else None,
     )

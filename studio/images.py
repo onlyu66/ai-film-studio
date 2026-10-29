@@ -200,9 +200,9 @@ def run_image_stage(
                 _create_fallback_image(out_file, width=w, height=h, label=shot.image_prompt or shot.id)
                 return shot.id, out_file
 
-        # Use 2 workers when unauthenticated to avoid 402 concurrent rate limits
-        has_key = bool(os.environ.get("POLLINATIONS_API_KEY") or os.environ.get("POLLEN_API_KEY"))
-        max_workers = min(4 if has_key else 2, len(pending_shots))
+        from studio.hardware import get_optimal_concurrency
+        optimal_workers = get_optimal_concurrency("image", config)
+        max_workers = max(1, min(optimal_workers, len(pending_shots)))
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(process_shot_image, s) for s in pending_shots]
