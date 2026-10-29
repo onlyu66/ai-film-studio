@@ -80,6 +80,9 @@ export interface ProductionFormData {
   bgm_volume?: number
   ducking_level?: string
   voice_volume?: number
+  color_lut?: string
+  transition_preset?: string
+  transition_duration?: number
 }
 
 export interface StudioStatus {
@@ -315,6 +318,23 @@ export interface MultiAngleCoverageResponse {
   shot_id: string
   angles: Record<string, string>
 }
+
+export interface ColorLutItem {
+  id: string
+  name: string
+  description: string
+  css_gradient: string
+  ffmpeg_filter: string
+}
+
+export interface SceneTransitionItem {
+  id: string
+  name: string
+  description: string
+  xfade_name: string
+  default_duration: number
+}
+
 
 
 

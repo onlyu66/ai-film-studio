@@ -40,6 +40,9 @@ class StudioConfig:
     bgm_volume: float = 0.7
     ducking_level: str = "medium"
     voice_volume: float = 1.0
+    color_lut: Optional[str] = "teal_and_orange"
+    transition_preset: Optional[str] = "dissolve"
+    transition_duration: float = 0.6
 
 def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) -> StudioConfig:
     """Load configuration from config.yaml merged with CLI kwargs."""
@@ -99,6 +102,12 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
                 merged["ducking_level"] = str(v)
             elif k in ("voice_volume", "dialogue_volume"):
                 merged["voice_volume"] = float(v)
+            elif k in ("color_lut", "lut", "color_grading"):
+                merged["color_lut"] = str(v) if v else None
+            elif k in ("transition_preset", "transition", "scene_transition"):
+                merged["transition_preset"] = str(v)
+            elif k in ("transition_duration", "trans_dur"):
+                merged["transition_duration"] = float(v)
             elif k in ("video_api_token", "replicate_token", "video_token"):
                 merged["video_api_token"] = str(v)
             elif k in ("video_model", "replicate_model"):

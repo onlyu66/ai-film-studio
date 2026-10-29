@@ -88,6 +88,9 @@ class ProduceRequest(BaseModel):
     bgm_volume: Optional[float] = 0.7
     ducking_level: Optional[str] = "medium"
     voice_volume: Optional[float] = 1.0
+    color_lut: Optional[str] = "teal_and_orange"
+    transition_preset: Optional[str] = "dissolve"
+    transition_duration: Optional[float] = 0.6
 
 # Global pipeline execution state & cancel event
 _cancel_event = threading.Event()
@@ -369,6 +372,9 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             bgm_volume=float(getattr(req, "bgm_volume", 0.7) if getattr(req, "bgm_volume", None) is not None else 0.7),
             ducking_level=getattr(req, "ducking_level", "medium") or "medium",
             voice_volume=float(getattr(req, "voice_volume", 1.0) if getattr(req, "voice_volume", None) is not None else 1.0),
+            color_lut=getattr(req, "color_lut", "teal_and_orange") or "teal_and_orange",
+            transition_preset=getattr(req, "transition_preset", "dissolve") or "dissolve",
+            transition_duration=float(getattr(req, "transition_duration", 0.6) if getattr(req, "transition_duration", None) is not None else 0.6),
         )
 
         def _on_progress(stage: int, stage_name: str, progress: int, log_msg: str, **kwargs):
@@ -1269,6 +1275,16 @@ def api_get_camera_presets():
     from studio.camera_director import get_camera_presets
     return get_camera_presets()
 
+@app.get("/api/lut/presets")
+def api_get_lut_presets():
+    from studio.color_grading import get_color_luts
+    return get_color_luts()
+
+@app.get("/api/transitions/presets")
+def api_get_transition_presets():
+    from studio.color_grading import get_scene_transitions
+    return get_scene_transitions()
+
 class MultiAngleCoverageRequest(BaseModel):
     angles: Optional[List[str]] = None
     engine: Optional[str] = None
@@ -1735,6 +1751,9 @@ class RenderShotVideoRequest(BaseModel):
     bgm_volume: Optional[float] = 0.7
     ducking_level: Optional[str] = "medium"
     voice_volume: Optional[float] = 1.0
+    color_lut: Optional[str] = "teal_and_orange"
+    transition_preset: Optional[str] = "dissolve"
+    transition_duration: Optional[float] = 0.6
 
 @app.post("/api/storyboard/render-shot-video")
 def render_shot_video(req: RenderShotVideoRequest):
@@ -1881,6 +1900,9 @@ class AssembleMasterRequest(BaseModel):
     bgm_volume: Optional[float] = None
     ducking_level: Optional[str] = None
     voice_volume: Optional[float] = None
+    color_lut: Optional[str] = None
+    transition_preset: Optional[str] = None
+    transition_duration: Optional[float] = None
 
 @app.post("/api/storyboard/assemble-master")
 def assemble_master(req: AssembleMasterRequest):
@@ -1916,6 +1938,9 @@ def assemble_master(req: AssembleMasterRequest):
         eff_bgm_volume = req.bgm_volume if req.bgm_volume is not None else (getattr(last_produce_request, "bgm_volume", 0.7) if last_produce_request else 0.7)
         eff_ducking = req.ducking_level or (getattr(last_produce_request, "ducking_level", "medium") if last_produce_request else "medium")
         eff_voice_vol = req.voice_volume if req.voice_volume is not None else (getattr(last_produce_request, "voice_volume", 1.0) if last_produce_request else 1.0)
+        eff_color_lut = req.color_lut if req.color_lut is not None else (getattr(last_produce_request, "color_lut", "teal_and_orange") if last_produce_request else "teal_and_orange")
+        eff_trans = req.transition_preset if req.transition_preset is not None else (getattr(last_produce_request, "transition_preset", "dissolve") if last_produce_request else "dissolve")
+        eff_trans_dur = req.transition_duration if req.transition_duration is not None else (getattr(last_produce_request, "transition_duration", 0.6) if last_produce_request else 0.6)
 
         cfg = StudioConfig(
             topic=sb.title,
@@ -1930,6 +1955,9 @@ def assemble_master(req: AssembleMasterRequest):
             bgm_volume=float(eff_bgm_volume),
             ducking_level=eff_ducking,
             voice_volume=float(eff_voice_vol),
+            color_lut=eff_color_lut,
+            transition_preset=eff_trans,
+            transition_duration=float(eff_trans_dur),
             output_dir=Path("outputs"),
         )
         state_file = Path("outputs/state.json")

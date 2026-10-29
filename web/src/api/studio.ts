@@ -195,6 +195,9 @@ export interface AssembleMasterParams {
   bgm_volume?: number
   ducking_level?: string
   voice_volume?: number
+  color_lut?: string
+  transition_preset?: string
+  transition_duration?: number
 }
 
 export async function assembleMaster(params: AssembleMasterParams = {}): Promise<{ success: boolean; video_url: string; filename: string }> {
@@ -407,6 +410,17 @@ export async function applyMultiAngleShot(
   )
   return response.data
 }
+
+export async function fetchColorLuts(): Promise<import('../types').ColorLutItem[]> {
+  const response = await apiClient.get<import('../types').ColorLutItem[]>('/api/lut/presets')
+  return response.data
+}
+
+export async function fetchSceneTransitions(): Promise<import('../types').SceneTransitionItem[]> {
+  const response = await apiClient.get<import('../types').SceneTransitionItem[]>('/api/transitions/presets')
+  return response.data
+}
+
 
 
 

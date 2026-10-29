@@ -41,6 +41,8 @@ import {
   fetchCameraPresets,
   generateMultiAngleCoverage,
   applyMultiAngleShot,
+  fetchColorLuts,
+  fetchSceneTransitions,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -482,6 +484,22 @@ export function useApplyMultiAngle() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
     },
+  })
+}
+
+export function useColorLuts() {
+  return useQuery({
+    queryKey: ['system', 'color-luts'],
+    queryFn: fetchColorLuts,
+    staleTime: 10 * 60_000,
+  })
+}
+
+export function useSceneTransitions() {
+  return useQuery({
+    queryKey: ['system', 'scene-transitions'],
+    queryFn: fetchSceneTransitions,
+    staleTime: 10 * 60_000,
   })
 }
 

@@ -25,6 +25,7 @@ def build_ffmpeg_command(
     letterbox: bool = False,
     style: str = "cinematic",
     accel: str = "auto",
+    color_lut: Optional[str] = None,
 ) -> List[str]:
     """Construct the FFmpeg command line to generate smooth Ease-In-Out Ken Burns camera motion from a still image."""
     d = max(1, int(duration * fps))
@@ -81,7 +82,15 @@ def build_ffmpeg_command(
 
     vf_filters = [f"{scale_filter},zoompan={zoompan_expr}:d={d}:s={width}x{height}:fps={fps}"]
 
-    if vfx:
+    if color_lut:
+        try:
+            from studio.color_grading import get_color_lut_filter
+            lut_f = get_color_lut_filter(color_lut)
+            if lut_f:
+                vf_filters.append(lut_f)
+        except Exception:
+            pass
+    elif vfx:
         # Style-tailored color grading
         style_clean = (style or "cinematic").lower()
         if style_clean == "noir":
@@ -151,6 +160,7 @@ def render_motion_for_shot(
     accel: str = "auto",
     video_api_token: Optional[str] = None,
     video_model: Optional[str] = None,
+    color_lut: Optional[str] = None,
 ) -> Path:
     """Execute motion rendering for a single shot according to selected engine."""
     if not shutil.which("ffmpeg"):
@@ -193,6 +203,7 @@ def render_motion_for_shot(
         letterbox=letterbox,
         style=style,
         accel=accel,
+        color_lut=color_lut,
     )
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode != 0:

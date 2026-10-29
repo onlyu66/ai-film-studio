@@ -403,18 +403,41 @@ def run_assembly_stage(
     create_concat_file(video_paths, concat_list_file)
 
     # 1. Concat video clips
+    transition_preset = getattr(config, "transition_preset", "cut") or "cut"
+    trans_duration = float(getattr(config, "transition_duration", 0.6) or 0.6)
+
+    from studio.color_grading import build_xfade_filtergraph, get_color_lut_filter
+
+    clip_durations = [durations.get(s.id, s.duration or 5.0) for s in storyboard.shots if (vid_dir / f"{s.id}.mp4").exists()]
+    xfade_filter = build_xfade_filtergraph(clip_durations, transition=transition_preset, trans_duration=trans_duration)
+
     if progress_callback:
-        progress_callback(5, "Đang ghép nối các video clips bằng FFmpeg...", 88, "[Assembly] Đang ghép nối các phân cảnh video...")
+        progress_callback(5, "Đang ghép nối các video clips bằng FFmpeg...", 88, f"[Assembly] Đang ghép nối các phân cảnh video (Chuyển cảnh: {transition_preset})...")
     raw_video = final_dir / f"raw_video_{timestamp}.mp4"
-    cmd_concat = [
-        "ffmpeg", "-y",
-        "-f", "concat",
-        "-safe", "0",
-        "-i", str(concat_list_file),
-        "-c:v", "copy",
-        "-an",
-        str(raw_video)
-    ]
+
+    if xfade_filter and len(video_paths) >= 2:
+        cmd_concat = ["ffmpeg", "-y"]
+        for vp in video_paths:
+            cmd_concat.extend(["-i", str(vp)])
+        last_v_tag = f"[v{len(video_paths)-1}]"
+        cmd_concat.extend([
+            "-filter_complex", xfade_filter,
+            "-map", last_v_tag,
+            "-c:v", "libx264",
+            "-pix_fmt", "yuv420p",
+            "-an",
+            str(raw_video)
+        ])
+    else:
+        cmd_concat = [
+            "ffmpeg", "-y",
+            "-f", "concat",
+            "-safe", "0",
+            "-i", str(concat_list_file),
+            "-c:v", "copy",
+            "-an",
+            str(raw_video)
+        ]
     subprocess.run(cmd_concat, check=True)
 
     # 2. Build master audio track
@@ -448,10 +471,15 @@ def run_assembly_stage(
         karaoke=getattr(config, "subtitle_karaoke", False),
     )
 
-    # 4. Mux final video with audio (with optional Burn-in Hardsub)
+    # 4. Mux final video with audio (with optional Burn-in Hardsub & Master Color LUT)
     if progress_callback:
         progress_callback(5, "Đang xuất bản video hoàn thiện...", 96, "[Assembly] Đang mux video, audio và phụ đề hoàn chỉnh...")
     final_movie = final_dir / f"movie_{timestamp}.mp4"
+
+    color_lut = getattr(config, "color_lut", None)
+    lut_filter = get_color_lut_filter(color_lut) if color_lut and color_lut != "none" else ""
+
+    vf_filters = []
     if getattr(config, "hardsub", False):
         sub_filter = build_hardsub_filter(
             master_ass,
@@ -459,11 +487,18 @@ def run_assembly_stage(
             style_id=getattr(config, "subtitle_style", "tiktok_bold"),
             position=getattr(config, "subtitle_position", "bottom"),
         )
+        vf_filters.append(sub_filter)
+    if lut_filter:
+        vf_filters.append(lut_filter)
+
+    final_vf = ",".join(vf_filters) if vf_filters else None
+
+    if final_vf:
         cmd_mux = [
             "ffmpeg", "-y",
             "-i", str(raw_video),
             "-i", str(master_audio),
-            "-vf", sub_filter,
+            "-vf", final_vf,
             "-map", "0:v:0",
             "-map", "1:a:0",
             "-c:v", "libx264",

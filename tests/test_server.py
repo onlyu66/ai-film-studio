@@ -792,6 +792,26 @@ def test_multi_angle_coverage_endpoints(tmp_path, monkeypatch):
     updated_sb = json.loads(sb_file.read_text(encoding="utf-8"))
     assert updated_sb["shots"][0]["camera_angle"] == "wide"
 
+def test_get_lut_and_transition_presets_endpoints():
+    resp_luts = client.get("/api/lut/presets")
+    assert resp_luts.status_code == 200
+    luts = resp_luts.json()
+    assert isinstance(luts, list)
+    assert len(luts) >= 8
+    lut_ids = [l["id"] for l in luts]
+    assert "teal_and_orange" in lut_ids
+    assert "kodachrome_1970" in lut_ids
+
+    resp_trans = client.get("/api/transitions/presets")
+    assert resp_trans.status_code == 200
+    transitions = resp_trans.json()
+    assert isinstance(transitions, list)
+    assert len(transitions) >= 8
+    trans_ids = [t["id"] for t in transitions]
+    assert "cut" in trans_ids
+    assert "dissolve" in trans_ids
+
+
 
 
 

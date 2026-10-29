@@ -49,6 +49,8 @@ import {
   useSubtitlePresets,
   useBgmTracks,
   useUploadCustomBgm,
+  useColorLuts,
+  useSceneTransitions,
 } from '../api/queries'
 import type {
   PresetIdea,
@@ -60,6 +62,8 @@ import type {
   ImageEngineInfo,
   SubtitlePresetItem,
   BgmTrackItem,
+  ColorLutItem,
+  SceneTransitionItem,
 } from '../types'
 
 const StoryTemplateModal = lazy(() => import('./StoryTemplateModal'))
@@ -268,6 +272,131 @@ const DEFAULT_BGM_TRACKS: BgmTrackItem[] = [
     bpm: 100,
     description: 'Phim tài liệu khoa học, địa lý, trang trọng và truyền cảm hứng',
     stream_url: '/api/assets/bgm/documentary.mp3',
+  },
+]
+
+const DEFAULT_COLOR_LUTS: ColorLutItem[] = [
+  {
+    id: 'none',
+    name: 'Nguyên bản (No LUT)',
+    description: 'Giữ nguyên màu sắc hình ảnh gốc từ AI generator, không chỉnh màu',
+    css_gradient: 'from-zinc-500 to-zinc-700',
+    ffmpeg_filter: '',
+  },
+  {
+    id: 'teal_and_orange',
+    name: 'Hollywood Teal & Orange',
+    description: 'Tone bom tấn Hollywood kinh điển: ấm áp da người, xanh ngọc bóng tối',
+    css_gradient: 'from-amber-600 to-cyan-700',
+    ffmpeg_filter: 'colorbalance=rs=0.08:gs=0.01:bs=-0.06:rm=-0.04:gm=0.02:bm=0.06:rh=0.05:gh=0.02:bh=-0.04,eq=contrast=1.12:saturation=1.18:brightness=0.01,vignette=PI/4',
+  },
+  {
+    id: 'kodachrome_1970',
+    name: 'Vintage Kodachrome 1970s',
+    description: 'Màu phim nhựa cổ điển thập niên 70: ấm áp, hơi hoài niệm vàng đồng',
+    css_gradient: 'from-amber-700 to-rose-900',
+    ffmpeg_filter: 'curves=vintage,colorbalance=rs=0.06:gs=0.02:bs=-0.05,eq=contrast=1.08:saturation=1.10:gamma_r=1.05:gamma_b=0.95,vignette=PI/3.5',
+  },
+  {
+    id: 'wes_anderson_pastel',
+    name: 'Wes Anderson Pastel Warmth',
+    description: 'Gam màu pastel mộng mơ, vàng dịu và hồng đào tinh tế đối xứng',
+    css_gradient: 'from-yellow-500 to-pink-500',
+    ffmpeg_filter: 'colorbalance=rs=0.05:gs=0.03:bs=-0.02:rm=0.04:gm=0.02:bm=-0.03,eq=contrast=0.96:saturation=1.12:brightness=0.02,vignette=PI/5',
+  },
+  {
+    id: 'cyberpunk_matrix',
+    name: 'Cyberpunk Matrix Neon',
+    description: 'Bóng tối xanh lục ma trận và ánh sáng neon tím viễn tưởng',
+    css_gradient: 'from-emerald-500 to-fuchsia-600',
+    ffmpeg_filter: 'colorbalance=rs=-0.05:gs=0.08:bs=0.04:rm=-0.08:gm=0.06:bm=0.05:rh=0.06:gh=-0.02:bh=0.08,eq=contrast=1.20:saturation=1.25:brightness=-0.02,vignette=PI/3',
+  },
+  {
+    id: 'bleach_bypass',
+    name: 'Bleach Bypass War Film',
+    description: 'Khử bão hòa -45%, độ tương phản sắc bén, phong cách gai góc',
+    css_gradient: 'from-zinc-500 to-stone-800',
+    ffmpeg_filter: 'eq=contrast=1.35:saturation=0.55:brightness=-0.02,colorbalance=rs=-0.02:gs=0.01:bs=0.03,vignette=PI/3',
+  },
+  {
+    id: 'film_noir_bw',
+    name: 'Silver Nitrate Noir (B&W)',
+    description: 'Đen trắng tráng bạc kinh điển, tương phản cao, đổ bóng bí ẩn',
+    css_gradient: 'from-zinc-200 to-zinc-900',
+    ffmpeg_filter: 'hue=s=0,eq=contrast=1.30:brightness=-0.03,vignette=PI/2.5',
+  },
+  {
+    id: 'golden_sunset',
+    name: 'Golden Sunset Glow',
+    description: 'Nắng vàng cam hoàng hôn rực rỡ, lãng mạn dạt dào cảm xúc',
+    css_gradient: 'from-yellow-400 to-orange-600',
+    ffmpeg_filter: 'colorbalance=rs=0.12:gs=0.04:bs=-0.08:rm=0.08:gm=0.02:bm=-0.06,eq=contrast=1.10:saturation=1.22:brightness=0.01,vignette=PI/4',
+  },
+  {
+    id: 'nordic_cold',
+    name: 'Nordic Cold Mystery',
+    description: 'Tông lạnh xanh xám Bắc Âu bí ẩn, băng giá và sâu thẳm',
+    css_gradient: 'from-cyan-900 to-slate-900',
+    ffmpeg_filter: 'colorbalance=rs=-0.06:gs=-0.01:bs=0.09:rm=-0.05:gm=0.01:bm=0.08,eq=contrast=1.08:saturation=0.85:brightness=-0.01,vignette=PI/3',
+  },
+]
+
+const DEFAULT_TRANSITIONS: SceneTransitionItem[] = [
+  {
+    id: 'cut',
+    name: 'Cut (Hard Cut)',
+    description: 'Cắt trực tiếp tức thì — Fast-path lossless không re-encode',
+    xfade_name: '',
+    default_duration: 0.0,
+  },
+  {
+    id: 'dissolve',
+    name: 'Dissolve (Hòa tan mượt mà)',
+    description: 'Hai cảnh hòa tan lồng ghép vào nhau êm ái, liền mạch',
+    xfade_name: 'fade',
+    default_duration: 0.6,
+  },
+  {
+    id: 'fade_black',
+    name: 'Dip to Black (Mờ về đen)',
+    description: 'Màn hình tối dần về đen rồi bừng sáng cảnh mới, ngắt quãng thời gian',
+    xfade_name: 'fadeblack',
+    default_duration: 0.5,
+  },
+  {
+    id: 'fade_white',
+    name: 'Dip to White (Chớp sáng trắng)',
+    description: 'Chớp lóa sáng trắng, phù hợp cảnh hồi tưởng hoặc chấn động',
+    xfade_name: 'fadewhite',
+    default_duration: 0.5,
+  },
+  {
+    id: 'whip_pan',
+    name: 'Whip Pan (Lia nhòe ngang)',
+    description: 'Lia máy cực nhanh tạo vệt nhòe ngang chuyển cảnh hành động',
+    xfade_name: 'hblur',
+    default_duration: 0.4,
+  },
+  {
+    id: 'film_burn',
+    name: 'Film Burn (Cháy phim)',
+    description: 'Vệt sáng chớp ngang phong cách phim nhựa cổ điển',
+    xfade_name: 'hlwind',
+    default_duration: 0.5,
+  },
+  {
+    id: 'glitch',
+    name: 'Digital Glitch (Nhiễu pixel)',
+    description: 'Hiệu ứng vỡ hạt pixel kỹ thuật số cho phim Sci-Fi & Cyberpunk',
+    xfade_name: 'pixelize',
+    default_duration: 0.4,
+  },
+  {
+    id: 'circle_open',
+    name: 'Circle Iris (Mở tròn ống kính)',
+    description: 'Vòng tròn mở rộng dần từ trung tâm như ống kính mở màn',
+    xfade_name: 'circleopen',
+    default_duration: 0.6,
   },
 ]
 
@@ -639,6 +768,56 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
     reader.readAsDataURL(file)
   }
 
+  const [colorLut, setColorLut] = useState('none')
+  const [transitionPreset, setTransitionPreset] = useState('cut')
+  const [transitionDuration, setTransitionDuration] = useState(0.6)
+
+  const { data: serverLuts } = useColorLuts()
+  const { data: serverTransitions } = useSceneTransitions()
+
+  const availableLuts = React.useMemo(() => {
+    if (!serverLuts || serverLuts.length === 0) return DEFAULT_COLOR_LUTS
+    const hasNone = serverLuts.some((l) => l.id === 'none')
+    if (!hasNone) {
+      return [DEFAULT_COLOR_LUTS[0], ...serverLuts]
+    }
+    return serverLuts
+  }, [serverLuts])
+
+  const availableTransitions = React.useMemo(() => {
+    if (!serverTransitions || serverTransitions.length === 0) return DEFAULT_TRANSITIONS
+    return serverTransitions
+  }, [serverTransitions])
+
+  useEffect(() => {
+    const savedLut = localStorage.getItem('studio_color_lut') || 'none'
+    const savedTrans = localStorage.getItem('studio_transition_preset') || 'cut'
+    const savedTransDur = localStorage.getItem('studio_transition_duration')
+    setColorLut(savedLut)
+    setTransitionPreset(savedTrans)
+    if (savedTransDur) setTransitionDuration(parseFloat(savedTransDur))
+  }, [])
+
+  const handleColorLutChange = (val: string) => {
+    setColorLut(val)
+    localStorage.setItem('studio_color_lut', val)
+  }
+
+  const handleTransitionPresetChange = (val: string) => {
+    setTransitionPreset(val)
+    localStorage.setItem('studio_transition_preset', val)
+    const item = availableTransitions.find((t) => t.id === val)
+    if (item && item.default_duration > 0) {
+      setTransitionDuration(item.default_duration)
+      localStorage.setItem('studio_transition_duration', item.default_duration.toString())
+    }
+  }
+
+  const handleTransitionDurationChange = (val: number) => {
+    setTransitionDuration(val)
+    localStorage.setItem('studio_transition_duration', val.toString())
+  }
+
   useEffect(() => {
     if (initialData) {
       if (initialData.topic) setTopic(initialData.topic)
@@ -705,6 +884,9 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       bgm_preset: bgmPreset,
       bgm_volume: bgmVolume,
       ducking_level: duckingLevel,
+      color_lut: colorLut,
+      transition_preset: transitionPreset,
+      transition_duration: transitionPreset === 'cut' ? 0.0 : transitionDuration,
     })
   }
 
@@ -1407,7 +1589,167 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
           </div>
         </div>
 
-        {/* 5. Advanced Engine Accordion */}
+        {/* 5. Color Grading LUTs & Scene Transitions Studio */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-studio-deck border border-studio-border">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-studio-border/60">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                <Palette className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                  <span>Color Grading LUTs & Chuyển Cảnh</span>
+                  <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300">
+                    FFmpeg 7.1 Filtergraph
+                  </span>
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Bộ lọc màu 3D LUTs điện ảnh & kỹ xảo chuyển tiếp xfade mượt mà giữa các phân cảnh
+                </p>
+              </div>
+            </div>
+            <div className="text-[11px] font-mono text-zinc-500 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
+              <span>{availableLuts.find((l) => l.id === colorLut)?.name || 'LUT Mặc định'}</span>
+              <span>•</span>
+              <span>{availableTransitions.find((t) => t.id === transitionPreset)?.name || 'Chuyển cảnh'}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Col 1: Cinematic Color LUTs */}
+            <div>
+              <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Bộ Lọc Màu Điện Ảnh (3D LUTs)</span>
+                </span>
+                <span className="text-[10px] font-mono text-zinc-500 font-normal">
+                  {availableLuts.length} phong cách
+                </span>
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
+                {availableLuts.map((lut) => {
+                  const isActive = colorLut === lut.id
+                  return (
+                    <button
+                      key={lut.id}
+                      type="button"
+                      onClick={() => handleColorLutChange(lut.id)}
+                      className={`p-2.5 rounded-xl border text-left transition-all relative overflow-hidden group ${
+                        isActive
+                          ? 'bg-rose-500/15 border-rose-500/60 shadow-sm text-rose-200'
+                          : 'bg-studio-card/40 border-studio-border/60 hover:bg-studio-card text-zinc-400 hover:text-zinc-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 mb-1.5">
+                        <div
+                          className={`w-5 h-5 rounded-md bg-gradient-to-tr ${lut.css_gradient} shrink-0 shadow-sm border border-white/20`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-semibold truncate leading-tight text-zinc-200">
+                            {lut.name}
+                          </div>
+                        </div>
+                        {isActive && <Check className="w-3.5 h-3.5 text-rose-400 shrink-0" />}
+                      </div>
+                      <p className="text-[10px] text-zinc-500 leading-tight line-clamp-1 group-hover:text-zinc-400">
+                        {lut.description}
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Col 2: Scene Transitions */}
+            <div className="flex flex-col justify-between">
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Film className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Hiệu Ứng Chuyển Cảnh (Transitions)</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-zinc-500 font-normal">
+                    {availableTransitions.length} hiệu ứng
+                  </span>
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {availableTransitions.map((trans) => {
+                    const isActive = transitionPreset === trans.id
+                    return (
+                      <button
+                        key={trans.id}
+                        type="button"
+                        onClick={() => handleTransitionPresetChange(trans.id)}
+                        className={`p-2.5 rounded-xl border text-left transition-all relative group ${
+                          isActive
+                            ? 'bg-cyan-500/15 border-cyan-500/60 shadow-sm text-cyan-200'
+                            : 'bg-studio-card/40 border-studio-border/60 hover:bg-studio-card text-zinc-400 hover:text-zinc-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold truncate text-zinc-200">
+                            {trans.name}
+                          </span>
+                          {isActive && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                        </div>
+                        <p className="text-[10px] text-zinc-500 line-clamp-1 leading-tight group-hover:text-zinc-400">
+                          {trans.description}
+                        </p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Transition Duration Control (when not hard cut) */}
+              <div className="mt-4 pt-3 border-t border-studio-border/60">
+                {transitionPreset === 'cut' ? (
+                  <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span className="text-[11px]">
+                      <strong>Fast-path Lossless:</strong> Concat tức thì bằng stream copy, chất lượng nguyên bản 100%.
+                    </span>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Thời Gian Chuyển Cảnh (Duration)</span>
+                      </label>
+                      <span className="text-xs font-mono font-bold text-cyan-400">
+                        {transitionDuration.toFixed(2)}s
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-mono text-zinc-500">0.2s</span>
+                      <input
+                        type="range"
+                        min="0.2"
+                        max="1.5"
+                        step="0.05"
+                        value={transitionDuration}
+                        onChange={(e) => handleTransitionDurationChange(parseFloat(e.target.value))}
+                        className="w-full accent-cyan-500 cursor-pointer h-1.5 bg-zinc-700 rounded-lg appearance-none"
+                      />
+                      <span className="text-[10px] font-mono text-zinc-500">1.5s</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 mt-1 italic">
+                      * Kỹ xảo FFmpeg xfade sẽ tự động tính toán bù offset và cắt khớp mượt mà giữa các shot.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 6. Advanced Engine Accordion */}
         <div className="pt-2">
           <button
             type="button"

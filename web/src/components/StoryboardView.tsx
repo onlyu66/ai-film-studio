@@ -410,12 +410,19 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     const bgmVolStr = localStorage.getItem('studio_bgm_volume')
     const bgm_volume = bgmVolStr ? parseFloat(bgmVolStr) : undefined
     const ducking_level = localStorage.getItem('studio_ducking_level') || undefined
+    const color_lut = localStorage.getItem('studio_color_lut') || undefined
+    const transition_preset = localStorage.getItem('studio_transition_preset') || undefined
+    const transDurStr = localStorage.getItem('studio_transition_duration')
+    const transition_duration = transDurStr ? parseFloat(transDurStr) : undefined
 
     assembleMasterMutation.mutate(
       {
         bgm_preset,
         bgm_volume,
         ducking_level,
+        color_lut,
+        transition_preset,
+        transition_duration,
       },
       {
         onSuccess: (data) => {
