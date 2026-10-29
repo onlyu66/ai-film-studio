@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Callable
+from typing import Dict, Optional, Callable, Any
 import urllib.parse
 import time
 import os
@@ -155,9 +155,14 @@ def run_image_stage(
     storyboard: Storyboard,
     config: StudioConfig,
     state: StateManager,
-    progress_callback: Optional[Callable[[int, str, int, str], None]] = None,
+    progress_callback: Optional[Callable[..., None]] = None,
+    cancel_event: Optional[Any] = None,
 ) -> Dict[str, Path]:
     """Run image generation for all shots in storyboard in parallel with robust fallback. Returns mapping of shot_id -> image_path."""
+    if cancel_event and cancel_event.is_set():
+        from studio.orchestrator import PipelineCancelledException
+        raise PipelineCancelledException("Tiến trình sản xuất đã bị hủy.")
+
     img_dir = config.output_dir / "images"
     img_dir.mkdir(parents=True, exist_ok=True)
     images: Dict[str, Path] = {}
@@ -180,6 +185,8 @@ def run_image_stage(
 
         def process_shot_image(shot: Shot):
             out_file = img_dir / f"{shot.id}.png"
+            if cancel_event and cancel_event.is_set():
+                return shot.id, out_file
             result = generate_image_for_shot(
                 shot=shot,
                 characters=storyboard.characters,
@@ -200,6 +207,11 @@ def run_image_stage(
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(process_shot_image, s) for s in pending_shots]
             for future in as_completed(futures):
+                if cancel_event and cancel_event.is_set():
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    from studio.orchestrator import PipelineCancelledException
+                    raise PipelineCancelledException("Tiến trình sản xuất đã bị hủy.")
+
                 shot_id, img_path = future.result()
                 images[shot_id] = img_path
                 state.mark_complete(shot_id, "image")
@@ -207,7 +219,25 @@ def run_image_stage(
                 done_count += 1
                 if progress_callback:
                     pct = 40 + int(25 * (done_count / max(1, total_shots)))
-                    progress_callback(3, "Đang vẽ hình ảnh điện ảnh Flux...", min(pct, 65), f"[Visuals] Đã tạo ảnh cho phân cảnh '{shot_id}'")
+                    log_msg = f"[Visuals] Đã tạo ảnh cho phân cảnh '{shot_id}'"
+                    try:
+                        progress_callback(
+                            3,
+                            "Đang vẽ hình ảnh điện ảnh Flux...",
+                            min(pct, 65),
+                            log_msg,
+                            shot_id=shot_id,
+                            shot_idx=done_count,
+                            shots_total=total_shots,
+                            action="image",
+                        )
+                    except TypeError:
+                        progress_callback(
+                            3,
+                            "Đang vẽ hình ảnh điện ảnh Flux...",
+                            min(pct, 65),
+                            log_msg,
+                        )
 
     return images
 

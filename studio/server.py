@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 import os
+import re
 import asyncio
 import threading
 import json
@@ -19,7 +20,10 @@ from pydantic import BaseModel
 
 from contextlib import asynccontextmanager
 from studio.config import StudioConfig
-from studio.orchestrator import run_pipeline
+from studio.storage import atomic_write_json, safe_read_json
+from studio.orchestrator import run_pipeline, PipelineCancelledException
+from studio.storyboard import parse_storyboard_json
+from studio.export_fcpxml import generate_fcpxml
 from studio.llm.discovery import (
     list_gemini_models,
     list_groq_models,
@@ -68,7 +72,9 @@ class ProduceRequest(BaseModel):
     parent_project_id: Optional[str] = None
     webhook_url: Optional[str] = None
 
-# Global pipeline execution state
+# Global pipeline execution state & cancel event
+_cancel_event = threading.Event()
+
 pipeline_state: Dict[str, Any] = {
     "status": "idle",       # idle, running, script_ready, completed, error
     "stage": 0,            # 0 to 5
@@ -79,6 +85,10 @@ pipeline_state: Dict[str, Any] = {
     "error": None,
     "final_video": None,
     "final_srt": None,
+    "current_shot_id": None,
+    "current_shot_index": None,
+    "shots_total": None,
+    "active_action": None,
 }
 
 last_produce_request: Optional[ProduceRequest] = None
@@ -265,15 +275,19 @@ def save_project_to_library(final_video_path: Path, req: ProduceRequest):
         "shots_count": shots_count,
         "dubbed_versions": {},
     }
-    with open(project_dir / "metadata.json", "w", encoding="utf-8") as f:
-        json.dump(metadata, f, indent=2, ensure_ascii=False)
+    atomic_write_json(project_dir / "metadata.json", metadata, backup=False)
 
 def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
     global pipeline_state, last_produce_request
     last_produce_request = req
+    _cancel_event.clear()
     pipeline_state["status"] = "running"
     pipeline_state["topic"] = req.topic
     pipeline_state["error"] = None
+    pipeline_state["current_shot_id"] = None
+    pipeline_state["current_shot_index"] = None
+    pipeline_state["shots_total"] = None
+    pipeline_state["active_action"] = None
     broadcast_ws("status", get_status())
 
     try:
@@ -312,10 +326,18 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             webhook_url=req.webhook_url,
         )
 
-        def _on_progress(stage: int, stage_name: str, progress: int, log_msg: str):
+        def _on_progress(stage: int, stage_name: str, progress: int, log_msg: str, **kwargs):
             pipeline_state["stage"] = stage
             pipeline_state["stage_name"] = stage_name
             pipeline_state["progress"] = progress
+            if "shot_id" in kwargs:
+                pipeline_state["current_shot_id"] = kwargs["shot_id"]
+            if "shot_idx" in kwargs:
+                pipeline_state["current_shot_index"] = kwargs["shot_idx"]
+            if "shots_total" in kwargs:
+                pipeline_state["shots_total"] = kwargs["shots_total"]
+            if "action" in kwargs:
+                pipeline_state["active_action"] = kwargs["action"]
             if log_msg:
                 log_message(log_msg)
             broadcast_ws("status", get_status())
@@ -327,12 +349,13 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             broadcast_ws("status", get_status())
             log_message(f"Soạn kịch bản: {req.topic} ({req.lang}, {req.duration}m, {req.style})")
 
-            run_pipeline(cfg, stop_after_stage=1, force_new=True, progress_callback=_on_progress)
+            run_pipeline(cfg, stop_after_stage=1, force_new=True, progress_callback=_on_progress, cancel_event=_cancel_event)
 
             pipeline_state["status"] = "script_ready"
             pipeline_state["stage"] = 1
             pipeline_state["stage_name"] = "Kịch bản đã sẵn sàng - Chờ duyệt"
             pipeline_state["progress"] = 20
+            pipeline_state["current_shot_id"] = None
             broadcast_ws("status", get_status())
             log_message("Kịch bản và phân cảnh đã được tạo xong! Bạn có thể chỉnh sửa lời thoại, nhân vật và giọng đọc trước khi bấm 'Tiếp tục sản xuất phim'.")
             return
@@ -347,7 +370,8 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             cfg,
             stop_after_stage=None,
             force_new=(not resume_only),
-            progress_callback=_on_progress
+            progress_callback=_on_progress,
+            cancel_event=_cancel_event,
         )
 
         pipeline_state["status"] = "completed"
@@ -380,6 +404,17 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             except Exception:
                 pass
 
+    except PipelineCancelledException:
+        pipeline_state["status"] = "idle"
+        pipeline_state["stage"] = 0
+        pipeline_state["stage_name"] = "Đã dừng sản xuất"
+        pipeline_state["progress"] = 0
+        pipeline_state["current_shot_id"] = None
+        pipeline_state["current_shot_index"] = None
+        pipeline_state["shots_total"] = None
+        pipeline_state["active_action"] = None
+        broadcast_ws("status", get_status())
+        log_message("[Pipeline] Tiến trình sản xuất đã được dừng an toàn theo yêu cầu người dùng.")
     except Exception as e:
         pipeline_state["status"] = "error"
         pipeline_state["error"] = str(e)
@@ -422,6 +457,7 @@ def get_status():
     return {
         **pipeline_state,
         "shots_count": _status_shots_count_cache,
+        "can_cancel": pipeline_state.get("status") == "running",
     }
 
 class LLMModelsRequest(BaseModel):
@@ -483,6 +519,18 @@ def produce_film(req: ProduceRequest, background_tasks: BackgroundTasks):
     threading.Thread(target=execute_pipeline_task, args=(req,), daemon=True).start()
     return {"message": "Đã bắt đầu sản xuất phim", "status": "running"}
 
+@app.post("/api/pipeline/cancel")
+@app.post("/api/cancel")
+def cancel_pipeline():
+    if pipeline_state.get("status") != "running":
+        return {"success": False, "message": "Không có tiến trình sản xuất nào đang chạy."}
+
+    _cancel_event.set()
+    log_message("[Pipeline] Đang dừng tiến trình sản xuất theo yêu cầu...")
+    pipeline_state["stage_name"] = "Đang dừng quy trình..."
+    broadcast_ws("status", get_status())
+    return {"success": True, "message": "Đã gửi tín hiệu dừng tiến trình thành công."}
+
 @app.get("/api/storyboard")
 def get_storyboard():
     global _sb_cache, _sb_cached_mtime, _sb_cached_dir_counts
@@ -531,6 +579,44 @@ def get_storyboard():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/storyboard/export-timeline")
+def export_storyboard_timeline(
+    format: str = "fcpxml",
+    aspect_ratio: str = "16:9",
+    fps: int = 25,
+):
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    try:
+        raw_text = sb_file.read_text(encoding="utf-8")
+        sb = parse_storyboard_json(raw_text)
+
+        export_dir = Path("outputs")
+        export_file = export_dir / "timeline_export.fcpxml"
+        generate_fcpxml(
+            storyboard=sb,
+            output_path=export_file,
+            aspect_ratio=aspect_ratio,
+            fps=fps,
+            project_dir=export_dir,
+        )
+
+        title_slug = re.sub(r'[^a-zA-Z0-9_\-]', '_', getattr(sb, "title", None) or getattr(sb, "topic", "timeline") or "timeline").strip('_') or "timeline"
+        filename = f"timeline_{title_slug}.fcpxml"
+
+        return FileResponse(
+            path=export_file,
+            media_type="application/xml",
+            filename=filename,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi xuất timeline FCPXML: {str(e)}")
+
 class UpdateVoiceRequest(BaseModel):
     character_id: str
     voice: str
@@ -553,8 +639,7 @@ def update_character_voice(req: UpdateVoiceRequest):
         characters[req.character_id]["voice"] = req.voice
         data["characters"] = characters
 
-        with open(sb_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        atomic_write_json(sb_file, data, backup=True)
 
         # Invalidate existing audio and motion files for this character, and reset checkpoint state
         audio_dir = Path("outputs/audio")
@@ -775,8 +860,7 @@ def update_shot(req: UpdateShotRequest):
         if state:
             state.save()
 
-        with open(sb_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        atomic_write_json(sb_file, data, backup=True)
 
         invalidate_storyboard_cache()
         log_message(f"Đã cập nhật phân cảnh '{req.shot_id}'.")
@@ -845,8 +929,7 @@ def add_shot(req: AddShotRequest):
         shots.insert(insert_idx, new_shot)
         data["shots"] = shots
 
-        with open(sb_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        atomic_write_json(sb_file, data, backup=True)
 
         invalidate_storyboard_cache()
         log_message(f"Đã chèn thêm phân cảnh mới '{new_shot_id}'.")
@@ -891,8 +974,7 @@ def delete_shot(req: DeleteShotRequest):
             except Exception:
                 pass
 
-        with open(sb_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        atomic_write_json(sb_file, data, backup=True)
 
         invalidate_storyboard_cache()
         log_message(f"Đã xóa phân cảnh '{req.shot_id}'.")
@@ -927,8 +1009,7 @@ def reorder_shots(req: ReorderShotsRequest):
                 reordered.append(shot)
 
         data["shots"] = reordered
-        with open(sb_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        atomic_write_json(sb_file, data, backup=True)
 
         invalidate_storyboard_cache()
         log_message("Đã cập nhật lại thứ tự các phân cảnh trên kịch bản.")
@@ -1185,8 +1266,7 @@ def approve_shot(req: ApproveShotRequest):
         if not target:
             raise HTTPException(status_code=404, detail=f"Không tìm thấy phân cảnh '{req.shot_id}'")
 
-        with open(sb_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        atomic_write_json(sb_file, data, backup=True)
 
         invalidate_storyboard_cache()
         status_str = "Đã duyệt" if req.approved else "Đã bỏ duyệt"
@@ -1270,8 +1350,7 @@ def render_shot_audio(req: RenderShotAudioRequest):
             if s.get("id") == req.shot_id:
                 s["duration"] = round(dur, 2)
                 break
-        with open(sb_file, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
+        atomic_write_json(sb_file, data, backup=True)
 
         # If a video clip exists, fast-remux with the new audio so video preview is updated in ~50ms
         vid_file = Path(f"outputs/videos/{req.shot_id}.mp4")
@@ -1601,6 +1680,60 @@ def list_projects():
                     pass
     return projects
 
+@app.get("/api/projects/{project_id}/export-timeline")
+def export_project_timeline(
+    project_id: str,
+    format: str = "fcpxml",
+    aspect_ratio: Optional[str] = None,
+    fps: int = 25,
+):
+    project_dir = Path("outputs/projects") / project_id
+    if not project_dir.exists() or not project_dir.is_dir():
+        raise HTTPException(status_code=404, detail="Không tìm thấy dự án trong thư viện.")
+
+    sb_file = project_dir / "storyboard.json"
+    if not sb_file.exists():
+        sb_file = Path("outputs/storyboard.json")
+        if not sb_file.exists():
+            raise HTTPException(status_code=404, detail="Dự án không có dữ liệu storyboard.json")
+
+    meta_file = project_dir / "metadata.json"
+    resolved_aspect = aspect_ratio
+    if not resolved_aspect and meta_file.exists():
+        try:
+            with open(meta_file, "r", encoding="utf-8") as f:
+                meta = json.load(f)
+                resolved_aspect = meta.get("aspect_ratio", "16:9")
+        except Exception:
+            pass
+    if not resolved_aspect:
+        resolved_aspect = "16:9"
+
+    try:
+        raw_text = sb_file.read_text(encoding="utf-8")
+        sb = parse_storyboard_json(raw_text)
+
+        export_file = project_dir / f"timeline_{project_id}.fcpxml"
+        generate_fcpxml(
+            storyboard=sb,
+            output_path=export_file,
+            aspect_ratio=resolved_aspect,
+            fps=fps,
+            project_dir=project_dir,
+        )
+
+        filename = f"timeline_{project_id}.fcpxml"
+        return FileResponse(
+            path=export_file,
+            media_type="application/xml",
+            filename=filename,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi xuất timeline dự án: {str(e)}")
+
 @app.websocket("/ws/pipeline")
 async def websocket_pipeline_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -1649,8 +1782,7 @@ def api_generate_thumbnail(project_id: str, req: GenerateThumbnailRequest):
     # Update metadata
     meta["thumb_file"] = thumb_file
     try:
-        with open(meta_file, "w", encoding="utf-8") as f:
-            json.dump(meta, f, indent=2, ensure_ascii=False)
+        atomic_write_json(meta_file, meta, backup=False)
     except Exception:
         pass
 
@@ -1928,8 +2060,7 @@ def dub_project(project_id: str, req: DubProjectRequest):
         "video_url": f"/api/outputs/projects/{project_id}/{dubbed_video_name}",
         "srt_url": f"/api/outputs/projects/{project_id}/{dubbed_srt.name}",
     }
-    with open(meta_file, "w", encoding="utf-8") as f:
-        json.dump(meta, f, indent=2, ensure_ascii=False)
+    atomic_write_json(meta_file, meta, backup=False)
 
     return {
         "success": True,
@@ -1963,8 +2094,7 @@ def api_generate_headshot(req: GenerateHeadshotRequest):
                 sb_data = json.load(f)
             if "characters" in sb_data and req.character_id in sb_data["characters"]:
                 sb_data["characters"][req.character_id]["headshot_url"] = f"/api/outputs/characters/{req.character_id}.png"
-                with open(sb_file, "w", encoding="utf-8") as f:
-                    json.dump(sb_data, f, indent=2, ensure_ascii=False)
+                atomic_write_json(sb_file, sb_data, backup=True)
         except Exception:
             pass
 
@@ -2001,8 +2131,7 @@ def api_upload_headshot(req: UploadHeadshotRequest):
                 sb_data = json.load(f)
             if "characters" in sb_data and req.character_id in sb_data["characters"]:
                 sb_data["characters"][req.character_id]["headshot_url"] = f"/api/outputs/characters/{req.character_id}.png"
-                with open(sb_file, "w", encoding="utf-8") as f:
-                    json.dump(sb_data, f, indent=2, ensure_ascii=False)
+                atomic_write_json(sb_file, sb_data, backup=True)
         except Exception:
             pass
 

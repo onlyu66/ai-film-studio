@@ -269,5 +269,27 @@ export async function fetchLlmModels(
   return response.data
 }
 
+export function getTimelineExportUrl(options?: {
+  projectId?: string
+  format?: 'fcpxml'
+  aspectRatio?: string
+  fps?: number
+}): string {
+  const format = options?.format || 'fcpxml'
+  const fps = options?.fps || 25
+  const aspectRatio = options?.aspectRatio || '16:9'
+
+  if (options?.projectId) {
+    return `/api/projects/${options.projectId}/export-timeline?format=${format}&aspect_ratio=${aspectRatio}&fps=${fps}`
+  }
+  return `/api/storyboard/export-timeline?format=${format}&aspect_ratio=${aspectRatio}&fps=${fps}`
+}
+
+export async function cancelPipeline(): Promise<{ success: boolean; message: string }> {
+  const response = await apiClient.post<{ success: boolean; message: string }>('/api/pipeline/cancel')
+  return response.data
+}
+
+
 
 

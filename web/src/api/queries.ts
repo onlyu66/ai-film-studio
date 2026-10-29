@@ -28,6 +28,7 @@ import {
   uploadCharacterHeadshot,
   testWebhook,
   fetchLlmModels,
+  cancelPipeline,
   type UpdateShotParams,
   type AddShotParams,
   type DubProjectParams,
@@ -345,6 +346,16 @@ export function useFetchLlmModels() {
   return useMutation({
     mutationFn: ({ provider, apiKey, baseUrl }: { provider: string; apiKey?: string; baseUrl?: string }) =>
       fetchLlmModels(provider, apiKey, baseUrl),
+  })
+}
+
+export function useCancelPipeline() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => cancelPipeline(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.status })
+    },
   })
 }
 

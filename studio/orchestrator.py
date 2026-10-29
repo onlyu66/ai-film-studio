@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from studio.config import StudioConfig
+from studio.storage import atomic_write_json
 from studio.state import StateManager
 from studio.llm.factory import create_llm
 from studio.storyboard import Storyboard, generate_storyboard, parse_storyboard_json
@@ -16,18 +17,31 @@ from studio.assembly import run_assembly_stage
 
 console = Console()
 
-ProgressCallback = Optional[Callable[[int, str, int, str], None]]
+class PipelineCancelledException(Exception):
+    """Raised when the film production pipeline is cancelled by the user."""
+    pass
+
+ProgressCallback = Optional[Callable[..., None]]
 
 def run_pipeline(
     config: StudioConfig,
     stop_after_stage: Optional[int] = None,
     force_new: bool = False,
     progress_callback: ProgressCallback = None,
+    cancel_event: Optional[Any] = None,
 ) -> Path:
     """Execute the end-to-end automated film production pipeline with optional progress reporting."""
-    def notify(stage: int, stage_name: str, progress: int, msg: str):
+    def check_cancel():
+        if cancel_event and cancel_event.is_set():
+            raise PipelineCancelledException("Tiến trình sản xuất đã bị hủy theo yêu cầu.")
+
+    check_cancel()
+
+    def notify(stage: int, stage_name: str, progress: int, msg: str, **kwargs):
         if progress_callback:
             try:
+                progress_callback(stage, stage_name, progress, msg, **kwargs)
+            except TypeError:
                 progress_callback(stage, stage_name, progress, msg)
             except Exception:
                 pass
@@ -63,8 +77,7 @@ def run_pipeline(
     else:
         llm = create_llm(config.llm_provider, api_key=config.llm_api_key, model=config.llm_model)
         storyboard = generate_storyboard(config, llm)
-        with open(storyboard_file, "w", encoding="utf-8") as f:
-            json.dump(storyboard.to_dict(), f, indent=2, ensure_ascii=False)
+        atomic_write_json(storyboard_file, storyboard.to_dict(), backup=True)
         console.print(f"  [green]✓ Storyboard created with {len(storyboard.shots)} shots.[/green]")
 
     notify(1, "Kịch bản đã sẵn sàng", 20, f"Đã có kịch bản với {len(storyboard.shots)} phân cảnh")
@@ -79,27 +92,31 @@ def run_pipeline(
         return storyboard_file
 
     # Stage 2: Voice & Audio (TTS)
+    check_cancel()
     console.print("\n[bold yellow][Stage 2/5] Synthesizing Voiceover (TTS)...[/bold yellow]")
     notify(2, "Đang tổng hợp giọng nói AI (TTS)...", 20, "Bắt đầu tổng hợp giọng đọc...")
-    durations = run_tts_stage(storyboard, config, state, progress_callback=notify)
+    durations = run_tts_stage(storyboard, config, state, progress_callback=notify, cancel_event=cancel_event)
     console.print(f"  [green]✓ Voice audio synthesized for {len(durations)} shots.[/green]")
     notify(2, "Hoàn tất giọng nói", 40, f"Đã tổng hợp âm thanh cho {len(durations)} phân cảnh")
 
     # Stage 3: Image Generation
+    check_cancel()
     console.print("\n[bold yellow][Stage 3/5] Generating Visuals & Characters...[/bold yellow]")
     notify(3, "Đang vẽ hình ảnh điện ảnh Flux...", 40, "Bắt đầu vẽ hình ảnh...")
-    images = run_image_stage(storyboard, config, state, progress_callback=notify)
+    images = run_image_stage(storyboard, config, state, progress_callback=notify, cancel_event=cancel_event)
     console.print(f"  [green]✓ Visuals rendered for {len(images)} shots.[/green]")
     notify(3, "Hoàn tất hình ảnh", 65, f"Đã vẽ hình ảnh cho {len(images)} phân cảnh")
 
     # Stage 4: Motion & Cinematics (Ken Burns)
+    check_cancel()
     console.print("\n[bold yellow][Stage 4/5] Rendering Dynamic Camera Motion...[/bold yellow]")
     notify(4, "Đang render chuyển động máy quay 2.5D...", 65, "Bắt đầu render chuyển động...")
-    video_clips = run_motion_stage(storyboard, config, state, durations, progress_callback=notify)
+    video_clips = run_motion_stage(storyboard, config, state, durations, progress_callback=notify, cancel_event=cancel_event)
     console.print(f"  [green]✓ Motion clips rendered for {len(video_clips)} shots.[/green]")
     notify(4, "Hoàn tất chuyển động", 85, f"Đã render chuyển động cho {len(video_clips)} phân cảnh")
 
     # Stage 5: Assembly & Mastering
+    check_cancel()
     console.print("\n[bold yellow][Stage 5/5] Assembling Master Video, BGM & Subtitles...[/bold yellow]")
     notify(5, "Đang ghép nối, hòa âm BGM và làm phụ đề...", 85, "Bắt đầu hậu kỳ xuất bản...")
     final_video = run_assembly_stage(storyboard, config, state, durations, progress_callback=notify)

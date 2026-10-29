@@ -47,6 +47,7 @@ import {
   useRemuxShotVideo,
   useAssembleMaster,
 } from '../api/queries'
+import { getTimelineExportUrl } from '../api/studio'
 import type { StoryboardData, SelectOption } from '../types'
 
 interface CharacterData {
@@ -1541,6 +1542,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     <span>Duyệt tất cả ({totalShots - approvedShots} còn lại)</span>
                   </button>
                 )}
+
+                {/* Export FCPXML for NLE */}
+                <a
+                  href={getTimelineExportUrl()}
+                  download
+                  className="flex-1 sm:flex-initial px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-amber-300 font-semibold text-xs sm:text-sm border border-amber-500/30 hover:border-amber-400/50 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] whitespace-nowrap"
+                  title="Xuất timeline FCPXML đa rãnh sang DaVinci Resolve hoặc Adobe Premiere Pro"
+                >
+                  <Download className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Xuất Premiere / DaVinci XML</span>
+                </a>
 
                 {/* Primary Master Assembly CTA */}
                 <button

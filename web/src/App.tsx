@@ -18,6 +18,7 @@ import {
   useProduceMovie,
   useCleanOutputs,
   useContinueProduction,
+  useCancelPipeline,
   useProjects,
   QUERY_KEYS,
 } from './api/queries'
@@ -44,6 +45,15 @@ export default function App() {
   const produceMutation = useProduceMovie()
   const cleanMutation = useCleanOutputs()
   const continueMutation = useContinueProduction()
+  const cancelMutation = useCancelPipeline()
+
+  const handleCancelProduction = () => {
+    cancelMutation.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.status })
+      },
+    })
+  }
 
   // Auto-open console when production starts
   useEffect(() => {
@@ -230,6 +240,8 @@ export default function App() {
         onToggleConsole={() => setShowConsole(!showConsole)}
         showConsole={showConsole}
         logsCount={displayLogs.length}
+        onCancel={handleCancelProduction}
+        isCancelling={cancelMutation.isPending}
       />
 
       <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
@@ -349,6 +361,13 @@ export default function App() {
           currentStage={status.stage}
           status={status.status}
           progress={status.progress}
+          currentShotId={status.current_shot_id}
+          currentShotIndex={status.current_shot_index}
+          shotsTotal={status.shots_total}
+          activeAction={status.active_action}
+          canCancel={status.can_cancel}
+          onCancel={handleCancelProduction}
+          isCancelling={cancelMutation.isPending}
         />
 
         {/* Center: Focused Creative Director Suite */}

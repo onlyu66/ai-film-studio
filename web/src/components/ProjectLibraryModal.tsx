@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Film, X, Trash2, Download, Play, Calendar, Clock, MonitorPlay, Loader2, Share2, Clapperboard, Globe } from 'lucide-react'
 import { useProjects, useDeleteProject, useDubProject } from '../api/queries'
+import { getTimelineExportUrl } from '../api/studio'
 import type { ProjectItem } from '../types'
 
 export interface ProjectLibraryModalProps {
@@ -294,6 +295,15 @@ export default function ProjectLibraryModal({
                                 <Download className="w-3.5 h-3.5" />
                               </a>
                             )}
+
+                            <a
+                              href={getTimelineExportUrl({ projectId: p.id, aspectRatio: p.aspect_ratio })}
+                              download
+                              className="p-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-amber-300 hover:text-amber-200 border border-amber-500/30 transition-colors cursor-pointer flex items-center justify-center"
+                              title="Xuất timeline FCPXML cho DaVinci Resolve / Premiere Pro"
+                            >
+                              <Film className="w-3.5 h-3.5" />
+                            </a>
 
                             <button
                               type="button"

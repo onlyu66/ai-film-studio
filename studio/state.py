@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, Any, Optional
-import json
 import os
 import threading
+from studio.storage import atomic_write_json, safe_read_json
 
 class StateManager:
     """Tracks per-shot progress across pipeline stages for checkpointing and resuming."""
@@ -51,17 +51,11 @@ class StateManager:
     def save(self) -> None:
         """Atomically persist state dictionary to disk."""
         with self._lock:
-            self.state_path.parent.mkdir(parents=True, exist_ok=True)
-            tmp_path = self.state_path.with_suffix(".tmp")
-            with open(tmp_path, "w", encoding="utf-8") as f:
-                json.dump(self._state, f, indent=2)
-            os.replace(tmp_path, self.state_path)
+            atomic_write_json(self.state_path, self._state, backup=False)
 
     def load(self) -> None:
         """Read state from disk if exists."""
         with self._lock:
-            if self.state_path.exists():
-                with open(self.state_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    if isinstance(data, dict):
-                        self._state = data
+            data = safe_read_json(self.state_path, default={})
+            if isinstance(data, dict):
+                self._state = data

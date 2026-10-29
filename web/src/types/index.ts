@@ -67,6 +67,11 @@ export interface StudioStatus {
   final_video: string | null
   final_srt: string | null
   shots_count?: number
+  current_shot_id?: string | null
+  current_shot_index?: number | null
+  shots_total?: number | null
+  active_action?: string | null
+  can_cancel?: boolean
 }
 
 export interface Character {

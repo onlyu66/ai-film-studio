@@ -444,4 +444,121 @@ def test_render_shot_audio_endpoint(tmp_path, monkeypatch):
     assert data["duration"] == 4.2
     assert "shot_test_01.mp3" in data["audio_url"]
 
+def test_export_timeline_endpoint(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    out_dir = tmp_path / "outputs"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    sb_file = out_dir / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Timeline Export Test",
+        "language": "vi",
+        "characters": {},
+        "shots": [
+            {"id": "shot_01", "dialogue": "Lời thoại số 1", "duration": 4.0, "image_prompt": "Cảnh 1"}
+        ]
+    }), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        str_arg = str(arg)
+        if str_arg == "outputs/storyboard.json":
+            return sb_file
+        if str_arg.startswith("outputs/"):
+            return out_dir / str_arg.replace("outputs/", "")
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    # 1. Export current storyboard timeline
+    resp = client.get("/api/storyboard/export-timeline?format=fcpxml&aspect_ratio=16:9&fps=25")
+    assert resp.status_code == 200
+    assert "attachment" in resp.headers.get("content-disposition", "")
+    assert ".fcpxml" in resp.headers.get("content-disposition", "")
+    assert "<fcpxml version=\"1.8\">" in resp.text
+    assert "Lời thoại số 1" in resp.text
+
+def test_export_project_timeline_endpoint(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+
+    proj_dir = tmp_path / "outputs" / "projects" / "proj_test_123"
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    sb_file = proj_dir / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Project Saved Film",
+        "language": "vi",
+        "characters": {},
+        "shots": [
+            {"id": "shot_p1", "dialogue": "Lời thoại lưu trữ", "duration": 5.0, "image_prompt": "Cảnh lưu trữ"}
+        ]
+    }), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        str_arg = str(arg)
+        if str_arg == "outputs/projects/proj_test_123/storyboard.json":
+            return sb_file
+        if "outputs/projects/proj_test_123" in str_arg:
+            return proj_dir
+        if str_arg == "outputs/projects":
+            return tmp_path / "outputs" / "projects"
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    resp = client.get("/api/projects/proj_test_123/export-timeline?format=fcpxml")
+    assert resp.status_code == 200
+    assert "attachment" in resp.headers.get("content-disposition", "")
+    assert ".fcpxml" in resp.headers.get("content-disposition", "")
+    assert "<fcpxml version=\"1.8\">" in resp.text
+    assert "Lời thoại lưu trữ" in resp.text
+
+def test_cancel_pipeline_endpoints():
+    import studio.server as srv
+
+    # 1. When idle
+    srv.pipeline_state["status"] = "idle"
+    srv._cancel_event.clear()
+    resp = client.post("/api/pipeline/cancel")
+    assert resp.status_code == 200
+    assert resp.json()["success"] is False
+    assert "Không có tiến trình" in resp.json()["message"]
+
+    # 2. When running
+    srv.pipeline_state["status"] = "running"
+    resp = client.post("/api/pipeline/cancel")
+    assert resp.status_code == 200
+    assert resp.json()["success"] is True
+    assert srv._cancel_event.is_set()
+
+    # Reset
+    srv.pipeline_state["status"] = "idle"
+    srv._cancel_event.clear()
+
+def test_status_endpoint_includes_per_shot_metadata():
+    import studio.server as srv
+    srv.pipeline_state["current_shot_id"] = "shot_test_99"
+    srv.pipeline_state["current_shot_index"] = 4
+    srv.pipeline_state["shots_total"] = 10
+    srv.pipeline_state["active_action"] = "image"
+
+    resp = client.get("/api/status")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["current_shot_id"] == "shot_test_99"
+    assert data["current_shot_index"] == 4
+    assert data["shots_total"] == 10
+    assert data["active_action"] == "image"
+    assert "can_cancel" in data
+
+    # Reset
+    srv.pipeline_state["current_shot_id"] = None
+    srv.pipeline_state["current_shot_index"] = None
+    srv.pipeline_state["shots_total"] = None
+    srv.pipeline_state["active_action"] = None
+
+
+
 

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { FileText, Mic, Image, Video, Sparkles, CheckCircle2, Loader2, type LucideIcon } from 'lucide-react'
+import { FileText, Mic, Image, Video, Sparkles, CheckCircle2, Loader2, Square, type LucideIcon } from 'lucide-react'
 
 export interface StageItem {
   id: number
@@ -22,9 +22,26 @@ export interface ProgressStageProps {
   currentStage: number
   status: string
   progress: number
+  currentShotId?: string | null
+  currentShotIndex?: number | null
+  shotsTotal?: number | null
+  activeAction?: string | null
+  canCancel?: boolean
+  onCancel?: () => void
+  isCancelling?: boolean
 }
 
-export default function ProgressStage({ currentStage, status, progress }: ProgressStageProps) {
+export default function ProgressStage({
+  currentStage,
+  status,
+  progress,
+  currentShotId,
+  currentShotIndex,
+  shotsTotal,
+  activeAction,
+  onCancel,
+  isCancelling,
+}: ProgressStageProps) {
   const isRunning = status === 'running'
   const isCompleted = status === 'completed'
   const isScriptReady = status === 'script_ready'
@@ -73,19 +90,50 @@ export default function ProgressStage({ currentStage, status, progress }: Progre
   return (
     <div className="w-full studio-panel rounded-2xl p-4 sm:p-5 transition-all border border-amber-500/30">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
           <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-300">
             {isRunning ? `Đang thực thi Giai đoạn ${currentStage}/5` : isScriptReady ? 'Giai đoạn 1 Hoàn tất — Chờ duyệt' : 'Sản xuất hoàn tất'}
           </span>
+
+          {/* Per-shot live indicator badge */}
+          {isRunning && currentShotId && (
+            <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono text-[11px] font-semibold flex items-center gap-1.5 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+              <span>
+                Phân cảnh {currentShotIndex || '?'}/{shotsTotal || '?'}: {currentShotId}
+                {activeAction ? ` • ${activeAction.toUpperCase()}` : ''}
+              </span>
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30">
-          <span className="text-xs font-mono text-amber-300/80">Tiến độ</span>
-          <span className="text-base font-bold font-mono text-amber-400">
-            {progress}%
-          </span>
+        <div className="flex items-center gap-2">
+          {/* Cancel button when running */}
+          {isRunning && onCancel && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Bạn có chắc chắn muốn dừng tiến trình sản xuất phim hiện tại không?")) {
+                  onCancel()
+                }
+              }}
+              disabled={isCancelling}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 hover:text-rose-200 border border-rose-500/30 text-xs font-semibold cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+              title="Hủy/Dừng tiến trình sản xuất ngay lập tức"
+            >
+              <Square className="w-3 h-3 fill-current" />
+              <span>{isCancelling ? "Đang dừng..." : "Dừng tác vụ"}</span>
+            </button>
+          )}
+
+          <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30">
+            <span className="text-xs font-mono text-amber-300/80">Tiến độ</span>
+            <span className="text-base font-bold font-mono text-amber-400">
+              {progress}%
+            </span>
+          </div>
         </div>
       </div>
 

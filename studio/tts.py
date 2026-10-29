@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Optional, Callable
+from typing import Dict, Optional, Callable, Any
 import asyncio
 import edge_tts
 from pydub import AudioSegment
@@ -172,12 +172,17 @@ def run_tts_stage(
     storyboard: Storyboard,
     config: StudioConfig,
     state: StateManager,
-    progress_callback: Optional[Callable[[int, str, int, str], None]] = None,
+    progress_callback: Optional[Callable[..., None]] = None,
+    cancel_event: Optional[Any] = None,
 ) -> Dict[str, float]:
     """
     Run TTS generation for all shots in storyboard in parallel.
     Returns a mapping of shot_id -> duration in seconds.
     """
+    if cancel_event and cancel_event.is_set():
+        from studio.orchestrator import PipelineCancelledException
+        raise PipelineCancelledException("Tiến trình sản xuất đã bị hủy.")
+
     audio_dir = config.output_dir / "audio"
     audio_dir.mkdir(parents=True, exist_ok=True)
     durations: Dict[str, float] = {}
@@ -197,6 +202,8 @@ def run_tts_stage(
         done_count = len(durations)
 
         def process_shot(shot: Shot):
+            if cancel_event and cancel_event.is_set():
+                return shot.id, 0.0
             audio_path = generate_audio_for_shot(
                 shot=shot,
                 characters=storyboard.characters,
@@ -213,6 +220,11 @@ def run_tts_stage(
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(process_shot, s) for s in pending_shots]
             for future in as_completed(futures):
+                if cancel_event and cancel_event.is_set():
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    from studio.orchestrator import PipelineCancelledException
+                    raise PipelineCancelledException("Tiến trình sản xuất đã bị hủy.")
+
                 shot_id, dur = future.result()
                 durations[shot_id] = dur
                 for s in storyboard.shots:
@@ -224,6 +236,24 @@ def run_tts_stage(
                 done_count += 1
                 if progress_callback:
                     pct = 20 + int(20 * (done_count / max(1, total_shots)))
-                    progress_callback(2, "Đang tổng hợp giọng nói AI (TTS)...", min(pct, 40), f"[TTS] Đã tạo giọng nói cho phân cảnh '{shot_id}' ({dur:.1f}s)")
+                    log_msg = f"[TTS] Đã tạo giọng nói cho phân cảnh '{shot_id}' ({dur:.1f}s)"
+                    try:
+                        progress_callback(
+                            2,
+                            "Đang tổng hợp giọng nói AI (TTS)...",
+                            min(pct, 40),
+                            log_msg,
+                            shot_id=shot_id,
+                            shot_idx=done_count,
+                            shots_total=total_shots,
+                            action="tts",
+                        )
+                    except TypeError:
+                        progress_callback(
+                            2,
+                            "Đang tổng hợp giọng nói AI (TTS)...",
+                            min(pct, 40),
+                            log_msg,
+                        )
 
     return durations

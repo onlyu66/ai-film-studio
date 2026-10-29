@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Any
 import shutil
 import subprocess
 
@@ -184,9 +184,14 @@ def run_motion_stage(
     config: StudioConfig,
     state: StateManager,
     durations: Optional[Dict[str, float]] = None,
-    progress_callback: Optional[Callable[[int, str, int, str], None]] = None,
+    progress_callback: Optional[Callable[..., None]] = None,
+    cancel_event: Optional[Any] = None,
 ) -> Dict[str, Path]:
     """Run motion video clip generation for all shots in parallel with optional Lip-Sync and VFX."""
+    if cancel_event and cancel_event.is_set():
+        from studio.orchestrator import PipelineCancelledException
+        raise PipelineCancelledException("Tiến trình sản xuất đã bị hủy.")
+
     img_dir = config.output_dir / "images"
     audio_dir = config.output_dir / "audio"
     vid_dir = config.output_dir / "videos"
@@ -214,6 +219,8 @@ def run_motion_stage(
 
         def process_shot_motion(shot: Shot):
             out_file = vid_dir / f"{shot.id}.mp4"
+            if cancel_event and cancel_event.is_set():
+                return shot.id, out_file
             img_file = img_dir / f"{shot.id}.png"
             shot_duration = durations.get(shot.id, shot.duration or 5.0)
 
@@ -248,6 +255,11 @@ def run_motion_stage(
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(process_shot_motion, s) for s in pending_shots]
             for future in as_completed(futures):
+                if cancel_event and cancel_event.is_set():
+                    executor.shutdown(wait=False, cancel_futures=True)
+                    from studio.orchestrator import PipelineCancelledException
+                    raise PipelineCancelledException("Tiến trình sản xuất đã bị hủy.")
+
                 shot_id, out_path = future.result()
                 video_clips[shot_id] = out_path
                 state.mark_complete(shot_id, "video")
@@ -255,6 +267,24 @@ def run_motion_stage(
                 done_count += 1
                 if progress_callback:
                     pct = 65 + int(20 * (done_count / max(1, total_shots)))
-                    progress_callback(4, "Đang render chuyển động máy quay 2.5D...", min(pct, 85), f"[Motion] Đã render clip cho phân cảnh '{shot_id}'")
+                    log_msg = f"[Motion] Đã render clip cho phân cảnh '{shot_id}'"
+                    try:
+                        progress_callback(
+                            4,
+                            "Đang render chuyển động máy quay 2.5D...",
+                            min(pct, 85),
+                            log_msg,
+                            shot_id=shot_id,
+                            shot_idx=done_count,
+                            shots_total=total_shots,
+                            action="motion",
+                        )
+                    except TypeError:
+                        progress_callback(
+                            4,
+                            "Đang render chuyển động máy quay 2.5D...",
+                            min(pct, 85),
+                            log_msg,
+                        )
 
     return video_clips

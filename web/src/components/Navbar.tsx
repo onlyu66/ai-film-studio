@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Film, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit, Clapperboard, Terminal } from 'lucide-react'
+import { Film, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit, Clapperboard, Terminal, Square } from 'lucide-react'
 import { Button } from './ui/button'
 import type { StudioStatus } from '../types'
 
@@ -12,6 +12,8 @@ export interface NavbarProps {
   onToggleConsole?: () => void
   showConsole?: boolean
   logsCount?: number
+  onCancel?: () => void
+  isCancelling?: boolean
 }
 
 export default function Navbar({
@@ -23,6 +25,8 @@ export default function Navbar({
   onToggleConsole,
   showConsole = false,
   logsCount = 0,
+  onCancel,
+  isCancelling = false,
 }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
 
@@ -55,10 +59,27 @@ export default function Navbar({
     }
     if (isRunning) {
       return (
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
-          <span className="truncate max-w-[130px] font-semibold">{status?.stage_name || 'Đang tạo phim...'}</span>
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+            <span className="truncate max-w-[130px] font-semibold">{status?.stage_name || 'Đang tạo phim...'}</span>
+          </div>
+          {onCancel && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Bạn có chắc muốn dừng tiến trình sản xuất?")) {
+                  onCancel()
+                }
+              }}
+              disabled={isCancelling}
+              className="p-1.5 rounded-full bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+              title="Dừng tiến trình sản xuất"
+            >
+              <Square className="w-3 h-3 fill-current" />
+            </button>
+          )}
         </div>
       )
     }

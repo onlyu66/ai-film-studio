@@ -9,9 +9,11 @@ import {
   Volume2,
   ZoomIn,
   ZoomOut,
-  Sparkles
+  Sparkles,
+  Download
 } from 'lucide-react'
 import { Badge } from './ui/badge'
+import { getTimelineExportUrl } from '../api/studio'
 import type { Shot } from '../types'
 
 export interface TimelineScrubberProps {
@@ -126,9 +128,17 @@ export default function TimelineScrubber({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider hidden sm:inline">
-            Multi-track Scrubber
-          </span>
+          <a
+            href={getTimelineExportUrl()}
+            download
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-cinema-amber text-xs font-medium border border-cinema-amber/30 transition-all hover:scale-[1.02] shadow-sm cursor-pointer"
+            title="Xuất timeline FCPXML chuyên nghiệp cho Adobe Premiere / DaVinci Resolve"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Xuất Timeline (FCPXML)</span>
+            <span className="md:hidden">FCPXML</span>
+          </a>
+
           <div className="flex items-center gap-1 bg-cinema-canvas border border-cinema-border rounded-lg p-0.5">
             <button
               type="button"
