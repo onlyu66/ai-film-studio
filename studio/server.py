@@ -79,6 +79,15 @@ class ProduceRequest(BaseModel):
     template_id: Optional[str] = None
     image_engine: str = "pollinations"
     image_api_url: Optional[str] = None
+    video_api_token: Optional[str] = None
+    video_model: Optional[str] = None
+    subtitle_style: Optional[str] = "tiktok_bold"
+    subtitle_position: Optional[str] = "bottom"
+    subtitle_karaoke: Optional[bool] = False
+    bgm_preset: Optional[str] = "cinematic"
+    bgm_volume: Optional[float] = 0.7
+    ducking_level: Optional[str] = "medium"
+    voice_volume: Optional[float] = 1.0
 
 # Global pipeline execution state & cancel event
 _cancel_event = threading.Event()
@@ -225,13 +234,20 @@ def save_project_to_library(final_video_path: Path, req: ProduceRequest):
     dest_video = project_dir / final_video_path.name
     shutil.copy2(str(final_video_path), str(dest_video))
 
-    # 2. Copy SRT if exists
+    # 2. Copy SRT and ASS if exists
     srt_name = None
     srt_path = final_video_path.with_suffix(".srt")
     if srt_path.exists():
         dest_srt = project_dir / srt_path.name
         shutil.copy2(str(srt_path), str(dest_srt))
         srt_name = srt_path.name
+
+    ass_name = None
+    ass_path = final_video_path.with_suffix(".ass")
+    if ass_path.exists():
+        dest_ass = project_dir / ass_path.name
+        shutil.copy2(str(ass_path), str(dest_ass))
+        ass_name = ass_path.name
 
     # 3. Copy first image as thumbnail if exists
     thumb_name = None
@@ -279,8 +295,12 @@ def save_project_to_library(final_video_path: Path, req: ProduceRequest):
         "created_at": timestamp,
         "video_file": final_video_path.name,
         "srt_file": srt_name,
+        "ass_file": ass_name,
         "thumb_file": thumb_name,
         "shots_count": shots_count,
+        "subtitle_style": getattr(req, "subtitle_style", "tiktok_bold"),
+        "subtitle_position": getattr(req, "subtitle_position", "bottom"),
+        "subtitle_karaoke": getattr(req, "subtitle_karaoke", False),
         "dubbed_versions": {},
     }
     atomic_write_json(project_dir / "metadata.json", metadata, backup=False)
@@ -340,6 +360,15 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             template_id=getattr(req, "template_id", None),
             image_engine=getattr(req, "image_engine", "pollinations") or "pollinations",
             image_api_url=getattr(req, "image_api_url", None),
+            video_api_token=getattr(req, "video_api_token", None),
+            video_model=getattr(req, "video_model", "wan-video/wan-2.1-i2v-480p") or "wan-video/wan-2.1-i2v-480p",
+            subtitle_style=getattr(req, "subtitle_style", "tiktok_bold") or "tiktok_bold",
+            subtitle_position=getattr(req, "subtitle_position", "bottom") or "bottom",
+            subtitle_karaoke=getattr(req, "subtitle_karaoke", False) or False,
+            bgm_preset=getattr(req, "bgm_preset", "cinematic") or "cinematic",
+            bgm_volume=float(getattr(req, "bgm_volume", 0.7) if getattr(req, "bgm_volume", None) is not None else 0.7),
+            ducking_level=getattr(req, "ducking_level", "medium") or "medium",
+            voice_volume=float(getattr(req, "voice_volume", 1.0) if getattr(req, "voice_volume", None) is not None else 1.0),
         )
 
         def _on_progress(stage: int, stage_name: str, progress: int, log_msg: str, **kwargs):
@@ -497,6 +526,22 @@ def test_image_engine(req: TestImageEngineRequest):
     from studio.image_providers import get_image_provider
     provider = get_image_provider(req.engine, api_url=req.url)
     return provider.check_health()
+
+@app.get("/api/system/video-models")
+def get_system_video_models():
+    """Return list of supported AI video models."""
+    from studio.video_providers import get_available_video_models
+    return get_available_video_models()
+
+class TestVideoTokenRequest(BaseModel):
+    token: str
+
+@app.post("/api/settings/test-video-token")
+def test_video_token_endpoint(req: TestVideoTokenRequest):
+    """Validate a Replicate API token against Replicate account API."""
+    from studio.video_providers import check_replicate_token
+    return check_replicate_token(req.token)
+
 
 class LLMModelsRequest(BaseModel):
     provider: str = "gemini"
@@ -1121,7 +1166,7 @@ AVAILABLE_SFX = [
 def list_sfx():
     return {"sfx": AVAILABLE_SFX}
 
-@app.get("/api/assets/sfx/{file_name}")
+@app.api_route("/api/assets/sfx/{file_name}", methods=["GET", "HEAD"])
 def serve_sfx_asset(file_name: str):
     clean_name = file_name.replace(".mp3", "").lower().strip()
     from studio.assembly import resolve_sfx_path
@@ -1133,6 +1178,81 @@ def serve_sfx_asset(file_name: str):
         media_type="audio/mpeg",
         headers={"Cache-Control": "public, max-age=86400"}
     )
+
+@app.get("/api/assets/bgm")
+def api_get_bgm_catalog():
+    from studio.audio_assets import get_bgm_catalog
+    return get_bgm_catalog()
+
+@app.api_route("/api/assets/bgm/{file_name}", methods=["GET", "HEAD"])
+def serve_bgm_asset(file_name: str):
+    clean_name = file_name.replace(".mp3", "").replace(".wav", "").lower().strip()
+    bgm_dir = Path("assets/bgm")
+    bgm_dir.mkdir(parents=True, exist_ok=True)
+
+    candidate = bgm_dir / f"{clean_name}.mp3"
+    if not candidate.exists():
+        candidate_wav = bgm_dir / f"{clean_name}.wav"
+        if candidate_wav.exists():
+            candidate = candidate_wav
+
+    if not candidate.exists() or candidate.stat().st_size < 1000:
+        try:
+            from studio.audio_assets import ensure_audio_assets, generate_tone_track, BGM_SOURCES
+            if clean_name in BGM_SOURCES:
+                ensure_audio_assets()
+            else:
+                generate_tone_track(candidate, style="cinematic", duration=30)
+        except Exception:
+            pass
+
+    if not candidate.exists():
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy file nhạc nền '{clean_name}'.")
+
+    return FileResponse(
+        str(candidate),
+        media_type="audio/mpeg",
+        headers={"Cache-Control": "public, max-age=86400"}
+    )
+
+class UploadBgmRequest(BaseModel):
+    filename: str
+    audio_base64: str
+
+@app.post("/api/assets/bgm/upload")
+def upload_custom_bgm(req: UploadBgmRequest):
+    import base64
+    ext = Path(req.filename or "").suffix.lower()
+    if ext not in (".mp3", ".wav", ".m4a", ".ogg", ".aac"):
+        raise HTTPException(status_code=400, detail="Chỉ hỗ trợ file âm thanh: .mp3, .wav, .m4a, .ogg, .aac")
+
+    bgm_dir = Path("assets/bgm")
+    bgm_dir.mkdir(parents=True, exist_ok=True)
+
+    timestamp = int(time.time())
+    safe_name = f"custom_{timestamp}"
+    dest_path = bgm_dir / f"{safe_name}.mp3"
+
+    try:
+        raw_b64 = req.audio_base64
+        if "," in raw_b64:
+            raw_b64 = raw_b64.split(",", 1)[1]
+        content = base64.b64decode(raw_b64)
+        if len(content) < 100:
+            raise HTTPException(status_code=400, detail="File âm thanh quá nhỏ hoặc bị hỏng.")
+
+        dest_path.write_bytes(content)
+        return {
+            "success": True,
+            "id": safe_name,
+            "name": req.filename or f"Custom Music {timestamp}",
+            "stream_url": f"/api/assets/bgm/{safe_name}.mp3",
+            "message": "Đã tải lên file nhạc nền tùy chỉnh thành công!",
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi khi lưu file nhạc: {e}")
 
 class RerollShotRequest(BaseModel):
     shot_id: str
@@ -1450,6 +1570,16 @@ def remux_shot_video(req: RemuxShotVideoRequest):
 
 class RenderShotVideoRequest(BaseModel):
     shot_id: str
+    engine: Optional[str] = None
+    video_api_token: Optional[str] = None
+    video_model: Optional[str] = None
+    subtitle_style: Optional[str] = "tiktok_bold"
+    subtitle_position: Optional[str] = "bottom"
+    subtitle_karaoke: Optional[bool] = False
+    bgm_preset: Optional[str] = "cinematic"
+    bgm_volume: Optional[float] = 0.7
+    ducking_level: Optional[str] = "medium"
+    voice_volume: Optional[float] = 1.0
 
 @app.post("/api/storyboard/render-shot-video")
 def render_shot_video(req: RenderShotVideoRequest):
@@ -1482,7 +1612,9 @@ def render_shot_video(req: RenderShotVideoRequest):
 
         aspect_ratio = getattr(last_produce_request, "aspect_ratio", "16:9") if last_produce_request else "16:9"
         style = getattr(last_produce_request, "style", "cinematic") if last_produce_request else "cinematic"
-        motion_engine = getattr(last_produce_request, "motion", "kenburns") if last_produce_request else "kenburns"
+        motion_engine = req.engine or (getattr(last_produce_request, "motion", "kenburns") if last_produce_request else "kenburns")
+        video_token = req.video_api_token or (getattr(last_produce_request, "video_api_token", None) if last_produce_request else None)
+        video_mdl = req.video_model or (getattr(last_produce_request, "video_model", "wan-video/wan-2.1-i2v-480p") if last_produce_request else "wan-video/wan-2.1-i2v-480p")
 
         img_path = img_dir / f"{target_shot.id}.png"
         if not img_path.exists() or img_path.stat().st_size < 1000:
@@ -1542,6 +1674,8 @@ def render_shot_video(req: RenderShotVideoRequest):
             aspect_ratio=aspect_ratio,
             letterbox=getattr(last_produce_request, "letterbox", False) if last_produce_request else False,
             style=style,
+            video_api_token=video_token,
+            video_model=video_mdl,
         )
 
         # Mux with audio if available for rich shot preview
@@ -1585,6 +1719,13 @@ class AssembleMasterRequest(BaseModel):
     hardsub: Optional[bool] = None
     aspect_ratio: Optional[str] = None
     style: Optional[str] = None
+    subtitle_style: Optional[str] = None
+    subtitle_position: Optional[str] = None
+    subtitle_karaoke: Optional[bool] = None
+    bgm_preset: Optional[str] = None
+    bgm_volume: Optional[float] = None
+    ducking_level: Optional[str] = None
+    voice_volume: Optional[float] = None
 
 @app.post("/api/storyboard/assemble-master")
 def assemble_master(req: AssembleMasterRequest):
@@ -1613,6 +1754,13 @@ def assemble_master(req: AssembleMasterRequest):
         eff_style = req.style or (getattr(last_produce_request, "style", "cinematic") if last_produce_request else "cinematic")
         eff_ratio = req.aspect_ratio or (getattr(last_produce_request, "aspect_ratio", "16:9") if last_produce_request else "16:9")
         eff_hardsub = req.hardsub if req.hardsub is not None else (getattr(last_produce_request, "hardsub", False) if last_produce_request else False)
+        eff_sub_style = req.subtitle_style or (getattr(last_produce_request, "subtitle_style", "tiktok_bold") if last_produce_request else "tiktok_bold")
+        eff_sub_pos = req.subtitle_position or (getattr(last_produce_request, "subtitle_position", "bottom") if last_produce_request else "bottom")
+        eff_sub_karaoke = req.subtitle_karaoke if req.subtitle_karaoke is not None else (getattr(last_produce_request, "subtitle_karaoke", False) if last_produce_request else False)
+        eff_bgm_preset = req.bgm_preset or (getattr(last_produce_request, "bgm_preset", "cinematic") if last_produce_request else "cinematic")
+        eff_bgm_volume = req.bgm_volume if req.bgm_volume is not None else (getattr(last_produce_request, "bgm_volume", 0.7) if last_produce_request else 0.7)
+        eff_ducking = req.ducking_level or (getattr(last_produce_request, "ducking_level", "medium") if last_produce_request else "medium")
+        eff_voice_vol = req.voice_volume if req.voice_volume is not None else (getattr(last_produce_request, "voice_volume", 1.0) if last_produce_request else 1.0)
 
         cfg = StudioConfig(
             topic=sb.title,
@@ -1620,6 +1768,13 @@ def assemble_master(req: AssembleMasterRequest):
             style=eff_style,
             aspect_ratio=eff_ratio,
             hardsub=eff_hardsub,
+            subtitle_style=eff_sub_style,
+            subtitle_position=eff_sub_pos,
+            subtitle_karaoke=eff_sub_karaoke,
+            bgm_preset=eff_bgm_preset,
+            bgm_volume=float(eff_bgm_volume),
+            ducking_level=eff_ducking,
+            voice_volume=float(eff_voice_vol),
             output_dir=Path("outputs"),
         )
         state_file = Path("outputs/state.json")
@@ -2210,6 +2365,115 @@ def api_test_webhook(req: TestWebhookRequest):
     }
     send_webhook_notification(req.webhook_url, test_payload)
     return {"success": True, "message": "Đã gửi thông báo kiểm tra đến Webhook"}
+
+@app.get("/api/system/subtitle-presets")
+def api_get_subtitle_presets():
+    from studio.subtitles import get_subtitle_presets
+    return get_subtitle_presets()
+
+@app.get("/api/storyboard/subtitles/{sub_format}")
+def download_active_storyboard_subtitles(sub_format: str):
+    fmt = sub_format.lower().strip()
+    if fmt not in ("srt", "ass"):
+        raise HTTPException(status_code=400, detail="Chỉ hỗ trợ định dạng phụ đề srt hoặc ass.")
+
+    sb_file = Path("outputs/storyboard.json")
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Chưa có kịch bản storyboard.json")
+
+    final_dir = Path("outputs/final")
+    if final_dir.exists():
+        candidates = list(final_dir.glob(f"*.{fmt}"))
+        if candidates:
+            sub_file = sorted(candidates, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+            media_type = "text/plain" if fmt == "srt" else "text/x-ssa"
+            return FileResponse(
+                str(sub_file),
+                media_type=media_type,
+                filename=f"movie.{fmt}",
+                headers={"Content-Disposition": f'attachment; filename="movie.{fmt}"'}
+            )
+
+    from studio.storyboard import parse_storyboard_json
+    from studio.subtitles import generate_srt, generate_ass
+    with open(sb_file, "r", encoding="utf-8") as f:
+        sb = parse_storyboard_json(f.read())
+
+    durations = {s.id: float(s.duration or 5.0) for s in sb.shots}
+    out_file = Path("outputs") / f"active_subtitles.{fmt}"
+    if fmt == "srt":
+        generate_srt(sb, durations, out_file)
+        media_type = "text/plain"
+    else:
+        generate_ass(sb, durations, out_file, preset_id="tiktok_bold", aspect_ratio="16:9")
+        media_type = "text/x-ssa"
+
+    return FileResponse(
+        str(out_file),
+        media_type=media_type,
+        filename=f"movie.{fmt}",
+        headers={"Content-Disposition": f'attachment; filename="movie.{fmt}"'}
+    )
+
+@app.get("/api/projects/{project_id}/subtitles/{sub_format}")
+def download_project_subtitles(project_id: str, sub_format: str):
+    fmt = sub_format.lower().strip()
+    if fmt not in ("srt", "ass"):
+        raise HTTPException(status_code=400, detail="Chỉ hỗ trợ định dạng phụ đề srt hoặc ass.")
+
+    project_dir = Path("outputs/projects") / project_id
+    if not project_dir.exists():
+        raise HTTPException(status_code=404, detail="Không tìm thấy dự án.")
+
+    # 1. Search for existing srt/ass files in project directory
+    candidates = list(project_dir.glob(f"*.{fmt}"))
+    if candidates:
+        sub_file = sorted(candidates, key=lambda f: f.stat().st_mtime, reverse=True)[0]
+        media_type = "text/plain" if fmt == "srt" else "text/x-ssa"
+        return FileResponse(
+            str(sub_file),
+            media_type=media_type,
+            filename=f"{project_id}.{fmt}",
+            headers={"Content-Disposition": f'attachment; filename="{project_id}.{fmt}"'}
+        )
+
+    # 2. If not pre-rendered, but storyboard.json exists, generate on-the-fly!
+    sb_path = project_dir / "storyboard.json"
+    if not sb_path.exists():
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy file phụ đề .{fmt} hoặc kịch bản của dự án.")
+
+    from studio.storyboard import parse_storyboard_json
+    from studio.subtitles import generate_srt, generate_ass
+    with open(sb_path, "r", encoding="utf-8") as f:
+        sb = parse_storyboard_json(f.read())
+
+    durations = {s.id: float(s.duration or 5.0) for s in sb.shots}
+    meta_file = project_dir / "metadata.json"
+    sub_style = "tiktok_bold"
+    aspect_ratio = "16:9"
+    if meta_file.exists():
+        try:
+            with open(meta_file, "r", encoding="utf-8") as mf:
+                m = json.load(mf)
+                sub_style = m.get("subtitle_style", "tiktok_bold")
+                aspect_ratio = m.get("aspect_ratio", "16:9")
+        except Exception:
+            pass
+
+    out_file = project_dir / f"generated_{fmt}.{fmt}"
+    if fmt == "srt":
+        generate_srt(sb, durations, out_file)
+        media_type = "text/plain"
+    else:
+        generate_ass(sb, durations, out_file, preset_id=sub_style, aspect_ratio=aspect_ratio)
+        media_type = "text/x-ssa"
+
+    return FileResponse(
+        str(out_file),
+        media_type=media_type,
+        filename=f"{project_id}.{fmt}",
+        headers={"Content-Disposition": f'attachment; filename="{project_id}.{fmt}"'}
+    )
 
 @app.delete("/api/projects/{project_id}")
 def delete_project(project_id: str):

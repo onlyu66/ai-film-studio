@@ -149,10 +149,25 @@ export async function renderShotAudio(shotId: string): Promise<{ success: boolea
   return response.data
 }
 
-export async function renderShotVideo(shotId: string): Promise<{ success: boolean; shot_id: string; video_url: string; duration: number }> {
+export interface RenderShotVideoParams {
+  shotId: string
+  engine?: string
+  videoApiToken?: string
+  videoModel?: string
+}
+
+export async function renderShotVideo(
+  params: string | RenderShotVideoParams
+): Promise<{ success: boolean; shot_id: string; video_url: string; duration: number }> {
+  const payload = typeof params === 'string' ? { shot_id: params } : {
+    shot_id: params.shotId,
+    engine: params.engine,
+    video_api_token: params.videoApiToken,
+    video_model: params.videoModel,
+  }
   const response = await apiClient.post<{ success: boolean; shot_id: string; video_url: string; duration: number }>(
     '/api/storyboard/render-shot-video',
-    { shot_id: shotId }
+    payload
   )
   return response.data
 }
@@ -169,6 +184,13 @@ export interface AssembleMasterParams {
   hardsub?: boolean
   aspect_ratio?: string
   style?: string
+  subtitle_style?: string
+  subtitle_position?: string
+  subtitle_karaoke?: boolean
+  bgm_preset?: string
+  bgm_volume?: number
+  ducking_level?: string
+  voice_volume?: number
 }
 
 export async function assembleMaster(params: AssembleMasterParams = {}): Promise<{ success: boolean; video_url: string; filename: string }> {
@@ -317,6 +339,41 @@ export async function testImageEngine(engine: string, url?: string): Promise<imp
   })
   return response.data
 }
+
+export async function fetchVideoModels(): Promise<import('../types').VideoModelItem[]> {
+  const response = await apiClient.get<import('../types').VideoModelItem[]>('/api/system/video-models')
+  return response.data
+}
+
+export async function testVideoToken(token: string): Promise<{ is_valid: boolean; username?: string; message: string }> {
+  const response = await apiClient.post<{ is_valid: boolean; username?: string; message: string }>(
+    '/api/settings/test-video-token',
+    { token }
+  )
+  return response.data
+}
+
+export async function fetchSubtitlePresets(): Promise<import('../types').SubtitlePresetItem[]> {
+  const response = await apiClient.get<import('../types').SubtitlePresetItem[]>('/api/system/subtitle-presets')
+  return response.data
+}
+
+export async function fetchBgmTracks(): Promise<import('../types').BgmTrackItem[]> {
+  const response = await apiClient.get<import('../types').BgmTrackItem[]>('/api/assets/bgm')
+  return response.data
+}
+
+export async function uploadCustomBgm(
+  filename: string,
+  audioBase64: string
+): Promise<{ success: boolean; id: string; name: string; stream_url: string; message: string }> {
+  const response = await apiClient.post<{ success: boolean; id: string; name: string; stream_url: string; message: string }>(
+    '/api/assets/bgm/upload',
+    { filename, audio_base64: audioBase64 }
+  )
+  return response.data
+}
+
 
 
 

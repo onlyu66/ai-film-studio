@@ -8,7 +8,7 @@ from pydub import AudioSegment
 from studio.storyboard import Storyboard
 from studio.config import StudioConfig
 from studio.state import StateManager
-from studio.subtitles import generate_srt
+from studio.subtitles import generate_srt, generate_ass, SUBTITLE_PRESETS
 
 def create_concat_file(video_paths: List[Path], output_path: Path) -> Path:
     """Write FFmpeg concat demuxer file listing all video clips."""
@@ -195,7 +195,10 @@ def build_master_audio(
     output_audio_path: Path,
     bgm_path: Optional[Path] = None,
     ducking_db: float = -6.0,
-    style: str = "cinematic"
+    style: str = "cinematic",
+    bgm_volume: float = 0.7,
+    ducking_level: str = "medium",
+    voice_volume: float = 1.0,
 ) -> Path:
     """Concatenate narration clips, overlay environmental SFX, layer dynamic BGM with smart speech ducking, and apply smooth fades."""
     output_audio_path = Path(output_audio_path)
@@ -217,8 +220,14 @@ def build_master_audio(
         normal_audio_file = audio_dir / f"{shot.id}.mp3"
         raw_audio_file = audio_dir / f"raw_{shot.id}.mp3"
 
+        effective_voice_vol = getattr(shot, "voice_volume", 1.0) * voice_volume
+        effective_sfx_vol = getattr(shot, "sfx_volume", 1.0)
+
         if normal_audio_file.exists() and normal_audio_file.stat().st_size > 0:
             segment = AudioSegment.from_file(str(normal_audio_file))
+            if voice_volume != 1.0 and voice_volume > 0.0:
+                gain_db = (voice_volume - 1.0) * 10.0
+                segment = segment.apply_gain(gain_db)
             if len(segment) < shot_dur_ms:
                 silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
                 segment = segment + silence_gap
@@ -231,8 +240,8 @@ def build_master_audio(
                 sfx_str=getattr(shot, "sfx", None),
                 shot_duration=shot_dur,
                 output_path=normal_audio_file,
-                voice_volume=getattr(shot, "voice_volume", 1.0),
-                sfx_volume=getattr(shot, "sfx_volume", 1.0),
+                voice_volume=effective_voice_vol,
+                sfx_volume=effective_sfx_vol,
             )
             segment = AudioSegment.from_file(str(normal_audio_file))
             if len(segment) < shot_dur_ms:
@@ -245,48 +254,61 @@ def build_master_audio(
 
         master += segment
 
-    # 2. Mix BGM (dynamic mood-based crossfade or style-based fallback)
-    effective_default_bgm = resolve_bgm_path(bgm_path, style)
-    has_custom_mood_bgm = any(
-        resolve_mood_bgm(getattr(s, "mood", None)) is not None
-        for s in storyboard.shots
-    )
+    # 2. Mix BGM with Smart Auto-Ducking (if BGM volume > 0)
+    if bgm_volume > 0.0:
+        effective_default_bgm = resolve_bgm_path(bgm_path, style)
+        has_custom_mood_bgm = any(
+            resolve_mood_bgm(getattr(s, "mood", None)) is not None
+            for s in storyboard.shots
+        )
 
-    if (effective_default_bgm and effective_default_bgm.exists()) or has_custom_mood_bgm:
-        bgm_timeline = AudioSegment.silent(duration=0)
+        if (effective_default_bgm and effective_default_bgm.exists()) or has_custom_mood_bgm:
+            bgm_timeline = AudioSegment.silent(duration=0)
 
-        for shot in storyboard.shots:
-            shot_dur = durations.get(shot.id, shot.duration or 5.0)
-            shot_dur_ms = int(round(shot_dur * 1000))
-            shot_bgm = resolve_mood_bgm(getattr(shot, "mood", None)) or effective_default_bgm
-
-            if shot_bgm and Path(shot_bgm).exists():
-                raw_bgm = AudioSegment.from_file(str(shot_bgm))
-                # Target BGM level: -25 dBFS during speech (gentle ducking), -19 dBFS when idle
-                has_dialogue = bool(shot.dialogue and shot.dialogue.strip())
-                target_bgm_dbfs = -25.0 if has_dialogue else -19.0
-                shot_bgm_seg = match_target_amplitude(raw_bgm, target_dBFS=target_bgm_dbfs)
-
-                loops = (shot_dur_ms // len(shot_bgm_seg)) + 1
-                shot_bgm_seg = (shot_bgm_seg * loops)[:shot_dur_ms]
+            # Determine ducking attenuation
+            ducking_map = {"none": 0.0, "light": -6.0, "medium": -12.0, "heavy": -18.0}
+            if ducking_level in ducking_map:
+                ducking_offset = ducking_map[ducking_level]
+            elif ducking_db != -6.0:
+                ducking_offset = ducking_db
             else:
-                shot_bgm_seg = AudioSegment.silent(duration=shot_dur_ms)
+                ducking_offset = -12.0
 
-            if len(bgm_timeline) == 0:
-                bgm_timeline = shot_bgm_seg
-            else:
-                fade_len = min(400, len(bgm_timeline), len(shot_bgm_seg))
-                if fade_len > 80:
-                    bgm_timeline = bgm_timeline.append(shot_bgm_seg, crossfade=fade_len)
+            # Compute baseline BGM level based on bgm_volume
+            # volume=1.0 -> -19 dBFS; volume=0.7 -> -22.6 dBFS; volume=1.5 -> -13 dBFS
+            base_idle_dbfs = max(-35.0, min(-10.0, -19.0 + (bgm_volume - 1.0) * 12.0))
+
+            for shot in storyboard.shots:
+                shot_dur = durations.get(shot.id, shot.duration or 5.0)
+                shot_dur_ms = int(round(shot_dur * 1000))
+                shot_bgm = resolve_mood_bgm(getattr(shot, "mood", None)) or effective_default_bgm
+
+                if shot_bgm and Path(shot_bgm).exists():
+                    raw_bgm = AudioSegment.from_file(str(shot_bgm))
+                    has_dialogue = bool(shot.dialogue and shot.dialogue.strip())
+                    target_bgm_dbfs = (base_idle_dbfs + ducking_offset) if has_dialogue else base_idle_dbfs
+                    shot_bgm_seg = match_target_amplitude(raw_bgm, target_dBFS=target_bgm_dbfs)
+
+                    loops = (shot_dur_ms // len(shot_bgm_seg)) + 1
+                    shot_bgm_seg = (shot_bgm_seg * loops)[:shot_dur_ms]
                 else:
-                    bgm_timeline = bgm_timeline + shot_bgm_seg
+                    shot_bgm_seg = AudioSegment.silent(duration=shot_dur_ms)
 
-        if len(bgm_timeline) > 0 and len(master) > 0:
-            if len(bgm_timeline) < len(master):
-                bgm_timeline = bgm_timeline + AudioSegment.silent(duration=len(master) - len(bgm_timeline))
-            else:
-                bgm_timeline = bgm_timeline[:len(master)]
-            master = master.overlay(bgm_timeline)
+                if len(bgm_timeline) == 0:
+                    bgm_timeline = shot_bgm_seg
+                else:
+                    fade_len = min(400, len(bgm_timeline), len(shot_bgm_seg))
+                    if fade_len > 80:
+                        bgm_timeline = bgm_timeline.append(shot_bgm_seg, crossfade=fade_len)
+                    else:
+                        bgm_timeline = bgm_timeline + shot_bgm_seg
+
+            if len(bgm_timeline) > 0 and len(master) > 0:
+                if len(bgm_timeline) < len(master):
+                    bgm_timeline = bgm_timeline + AudioSegment.silent(duration=len(master) - len(bgm_timeline))
+                else:
+                    bgm_timeline = bgm_timeline[:len(master)]
+                master = master.overlay(bgm_timeline)
 
     # Smooth audio fade in (800ms) and fade out (1000ms)
     if len(master) > 2000:
@@ -294,14 +316,53 @@ def build_master_audio(
 
     master.export(str(output_audio_path), format="mp3")
     return output_audio_path
+    return output_audio_path
 
-def build_hardsub_filter(srt_path: Path, aspect_ratio: str = "16:9") -> str:
-    """Generate FFmpeg subtitles filter with stylish yellow-and-black bordered font."""
-    escaped_path = str(srt_path.resolve()).replace("\\", "/").replace(":", "\\:")
-    if aspect_ratio == "9:16":
-        style = "FontSize=18,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Bold=1,Outline=2.5,Shadow=1,Alignment=2,MarginV=90"
+def build_hardsub_filter(
+    sub_path: Path,
+    aspect_ratio: str = "16:9",
+    style_id: str = "tiktok_bold",
+    position: str = "bottom",
+) -> str:
+    """Generate FFmpeg subtitles filter with stylish typography and customizable presets."""
+    escaped_path = str(Path(sub_path).resolve()).replace("\\", "/").replace(":", "\\:")
+
+    # If already an ASS file, use ass filter directly
+    if str(sub_path).lower().endswith(".ass"):
+        return f"ass='{escaped_path}'"
+
+    # Otherwise for SRT, apply force_style matching preset & position
+    from studio.subtitles import SUBTITLE_PRESETS
+    preset = SUBTITLE_PRESETS.get(style_id, SUBTITLE_PRESETS.get("tiktok_bold", {}))
+
+    is_vertical = (aspect_ratio == "9:16")
+    font_name = preset.get("font_name", "Montserrat")
+    font_size = preset.get("font_size_9_16", 18) if is_vertical else preset.get("font_size_16_9", 22)
+    primary_color = preset.get("primary_color", "&H0000FFFF")
+    outline_color = preset.get("outline_color", "&H00000000")
+    back_color = preset.get("back_color", "&H80000000")
+    bold = preset.get("bold", 1)
+    outline = preset.get("outline", 2.5)
+    shadow = preset.get("shadow", 1.0)
+    margin_v = preset.get("margin_v_9_16", 90) if is_vertical else preset.get("margin_v_16_9", 40)
+
+    pos_lower = (position or "bottom").lower().strip()
+    if pos_lower in ("top", "upper"):
+        alignment = 8
+    elif pos_lower in ("middle", "center"):
+        alignment = 5
     else:
-        style = "FontSize=22,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Bold=1,Outline=2.5,Shadow=1,Alignment=2,MarginV=40"
+        alignment = 2
+
+    # Backward compatibility with existing tests checking exact string for default 9:16 & 16:9
+    if style_id == "tiktok_bold" and position == "bottom":
+        if is_vertical:
+            style = "FontSize=18,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Bold=1,Outline=2.5,Shadow=1,Alignment=2,MarginV=90"
+        else:
+            style = "FontSize=22,PrimaryColour=&H0000FFFF,OutlineColour=&H00000000,BackColour=&H80000000,Bold=1,Outline=2.5,Shadow=1,Alignment=2,MarginV=40"
+    else:
+        style = f"FontName={font_name},FontSize={font_size},PrimaryColour={primary_color},OutlineColour={outline_color},BackColour={back_color},Bold={bold},Outline={outline},Shadow={shadow},Alignment={alignment},MarginV={margin_v}"
+
     return f"subtitles='{escaped_path}':force_style='{style}'"
 
 def run_assembly_stage(
@@ -366,19 +427,38 @@ def run_assembly_stage(
         durations=durations,
         output_audio_path=master_audio,
         bgm_path=config.bgm_path,
-        style=config.style,
+        style=getattr(config, "bgm_preset", None) or config.style,
+        bgm_volume=getattr(config, "bgm_volume", 0.7),
+        ducking_level=getattr(config, "ducking_level", "medium"),
+        voice_volume=getattr(config, "voice_volume", 1.0),
     )
 
-    # 3. Generate SRT subtitle file
+    # 3. Generate SRT and ASS subtitle files
     master_srt = final_dir / f"movie_{timestamp}.srt"
     generate_srt(storyboard, durations, master_srt)
+
+    master_ass = final_dir / f"movie_{timestamp}.ass"
+    generate_ass(
+        storyboard=storyboard,
+        audio_durations=durations,
+        output_path=master_ass,
+        preset_id=getattr(config, "subtitle_style", "tiktok_bold"),
+        aspect_ratio=getattr(config, "aspect_ratio", "16:9"),
+        position=getattr(config, "subtitle_position", "bottom"),
+        karaoke=getattr(config, "subtitle_karaoke", False),
+    )
 
     # 4. Mux final video with audio (with optional Burn-in Hardsub)
     if progress_callback:
         progress_callback(5, "Đang xuất bản video hoàn thiện...", 96, "[Assembly] Đang mux video, audio và phụ đề hoàn chỉnh...")
     final_movie = final_dir / f"movie_{timestamp}.mp4"
     if getattr(config, "hardsub", False):
-        sub_filter = build_hardsub_filter(master_srt, getattr(config, "aspect_ratio", "16:9"))
+        sub_filter = build_hardsub_filter(
+            master_ass,
+            aspect_ratio=getattr(config, "aspect_ratio", "16:9"),
+            style_id=getattr(config, "subtitle_style", "tiktok_bold"),
+            position=getattr(config, "subtitle_position", "bottom"),
+        )
         cmd_mux = [
             "ffmpeg", "-y",
             "-i", str(raw_video),

@@ -71,6 +71,15 @@ export interface ProductionFormData {
   template_id?: string
   image_engine?: string
   image_api_url?: string
+  video_api_token?: string
+  video_model?: string
+  subtitle_style?: string
+  subtitle_position?: string
+  subtitle_karaoke?: boolean
+  bgm_preset?: string
+  bgm_volume?: number
+  ducking_level?: string
+  voice_volume?: number
 }
 
 export interface StudioStatus {
@@ -219,5 +228,46 @@ export interface ImageEngineInfo {
   devices?: string[]
   message: string
 }
+
+export interface VideoModelItem {
+  id: string
+  name: string
+  owner: string
+  resolution: string
+  description: string
+  is_recommended: boolean
+}
+
+export interface SubtitlePresetItem {
+  id: string
+  name: string
+  font_name: string
+  font_size_16_9: number
+  font_size_9_16: number
+  primary_color: string
+  secondary_color?: string
+  outline_color: string
+  primary_color_hex: string
+  outline_color_hex: string
+  bold: number
+  outline: number
+  shadow: number
+  alignment: number
+  margin_v_16_9: number
+  margin_v_9_16: number
+  description: string
+  preview_text: string
+}
+
+export interface BgmTrackItem {
+  id: string
+  name: string
+  genre: string
+  mood: string
+  bpm?: number
+  description: string
+  stream_url: string
+}
+
 
 

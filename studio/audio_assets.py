@@ -3,7 +3,7 @@ import subprocess
 import shutil
 import urllib.request
 import urllib.parse
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Any
 
 # Curated High-Quality CC0 / Royalty-Free Audio Repositories
 # 1. BGM: SoundSafari CC0 1.0 Public Domain (FreePD tracks by Kevin MacLeod & CC0 composers)
@@ -18,7 +18,96 @@ BGM_SOURCES: Dict[str, str] = {
     "mysterious": "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Dark%20Hallway.mp3",
     "noir": "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/A%20Good%20Bass%20for%20Gambling.mp3",
     "anime": "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Heroic%20Adventure.mp3",
+    "cyberpunk": "https://raw.githubusercontent.com/SoundSafari/CC0-1.0-Music/main/freepd.com/Alien%20Spaceship%20Atmosphere.mp3",
 }
+
+BGM_CATALOG: List[Dict[str, Any]] = [
+    {
+        "id": "cinematic",
+        "name": "Epic Blockbuster",
+        "genre": "Orchestral / Epic",
+        "mood": "Hùng tráng, kỳ vĩ",
+        "bpm": 120,
+        "description": "Nhạc dàn nhạc giao hưởng chuẩn Hollywood cho phim bom tấn, hành động kỳ vĩ",
+        "stream_url": "/api/assets/bgm/cinematic.mp3",
+    },
+    {
+        "id": "action",
+        "name": "Action Strike",
+        "genre": "Hybrid Rock / Electro",
+        "mood": "Dồn dập, chiến đấu",
+        "bpm": 135,
+        "description": "Nhịp trống dồn dập, tiết tấu nhanh cho cảnh truy đuổi hoặc chiến đấu",
+        "stream_url": "/api/assets/bgm/action.mp3",
+    },
+    {
+        "id": "dramatic",
+        "name": "The Drama",
+        "genre": "Cinematic Strings",
+        "mood": "Kịch tính, cao trào",
+        "bpm": 95,
+        "description": "Dàn dây kịch tính đẩy cao cảm xúc phân cảnh căng thẳng",
+        "stream_url": "/api/assets/bgm/dramatic.mp3",
+    },
+    {
+        "id": "calm",
+        "name": "Infinite Peace",
+        "genre": "Ambient / Piano",
+        "mood": "Êm đềm, bình yên",
+        "bpm": 70,
+        "description": "Giai điệu piano du dương, lắng đọng cho cảnh sâu lắng hoặc tự sự",
+        "stream_url": "/api/assets/bgm/calm.mp3",
+    },
+    {
+        "id": "cyberpunk",
+        "name": "Alien Spaceship Atmosphere",
+        "genre": "Synthwave / Dark Ambient",
+        "mood": "Tương lai, viễn tưởng",
+        "bpm": 85,
+        "description": "Không gian âm thanh synthesizer neon tương lai cho phim Sci-Fi Cyberpunk",
+        "stream_url": "/api/assets/bgm/cyberpunk.mp3",
+    },
+    {
+        "id": "mysterious",
+        "name": "Dark Hallway",
+        "genre": "Horror / Suspense",
+        "mood": "Rùng rợn, bí ẩn",
+        "bpm": 60,
+        "description": "Tiếng bass trầm u ám tạo cảm giác hồi hộp, rình rập, kỳ bí",
+        "stream_url": "/api/assets/bgm/mysterious.mp3",
+    },
+    {
+        "id": "noir",
+        "name": "Gambling Noir",
+        "genre": "Jazz Noir / Lounge",
+        "mood": "Trinh thám, hoài niệm",
+        "bpm": 80,
+        "description": "Giai điệu contrabass cổ điển cho phim trinh thám hoặc hồi tưởng",
+        "stream_url": "/api/assets/bgm/noir.mp3",
+    },
+    {
+        "id": "anime",
+        "name": "Heroic Adventure",
+        "genre": "Anime Orchestral",
+        "mood": "Phiêu lưu, hào hùng",
+        "bpm": 128,
+        "description": "Giai điệu tươi sáng hào hứng phong cách anime Shounen phiêu lưu",
+        "stream_url": "/api/assets/bgm/anime.mp3",
+    },
+    {
+        "id": "documentary",
+        "name": "Ambient Bongos",
+        "genre": "World / Acoustic",
+        "mood": "Khám phá, thiên nhiên",
+        "bpm": 90,
+        "description": "Bộ gõ mộc mạc và âm hưởng tự nhiên cho phim tài liệu",
+        "stream_url": "/api/assets/bgm/documentary.mp3",
+    },
+]
+
+def get_bgm_catalog() -> List[Dict[str, Any]]:
+    """Return list of curated BGM tracks with streaming URLs."""
+    return [dict(t) for t in BGM_CATALOG]
 
 SFX_SOURCES: Dict[str, str] = {
     "rain": "https://raw.githubusercontent.com/remvze/moodist/main/public/sounds/rain/heavy-rain.mp3",

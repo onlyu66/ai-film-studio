@@ -99,43 +99,24 @@ def build_ffmpeg_command(
         str(output_path),
     ]
 
-def _render_replicate_i2v(image_path: Path, output_path: Path, prompt: str = "") -> Optional[Path]:
-    """Render dynamic AI video via Replicate Image-to-Video API."""
-    api_token = os.environ.get("REPLICATE_API_TOKEN")
-    if not api_token:
-        print("  [Motion] Warning: REPLICATE_API_TOKEN not set. Falling back to Ken Burns.")
-        return None
-
-    import base64
+def _render_replicate_i2v(
+    image_path: Path,
+    output_path: Path,
+    prompt: str = "",
+    api_token: Optional[str] = None,
+    model: Optional[str] = None,
+    duration: float = 4.0,
+    aspect_ratio: str = "16:9",
+) -> Optional[Path]:
+    """Render dynamic AI video via Replicate Image-to-Video API with async polling."""
     try:
-        with open(image_path, "rb") as f:
-            img_b64 = base64.b64encode(f.read()).decode("utf-8")
-
-        headers = {
-            "Authorization": f"Bearer {api_token}",
-            "Content-Type": "application/json",
-            "Prefer": "wait",
-        }
-        payload = {
-            "version": "78619623e12521c7bb5e2fce31ceea09ab7ff2ee", # Stable Video Diffusion / Hotshot-XL
-            "input": {
-                "input_image": f"data:image/png;base64,{img_b64}",
-                "prompt": prompt or "cinematic motion, 4k photorealistic, fluid dynamic movement",
-            }
-        }
-        resp = requests.post("https://api.replicate.com/v1/predictions", headers=headers, json=payload, timeout=90)
-        if resp.status_code in (200, 201):
-            res_data = resp.json()
-            video_url = res_data.get("output")
-            if video_url and isinstance(video_url, str):
-                v_resp = requests.get(video_url, timeout=60)
-                if v_resp.status_code == 200:
-                    with open(output_path, "wb") as f:
-                        f.write(v_resp.content)
-                    return output_path
+        from studio.video_providers import ReplicateVideoProvider
+        provider = ReplicateVideoProvider(api_token=api_token, model=model)
+        if provider.render_shot_video(image_path, output_path, prompt, duration, aspect_ratio):
+            if output_path.exists() and output_path.stat().st_size > 100:
+                return output_path
     except Exception as exc:
         print(f"  [Motion] Replicate I2V failed ({exc}). Falling back to Ken Burns.")
-
     return None
 
 def render_motion_for_shot(
@@ -150,6 +131,8 @@ def render_motion_for_shot(
     letterbox: bool = False,
     style: str = "cinematic",
     accel: str = "auto",
+    video_api_token: Optional[str] = None,
+    video_model: Optional[str] = None,
 ) -> Path:
     """Execute motion rendering for a single shot according to selected engine."""
     if not shutil.which("ffmpeg"):
@@ -159,7 +142,15 @@ def render_motion_for_shot(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if engine == "replicate":
-        res = _render_replicate_i2v(image_path, output_path, prompt)
+        res = _render_replicate_i2v(
+            image_path=image_path,
+            output_path=output_path,
+            prompt=prompt,
+            api_token=video_api_token,
+            model=video_model,
+            duration=duration,
+            aspect_ratio=aspect_ratio,
+        )
         if res:
             return res
 
@@ -253,6 +244,8 @@ def run_motion_stage(
                     letterbox=getattr(config, "letterbox", False),
                     style=getattr(config, "style", "cinematic"),
                     accel=getattr(config, "hardware_accel", "auto"),
+                    video_api_token=getattr(config, "video_api_token", None),
+                    video_model=getattr(config, "video_model", None),
                 )
 
             return shot.id, out_file

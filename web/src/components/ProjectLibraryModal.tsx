@@ -305,6 +305,24 @@ export default function ProjectLibraryModal({
                               <Film className="w-3.5 h-3.5" />
                             </a>
 
+                            <a
+                              href={`/api/projects/${p.id}/subtitles/srt`}
+                              download
+                              className="px-2 py-1 rounded-lg bg-studio-input hover:bg-studio-card text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 transition-colors cursor-pointer flex items-center justify-center font-mono text-[10px] font-bold"
+                              title="Tải phụ đề chuẩn .SRT (Closed Captions)"
+                            >
+                              SRT
+                            </a>
+
+                            <a
+                              href={`/api/projects/${p.id}/subtitles/ass`}
+                              download
+                              className="px-2 py-1 rounded-lg bg-studio-input hover:bg-studio-card text-indigo-400 hover:text-indigo-300 border border-indigo-500/30 transition-colors cursor-pointer flex items-center justify-center font-mono text-[10px] font-bold"
+                              title="Tải phụ đề điện ảnh .ASS (Có Style & Karaoke Highlight)"
+                            >
+                              ASS
+                            </a>
+
                             <button
                               type="button"
                               onClick={() => handleDelete(p)}

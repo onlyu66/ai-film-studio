@@ -33,6 +33,12 @@ import {
   fetchStoryTemplates,
   fetchImageEngines,
   testImageEngine,
+  fetchVideoModels,
+  testVideoToken,
+  fetchSubtitlePresets,
+  fetchBgmTracks,
+  uploadCustomBgm,
+  type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
   type DubProjectParams,
@@ -223,7 +229,7 @@ export function useRenderShotVideo() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (shotId: string) => renderShotVideo(shotId),
+    mutationFn: (params: string | RenderShotVideoParams) => renderShotVideo(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
     },
@@ -392,6 +398,44 @@ export function useTestImageEngine() {
     mutationFn: ({ engine, url }: { engine: string; url?: string }) => testImageEngine(engine, url),
   })
 }
+
+export function useVideoModels() {
+  return useQuery({
+    queryKey: ['system', 'video-models'],
+    queryFn: fetchVideoModels,
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useTestVideoToken() {
+  return useMutation({
+    mutationFn: (token: string) => testVideoToken(token),
+  })
+}
+
+export function useSubtitlePresets() {
+  return useQuery({
+    queryKey: ['system', 'subtitle-presets'],
+    queryFn: fetchSubtitlePresets,
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useBgmTracks() {
+  return useQuery({
+    queryKey: ['system', 'bgm-tracks'],
+    queryFn: fetchBgmTracks,
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useUploadCustomBgm() {
+  return useMutation({
+    mutationFn: ({ filename, audioBase64 }: { filename: string; audioBase64: string }) =>
+      uploadCustomBgm(filename, audioBase64),
+  })
+}
+
 
 
 

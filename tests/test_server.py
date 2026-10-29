@@ -1,3 +1,5 @@
+import json
+from pathlib import Path
 from fastapi.testclient import TestClient
 from studio.server import app
 
@@ -609,6 +611,117 @@ def test_test_image_engine_connection_endpoint():
     data = resp.json()
     assert data["id"] == "pollinations"
     assert data["is_available"] is True
+
+def test_get_video_models_endpoint():
+    resp = client.get("/api/system/video-models")
+    assert resp.status_code == 200
+    models = resp.json()
+    assert isinstance(models, list)
+    assert len(models) >= 4
+    ids = [m["id"] for m in models]
+    assert "wan-video/wan-2.1-i2v-480p" in ids
+
+def test_test_video_token_endpoint():
+    # Empty token returns is_valid False
+    resp = client.post("/api/settings/test-video-token", json={"token": ""})
+    assert resp.status_code == 200
+    assert resp.json()["is_valid"] is False
+
+def test_get_subtitle_presets_endpoint():
+    resp = client.get("/api/system/subtitle-presets")
+    assert resp.status_code == 200
+    presets = resp.json()
+    assert isinstance(presets, list)
+    assert len(presets) >= 6
+    ids = [p["id"] for p in presets]
+    assert "tiktok_bold" in ids
+    assert "cinematic" in ids
+    assert "cyberpunk" in ids
+
+def test_download_subtitles_endpoint(tmp_path, monkeypatch):
+    import json
+    proj_dir = tmp_path / "outputs" / "projects" / "proj_sub_123"
+    proj_dir.mkdir(parents=True, exist_ok=True)
+
+    sb_json = {
+        "title": "Sub Test Movie",
+        "language": "vi",
+        "shots": [
+            {
+                "id": "s1",
+                "chapter": 1,
+                "character_id": None,
+                "dialogue": "Lời thoại phụ đề tiếng Việt",
+                "image_prompt": "prompt 1",
+                "motion": "zoom_in",
+                "duration": 3.0,
+            }
+        ]
+    }
+    (proj_dir / "storyboard.json").write_text(json.dumps(sb_json), encoding="utf-8")
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        str_arg = str(arg)
+        if str_arg == "outputs/projects":
+            return tmp_path / "outputs" / "projects"
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    # 1. Download SRT
+    resp_srt = client.get("/api/projects/proj_sub_123/subtitles/srt")
+    assert resp_srt.status_code == 200
+    assert "attachment" in resp_srt.headers.get("content-disposition", "")
+    assert ".srt" in resp_srt.headers.get("content-disposition", "")
+    assert "Lời thoại phụ đề tiếng Việt" in resp_srt.text
+
+    # 2. Download ASS
+    resp_ass = client.get("/api/projects/proj_sub_123/subtitles/ass")
+    assert resp_ass.status_code == 200
+    assert "attachment" in resp_ass.headers.get("content-disposition", "")
+    assert ".ass" in resp_ass.headers.get("content-disposition", "")
+    assert "[Script Info]" in resp_ass.text
+    assert "Lời thoại phụ đề tiếng Việt" in resp_ass.text
+
+    # 3. Invalid format
+    resp_invalid = client.get("/api/projects/proj_sub_123/subtitles/vtt")
+    assert resp_invalid.status_code == 400
+
+def test_get_bgm_catalog_endpoint():
+    resp = client.get("/api/assets/bgm")
+    assert resp.status_code == 200
+    catalog = resp.json()
+    assert isinstance(catalog, list)
+    assert len(catalog) >= 8
+    ids = [t["id"] for t in catalog]
+    assert "cinematic" in ids
+    assert "action" in ids
+    assert "dramatic" in ids
+
+def test_upload_bgm_endpoint(tmp_path, monkeypatch):
+    import base64
+    bgm_dir = tmp_path / "assets" / "bgm"
+    bgm_dir.mkdir(parents=True, exist_ok=True)
+
+    orig_path = Path
+    def mock_path(arg, *rest):
+        str_arg = str(arg)
+        if str_arg == "assets/bgm" or str_arg.startswith("assets/bgm/"):
+            return tmp_path / str_arg
+        return orig_path(arg, *rest)
+
+    monkeypatch.setattr("studio.server.Path", mock_path)
+
+    raw_bytes = b"fake_mp3_content_data_1234567890" * 10
+    b64_str = base64.b64encode(raw_bytes).decode("utf-8")
+    resp = client.post("/api/assets/bgm/upload", json={"filename": "my_custom_music.mp3", "audio_base64": b64_str})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert "stream_url" in data
+    assert "id" in data
+
 
 
 

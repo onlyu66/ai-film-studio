@@ -28,10 +28,39 @@ import {
   Smartphone,
   Monitor,
   Zap,
+  Type,
+  Music,
+  Volume2,
+  VolumeX,
+  Play,
+  Pause,
+  Upload,
+  Sliders,
 } from 'lucide-react'
 import { CustomSelect } from './ui/select'
-import { useTestWebhook, useFetchLlmModels, useHardwareInfo, useImageEngines, useTestImageEngine } from '../api/queries'
-import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem, StoryTemplate, ImageEngineInfo } from '../types'
+import {
+  useTestWebhook,
+  useFetchLlmModels,
+  useHardwareInfo,
+  useImageEngines,
+  useTestImageEngine,
+  useVideoModels,
+  useTestVideoToken,
+  useSubtitlePresets,
+  useBgmTracks,
+  useUploadCustomBgm,
+} from '../api/queries'
+import type {
+  PresetIdea,
+  StyleOption,
+  SelectOption,
+  ProductionFormData,
+  LLMModelItem,
+  StoryTemplate,
+  ImageEngineInfo,
+  SubtitlePresetItem,
+  BgmTrackItem,
+} from '../types'
 
 const StoryTemplateModal = lazy(() => import('./StoryTemplateModal'))
 
@@ -39,6 +68,207 @@ const IMAGE_ENGINE_OPTIONS: SelectOption[] = [
   { value: 'pollinations', label: 'Flux Cloud (Pollinations)', subtext: 'Mặc định — Nhanh, không cần cài đặt', icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" /> },
   { value: 'sd_webui', label: 'Local SD WebUI / Forge', subtext: 'A1111 REST API (Port 7860)', icon: <Cpu className="w-3.5 h-3.5 text-emerald-400" /> },
   { value: 'comfyui', label: 'Local ComfyUI', subtext: 'Graph Workflow API (Port 8188)', icon: <Server className="w-3.5 h-3.5 text-sky-400" /> },
+]
+
+const DEFAULT_SUBTITLE_PRESETS: SubtitlePresetItem[] = [
+  {
+    id: 'tiktok_bold',
+    name: 'TikTok / Reels Bold',
+    font_name: 'Montserrat',
+    font_size_16_9: 22,
+    font_size_9_16: 20,
+    primary_color: '&H0000FFFF',
+    outline_color: '&H00000000',
+    primary_color_hex: '#ffff00',
+    outline_color_hex: '#000000',
+    bold: 1,
+    outline: 3.0,
+    shadow: 1.5,
+    alignment: 2,
+    margin_v_16_9: 40,
+    margin_v_9_16: 120,
+    description: 'Chữ vàng viền đen dày nổi bật, chuẩn video ngắn Shorts & TikTok',
+    preview_text: 'Phim điện ảnh siêu thực đỉnh cao',
+  },
+  {
+    id: 'cinematic',
+    name: 'Cinematic Classic',
+    font_name: 'Cinzel',
+    font_size_16_9: 20,
+    font_size_9_16: 17,
+    primary_color: '&H00E8FFFF',
+    outline_color: '&H00101010',
+    primary_color_hex: '#ffffe8',
+    outline_color_hex: '#101010',
+    bold: 1,
+    outline: 1.5,
+    shadow: 1.0,
+    alignment: 2,
+    margin_v_16_9: 40,
+    margin_v_9_16: 80,
+    description: 'Phông chữ trang nhã viền thanh mảnh chuẩn phim chiếu rạp',
+    preview_text: 'Bí mật ngàn năm dưới đáy đại dương',
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk Neon',
+    font_name: 'Courier New',
+    font_size_16_9: 22,
+    font_size_9_16: 18,
+    primary_color: '&H00FFFF00',
+    outline_color: '&H00000000',
+    primary_color_hex: '#00ffff',
+    outline_color_hex: '#000000',
+    bold: 1,
+    outline: 2.8,
+    shadow: 2.0,
+    alignment: 2,
+    margin_v_16_9: 40,
+    margin_v_9_16: 90,
+    description: 'Sắc màu Cyan viền đen phong cách khoa học viễn tưởng tương lai',
+    preview_text: 'Hệ thống AI Cyberpunk 2088',
+  },
+  {
+    id: 'retro_vhs',
+    name: 'Retro 80s VHS',
+    font_name: 'Trebuchet MS',
+    font_size_16_9: 21,
+    font_size_9_16: 18,
+    primary_color: '&H0033E0FF',
+    outline_color: '&H00000000',
+    primary_color_hex: '#ffe033',
+    outline_color_hex: '#000000',
+    bold: 1,
+    outline: 2.2,
+    shadow: 0.0,
+    alignment: 2,
+    margin_v_16_9: 45,
+    margin_v_9_16: 95,
+    description: 'Màu vàng cổ điển với nền tối vintage hoài niệm thập niên 80',
+    preview_text: 'Bản ghi hình lưu trữ năm 1984',
+  },
+  {
+    id: 'minimalist',
+    name: 'Minimalist Clean',
+    font_name: 'Arial',
+    font_size_16_9: 19,
+    font_size_9_16: 16,
+    primary_color: '&H00FFFFFF',
+    outline_color: '&H00202020',
+    primary_color_hex: '#ffffff',
+    outline_color_hex: '#202020',
+    bold: 0,
+    outline: 1.2,
+    shadow: 0.8,
+    alignment: 2,
+    margin_v_16_9: 35,
+    margin_v_9_16: 70,
+    description: 'Tối giản, tinh tế, không viền nặng, tập trung vào hình ảnh',
+    preview_text: 'Khoảnh khắc bình minh tĩnh lặng',
+  },
+  {
+    id: 'karaoke_pop',
+    name: 'Karaoke Pop Highlight',
+    font_name: 'Montserrat',
+    font_size_16_9: 23,
+    font_size_9_16: 20,
+    primary_color: '&H0000FFFF',
+    outline_color: '&H00000000',
+    primary_color_hex: '#ffff00',
+    outline_color_hex: '#000000',
+    bold: 1,
+    outline: 3.0,
+    shadow: 1.5,
+    alignment: 2,
+    margin_v_16_9: 50,
+    margin_v_9_16: 130,
+    description: 'Hiệu ứng nhảy sáng từ ngữ theo nhịp điệu phát âm cuốn hút',
+    preview_text: 'Từng câu thoại bừng sáng sống động',
+  },
+]
+
+const DEFAULT_BGM_TRACKS: BgmTrackItem[] = [
+  {
+    id: 'cinematic',
+    name: 'Cinematic Epic Orchestral',
+    genre: 'Orchestral / Soundtrack',
+    mood: 'Hùng tráng, cao trào điện ảnh, kịch tính',
+    bpm: 120,
+    description: 'Dàn nhạc giao hưởng hùng tráng, bộ gõ mạnh mẽ, phù hợp cao trào và trailer',
+    stream_url: '/api/assets/bgm/cinematic.mp3',
+  },
+  {
+    id: 'action',
+    name: 'Intense Action & Hybrid Drums',
+    genre: 'Action / Hybrid Drums',
+    mood: 'Dồn dập, hồi hộp, hành động rượt đuổi',
+    bpm: 135,
+    description: 'Tiết tấu nhanh, trống điện tử dồn dập, căng thẳng nghẹt thở',
+    stream_url: '/api/assets/bgm/action.mp3',
+  },
+  {
+    id: 'dramatic',
+    name: 'Deep Dramatic Piano & Strings',
+    genre: 'Emotional Drama',
+    mood: 'Sâu lắng, bi tráng, cảm xúc dâng trào',
+    bpm: 85,
+    description: 'Đàn piano solo phối hợp dàn dây du dương xúc động',
+    stream_url: '/api/assets/bgm/dramatic.mp3',
+  },
+  {
+    id: 'calm',
+    name: 'Peaceful Ambient Atmosphere',
+    genre: 'Ambient / Chillout',
+    mood: 'Thanh bình, êm đềm, suy tư thư thái',
+    bpm: 75,
+    description: 'Không gian tĩnh mịch, giai điệu nhẹ nhàng sâu lắng',
+    stream_url: '/api/assets/bgm/calm.mp3',
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk Synthwave 2077',
+    genre: 'Synthwave / Electronic',
+    mood: 'Tương lai viễn tưởng, neon rực rỡ, sci-fi',
+    bpm: 125,
+    description: 'Bass analog synthesizer dày dặn, phong cách viễn tưởng tương lai',
+    stream_url: '/api/assets/bgm/cyberpunk.mp3',
+  },
+  {
+    id: 'mysterious',
+    name: 'Dark Mystery & Suspense',
+    genre: 'Mystery / Thriller',
+    mood: 'Bí ẩn, ma mị, rùng rợn, giật gân',
+    bpm: 90,
+    description: 'Âm hưởng u tối, huyền bí, thôi miên khám phá bí mật cổ xưa',
+    stream_url: '/api/assets/bgm/mysterious.mp3',
+  },
+  {
+    id: 'noir',
+    name: 'Vintage Film Noir & Jazz',
+    genre: 'Jazz / Noir Blues',
+    mood: 'Hoài niệm, mưa đêm phố cổ, trinh thám cổ điển',
+    bpm: 80,
+    description: 'Saxophone quyến rũ, jazz u buồn kiểu phim trinh thám thập niên 50',
+    stream_url: '/api/assets/bgm/noir.mp3',
+  },
+  {
+    id: 'anime',
+    name: 'Emotional Anime & Fantasy',
+    genre: 'Anime / Fantasy',
+    mood: 'Trong trẻo, hy vọng, hành trình phiêu lưu kỳ thú',
+    bpm: 110,
+    description: 'Giai điệu anime mộng mơ, cảm xúc phiêu lưu tươi sáng',
+    stream_url: '/api/assets/bgm/anime.mp3',
+  },
+  {
+    id: 'documentary',
+    name: 'Discovery Horizon & Nature',
+    genre: 'Documentary / World',
+    mood: 'Khám phá tri thức, vĩ đại, thiên nhiên hùng vĩ',
+    bpm: 100,
+    description: 'Phim tài liệu khoa học, địa lý, trang trọng và truyền cảm hứng',
+    stream_url: '/api/assets/bgm/documentary.mp3',
+  },
 ]
 
 const LANG_OPTIONS: SelectOption[] = [
@@ -244,6 +474,171 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
     )
   }
 
+  const [videoApiToken, setVideoApiToken] = useState('')
+  const [showVideoToken, setShowVideoToken] = useState(false)
+  const [videoModel, setVideoModel] = useState('wan-video/wan-2.1-i2v-480p')
+  const [testVideoTokenStatus, setTestVideoTokenStatus] = useState<{ is_valid: boolean; username?: string; message: string } | null>(null)
+
+  const { data: videoModels = [] } = useVideoModels()
+  const testVideoTokenMutation = useTestVideoToken()
+
+  useEffect(() => {
+    const savedToken = localStorage.getItem('studio_replicate_token') || ''
+    const savedModel = localStorage.getItem('studio_replicate_model') || 'wan-video/wan-2.1-i2v-480p'
+    setVideoApiToken(savedToken)
+    setVideoModel(savedModel)
+  }, [])
+
+  const handleVideoTokenChange = (val: string) => {
+    setVideoApiToken(val)
+    localStorage.setItem('studio_replicate_token', val)
+    setTestVideoTokenStatus(null)
+  }
+
+  const handleVideoModelChange = (val: string) => {
+    setVideoModel(val)
+    localStorage.setItem('studio_replicate_model', val)
+  }
+
+  const handleTestVideoToken = () => {
+    if (!videoApiToken.trim()) return
+    testVideoTokenMutation.mutate(videoApiToken.trim(), {
+      onSuccess: (data) => setTestVideoTokenStatus(data),
+      onError: (err: any) => setTestVideoTokenStatus({ is_valid: false, message: err?.message || 'Lỗi kết nối' }),
+    })
+  }
+
+  const [subtitleStyle, setSubtitleStyle] = useState('tiktok_bold')
+  const [subtitlePosition, setSubtitlePosition] = useState('bottom')
+  const [subtitleKaraoke, setSubtitleKaraoke] = useState(false)
+
+  const { data: subtitlePresets = [] } = useSubtitlePresets()
+
+  useEffect(() => {
+    const savedSubStyle = localStorage.getItem('studio_subtitle_style') || 'tiktok_bold'
+    const savedSubPos = localStorage.getItem('studio_subtitle_position') || 'bottom'
+    const savedSubKaraoke = localStorage.getItem('studio_subtitle_karaoke') === 'true'
+    setSubtitleStyle(savedSubStyle)
+    setSubtitlePosition(savedSubPos)
+    setSubtitleKaraoke(savedSubKaraoke)
+  }, [])
+
+  const handleSubtitleStyleChange = (val: string) => {
+    setSubtitleStyle(val)
+    localStorage.setItem('studio_subtitle_style', val)
+  }
+
+  const handleSubtitlePositionChange = (val: string) => {
+    setSubtitlePosition(val)
+    localStorage.setItem('studio_subtitle_position', val)
+  }
+
+  const handleSubtitleKaraokeChange = (val: boolean) => {
+    setSubtitleKaraoke(val)
+    localStorage.setItem('studio_subtitle_karaoke', val ? 'true' : 'false')
+  }
+
+  const [bgmPreset, setBgmPreset] = useState('cinematic')
+  const [bgmVolume, setBgmVolume] = useState(0.7)
+  const [duckingLevel, setDuckingLevel] = useState<'none' | 'light' | 'medium' | 'heavy'>('medium')
+  const [playingBgmId, setPlayingBgmId] = useState<string | null>(null)
+  const [bgmAudioElement, setBgmAudioElement] = useState<HTMLAudioElement | null>(null)
+  const [uploadBgmError, setUploadBgmError] = useState<string | null>(null)
+
+  const { data: bgmTracks = DEFAULT_BGM_TRACKS } = useBgmTracks()
+  const uploadBgmMutation = useUploadCustomBgm()
+
+  useEffect(() => {
+    const savedBgmPreset = localStorage.getItem('studio_bgm_preset') || 'cinematic'
+    const savedBgmVolume = localStorage.getItem('studio_bgm_volume')
+    const savedDuckingLevel = (localStorage.getItem('studio_ducking_level') as any) || 'medium'
+    setBgmPreset(savedBgmPreset)
+    if (savedBgmVolume) setBgmVolume(parseFloat(savedBgmVolume))
+    if (['none', 'light', 'medium', 'heavy'].includes(savedDuckingLevel)) setDuckingLevel(savedDuckingLevel)
+  }, [])
+
+  const handleBgmPresetChange = (val: string) => {
+    setBgmPreset(val)
+    localStorage.setItem('studio_bgm_preset', val)
+  }
+
+  const handleBgmVolumeChange = (val: number) => {
+    setBgmVolume(val)
+    localStorage.setItem('studio_bgm_volume', val.toString())
+  }
+
+  const handleDuckingLevelChange = (val: 'none' | 'light' | 'medium' | 'heavy') => {
+    setDuckingLevel(val)
+    localStorage.setItem('studio_ducking_level', val)
+  }
+
+  const handleTogglePlayBgm = (track: BgmTrackItem) => {
+    if (playingBgmId === track.id) {
+      if (bgmAudioElement) {
+        bgmAudioElement.pause()
+        setBgmAudioElement(null)
+      }
+      setPlayingBgmId(null)
+      return
+    }
+
+    if (bgmAudioElement) {
+      bgmAudioElement.pause()
+    }
+
+    if (!track.stream_url) return
+
+    const audio = new Audio(track.stream_url)
+    audio.volume = Math.min(Math.max(bgmVolume, 0.05), 1.0)
+    audio.play().catch((err) => {
+      console.warn('Audio preview playback error:', err)
+    })
+    audio.onended = () => {
+      setPlayingBgmId(null)
+      setBgmAudioElement(null)
+    }
+    setBgmAudioElement(audio)
+    setPlayingBgmId(track.id)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (bgmAudioElement) {
+        bgmAudioElement.pause()
+      }
+    }
+  }, [bgmAudioElement])
+
+  const handleBgmFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploadBgmError(null)
+
+    if (file.size > 25 * 1024 * 1024) {
+      setUploadBgmError('Tệp âm thanh quá lớn (vui lòng chọn tệp dưới 25MB)')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = () => {
+      const base64 = reader.result as string
+      uploadBgmMutation.mutate(
+        { filename: file.name, audioBase64: base64 },
+        {
+          onSuccess: (res) => {
+            if (res.id) {
+              handleBgmPresetChange(res.id)
+            }
+          },
+          onError: (err: any) => {
+            setUploadBgmError(err?.message || 'Tải nhạc thất bại')
+          },
+        }
+      )
+    }
+    reader.readAsDataURL(file)
+  }
+
   useEffect(() => {
     if (initialData) {
       if (initialData.topic) setTopic(initialData.topic)
@@ -302,6 +697,14 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       template_id: selectedTemplate?.id || undefined,
       image_engine: imageEngine,
       image_api_url: (imageEngine !== 'pollinations' && imageApiUrl.trim()) ? imageApiUrl.trim() : undefined,
+      video_api_token: motion === 'replicate' && videoApiToken.trim() ? videoApiToken.trim() : undefined,
+      video_model: motion === 'replicate' ? videoModel : undefined,
+      subtitle_style: hardsub ? subtitleStyle : undefined,
+      subtitle_position: hardsub ? subtitlePosition : undefined,
+      subtitle_karaoke: hardsub ? subtitleKaraoke : undefined,
+      bgm_preset: bgmPreset,
+      bgm_volume: bgmVolume,
+      ducking_level: duckingLevel,
     })
   }
 
@@ -651,6 +1054,359 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
           </div>
         </div>
 
+        {/* Subtitle Typography & Live Preview Card */}
+        {hardsub && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-studio-card/90 border border-amber-500/30 space-y-4 shadow-xl">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-studio-border pb-3">
+              <div className="flex items-center gap-2">
+                <Type className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-bold text-zinc-100 uppercase tracking-wider">
+                  Tùy Biến Typography & Phụ Đề Điện Ảnh (ASS / SRT)
+                </span>
+              </div>
+              <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                <CheckCircle2 className="w-3 h-3 text-amber-400" />
+                Hardsub Burn-in Bật
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+              {/* Left Column: Preset, Position & Karaoke Toggle */}
+              <div className="lg:col-span-7 space-y-3.5">
+                <div>
+                  <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Phong cách Typography</span>
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {(subtitlePresets.length > 0 ? subtitlePresets : DEFAULT_SUBTITLE_PRESETS).map((p) => {
+                      const isSelected = p.id === subtitleStyle
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => handleSubtitleStyleChange(p.id)}
+                          className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between gap-1.5 cursor-pointer ${
+                            isSelected
+                              ? 'bg-amber-500/15 border-amber-400/50 shadow-sm'
+                              : 'bg-studio-input/70 border-studio-border hover:border-studio-border-hover'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span
+                              className="w-3 h-3 rounded-full border border-black/40 shrink-0"
+                              style={{ backgroundColor: p.primary_color_hex }}
+                            />
+                            {isSelected && <Check className="w-3 h-3 text-amber-400" />}
+                          </div>
+                          <div>
+                            <span className={`text-xs font-bold block truncate ${isSelected ? 'text-amber-300' : 'text-zinc-200'}`}>
+                              {p.name}
+                            </span>
+                            <span className="text-[10px] text-zinc-400 block truncate">
+                              Font: {p.font_name}
+                            </span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* Position Segmented Control */}
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase text-zinc-400 font-medium mb-1.5">
+                      Vị trí phụ đề
+                    </label>
+                    <div className="grid grid-cols-3 gap-1 bg-studio-input p-1 rounded-xl border border-studio-border">
+                      {[
+                        { id: 'bottom', label: 'Dưới' },
+                        { id: 'middle', label: 'Giữa' },
+                        { id: 'top', label: 'Trên' },
+                      ].map((pos) => (
+                        <button
+                          key={pos.id}
+                          type="button"
+                          onClick={() => handleSubtitlePositionChange(pos.id)}
+                          className={`py-1 text-xs font-semibold rounded-lg transition-all text-center cursor-pointer ${
+                            subtitlePosition === pos.id
+                              ? 'bg-amber-400 text-zinc-950 shadow-sm'
+                              : 'text-zinc-400 hover:text-zinc-200'
+                          }`}
+                        >
+                          {pos.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Karaoke Highlight Toggle */}
+                  <div className="flex flex-col justify-end">
+                    <label
+                      onClick={() => handleSubtitleKaraokeChange(!subtitleKaraoke)}
+                      className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-2 ${
+                        subtitleKaraoke
+                          ? 'bg-amber-500/10 border-amber-400/40'
+                          : 'bg-studio-input/70 border-studio-border hover:border-studio-border-hover'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <span className={`text-xs font-semibold block leading-tight truncate ${subtitleKaraoke ? 'text-amber-300' : 'text-zinc-300'}`}>
+                          Karaoke Highlight
+                        </span>
+                        <span className="text-[10px] text-zinc-500 block truncate leading-tight mt-0.5">
+                          Nhảy sáng từng từ ({'\\'}k)
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={subtitleKaraoke}
+                        onChange={(e) => handleSubtitleKaraokeChange(e.target.checked)}
+                        className="w-3.5 h-3.5 rounded text-amber-500 focus:ring-amber-400 bg-studio-input border-studio-border cursor-pointer shrink-0"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Live Subtitle Preview */}
+              <div className="lg:col-span-5 flex flex-col justify-between p-3.5 rounded-xl bg-zinc-950/80 border border-studio-border/80">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>Live Subtitle Preview</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-zinc-500">
+                    {aspectRatio === '9:16' ? '9:16 Shorts' : '16:9 Cinema'}
+                  </span>
+                </div>
+
+                {/* Simulated Cinema Screen */}
+                {(() => {
+                  const effectivePresets = subtitlePresets.length > 0 ? subtitlePresets : DEFAULT_SUBTITLE_PRESETS
+                  const p = effectivePresets.find((x) => x.id === subtitleStyle) || effectivePresets[0]
+                  const textShadowStyle = `-1px -1px 0 ${p.outline_color_hex || '#000'}, 1px -1px 0 ${p.outline_color_hex || '#000'}, -1px 1px 0 ${p.outline_color_hex || '#000'}, 1px 1px 0 ${p.outline_color_hex || '#000'}, 0 2px 4px rgba(0,0,0,0.8)`
+
+                  return (
+                    <div className="relative aspect-video w-full rounded-lg bg-zinc-900 overflow-hidden border border-zinc-800 flex flex-col justify-between p-3 shadow-inner">
+                      {/* Cinema vignette & rule-of-thirds grid line */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none" />
+                      <div className="absolute inset-0 opacity-10 border border-dashed border-white pointer-events-none m-2" />
+
+                      {/* Top Header Placeholder */}
+                      <div className="text-[9px] font-mono text-zinc-500 z-10 select-none">
+                        REC [00:01:24:18]
+                      </div>
+
+                      {/* Centered / Positioned Subtitle Text */}
+                      <div className={`z-10 w-full text-center px-2 flex flex-col justify-center ${
+                        subtitlePosition === 'top'
+                          ? 'items-center pt-1'
+                          : subtitlePosition === 'middle'
+                          ? 'items-center my-auto'
+                          : 'items-center pb-1'
+                      }`}>
+                        <div
+                          style={{
+                            fontFamily: p.font_name || 'Montserrat',
+                            color: p.primary_color_hex || '#ffff00',
+                            textShadow: textShadowStyle,
+                            fontWeight: p.bold ? 700 : 400,
+                          }}
+                          className={`text-xs sm:text-sm leading-snug tracking-wide transition-all ${
+                            subtitleKaraoke ? 'animate-pulse' : ''
+                          }`}
+                        >
+                          {p.preview_text || 'Phim điện ảnh siêu thực đỉnh cao'}
+                        </div>
+                      </div>
+
+                      <div className="text-[9px] font-mono text-zinc-600 text-right z-10 select-none">
+                        {p.font_name} • {subtitlePosition.toUpperCase()}
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                <p className="text-[10px] text-zinc-500 italic mt-2 text-center">
+                  * Tự động điều chỉnh kích cỡ font và lề đứng theo tỉ lệ khung hình {aspectRatio}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Multi-Track Audio Mixer & Auto-Ducking BGM Card */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-studio-deck border border-studio-border/80 shadow-inner relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Music className="w-4 h-4" />
+                </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-200">
+                  Phối Âm Đa Kênh & Nhạc Nền (Multi-Track Audio Mixer)
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                  Auto-Ducking Pro
+                </span>
+              </div>
+              <p className="text-[11px] text-zinc-400 mt-1">
+                Tự động hạ âm lượng nhạc nền (ducking) mượt mà khi nhân vật cất tiếng thoại, chuyển cảnh crossfade tự nhiên.
+              </p>
+            </div>
+
+            {/* Custom Upload Button */}
+            <div className="flex items-center gap-2 shrink-0">
+              <label className="relative cursor-pointer flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-studio-card hover:bg-studio-card/80 border border-studio-border text-zinc-300 hover:text-white transition-all shadow-sm">
+                {uploadBgmMutation.isPending ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5 text-amber-400" />
+                )}
+                <span>{uploadBgmMutation.isPending ? 'Đang tải lên...' : 'Tải MP3 riêng'}</span>
+                <input
+                  type="file"
+                  accept="audio/mp3,audio/wav,audio/m4a,audio/*"
+                  className="hidden"
+                  onChange={handleBgmFileUpload}
+                  disabled={uploadBgmMutation.isPending}
+                />
+              </label>
+            </div>
+          </div>
+
+          {uploadBgmError && (
+            <div className="mb-3 p-2.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{uploadBgmError}</span>
+            </div>
+          )}
+
+          {/* BGM Preset Selection Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-4">
+            {bgmTracks.map((track) => {
+              const isSelected = bgmPreset === track.id
+              const isPlaying = playingBgmId === track.id
+              return (
+                <div
+                  key={track.id}
+                  onClick={() => handleBgmPresetChange(track.id)}
+                  className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between gap-2 select-none relative ${
+                    isSelected
+                      ? 'bg-amber-500/10 border-amber-500/50 shadow-sm ring-1 ring-amber-500/30'
+                      : 'bg-studio-card/40 border-studio-border/60 hover:bg-studio-card hover:border-studio-border'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-semibold text-zinc-200 truncate">
+                          {track.name}
+                        </span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                      </div>
+                      <span className="text-[10px] text-zinc-400 font-mono block">
+                        {track.genre} {track.bpm ? `• ${track.bpm} BPM` : ''}
+                      </span>
+                    </div>
+
+                    {/* Preview Play/Pause Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleTogglePlayBgm(track)
+                      }}
+                      title={isPlaying ? 'Dừng phát' : 'Nghe thử track'}
+                      className={`p-2 rounded-lg transition-colors shrink-0 ${
+                        isPlaying
+                          ? 'bg-amber-500 text-zinc-950 shadow-md'
+                          : 'bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 hover:text-white'
+                      }`}
+                    >
+                      {isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current" />}
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] text-zinc-400 line-clamp-1">
+                    {track.description}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Mixing Controls: BGM Volume & Auto-Ducking Level */}
+          <div className="pt-3 border-t border-studio-border/60 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* BGM Volume Slider */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Âm Lượng Nhạc Nền (BGM Level)</span>
+                </label>
+                <span className="text-xs font-mono font-bold text-amber-400">
+                  {Math.round(bgmVolume * 100)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <VolumeX className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                <input
+                  type="range"
+                  min="0"
+                  max="1.5"
+                  step="0.05"
+                  value={bgmVolume}
+                  onChange={(e) => handleBgmVolumeChange(parseFloat(e.target.value))}
+                  className="w-full accent-amber-500 cursor-pointer h-1.5 bg-zinc-700 rounded-lg appearance-none"
+                />
+                <Volume2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              </div>
+              <p className="text-[10px] text-zinc-500 mt-1 italic">
+                * Khuyên dùng 50% - 80% để nhạc hòa quyện mà không lấn át lời thoại.
+              </p>
+            </div>
+
+            {/* Auto-Ducking Level */}
+            <div>
+              <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <Volume2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Mức Độ Hạ Âm (Auto-Ducking Khi Có Lời Thoại)</span>
+              </label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {[
+                  { id: 'none', label: 'Tắt', sub: '0 dB' },
+                  { id: 'light', label: 'Nhẹ', sub: '-6 dB' },
+                  { id: 'medium', label: 'Tiêu chuẩn', sub: '-12 dB' },
+                  { id: 'heavy', label: 'Sâu', sub: '-18 dB' },
+                ].map((item) => {
+                  const isActive = duckingLevel === item.id
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleDuckingLevelChange(item.id as any)}
+                      className={`px-2 py-1.5 rounded-xl border text-center transition-all ${
+                        isActive
+                          ? 'bg-amber-500/15 border-amber-500/60 text-amber-300 shadow-sm'
+                          : 'bg-studio-card/40 border-studio-border/60 text-zinc-400 hover:text-zinc-200 hover:bg-studio-card'
+                      }`}
+                    >
+                      <div className="text-[11px] font-semibold leading-tight">{item.label}</div>
+                      <div className="text-[9px] font-mono text-zinc-500 leading-tight">{item.sub}</div>
+                    </button>
+                  )
+                })}
+              </div>
+              <p className="text-[10px] text-zinc-500 mt-1 italic">
+                * Nhạc nền sẽ tự động giảm {duckingLevel === 'heavy' ? '-18 dB' : duckingLevel === 'medium' ? '-12 dB' : duckingLevel === 'light' ? '-6 dB' : '0 dB'} và crossfade mượt mà trong đoạn có thoại.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* 5. Advanced Engine Accordion */}
         <div className="pt-2">
           <button
@@ -776,6 +1532,121 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                       <span>{testImageEngineStatus.message}</span>
                     </p>
                   )}
+                </div>
+              )}
+
+              {/* Replicate AI Video Configuration Card */}
+              {motion === 'replicate' && (
+                <div className="sm:col-span-2 lg:col-span-4 p-4 rounded-xl bg-studio-card border border-studio-border space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-studio-border pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Video className="w-4 h-4 text-indigo-400" />
+                      <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
+                        Cấu hình Replicate AI Video (Image-to-Video Cloud)
+                      </span>
+                    </div>
+
+                    {testVideoTokenStatus && (
+                      <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ${
+                        testVideoTokenStatus.is_valid
+                          ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/30'
+                          : 'text-rose-400 bg-rose-500/10 border border-rose-500/30'
+                      }`}>
+                        <span className={`w-2 h-2 rounded-full ${testVideoTokenStatus.is_valid ? 'bg-emerald-400 animate-pulse' : 'bg-rose-500'}`} />
+                        <span>{testVideoTokenStatus.is_valid ? `Hợp lệ (${testVideoTokenStatus.username || 'Replicate Account'})` : 'Token không hợp lệ'}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[10px] font-mono uppercase text-zinc-400 font-medium flex items-center gap-1">
+                          <Key className="w-3 h-3 text-indigo-400" />
+                          <span>Replicate API Token</span>
+                        </label>
+                        <a
+                          href="https://replicate.com/account/api-tokens"
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[10px] text-indigo-400 hover:underline"
+                        >
+                          Lấy token ↗
+                        </a>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type={showVideoToken ? 'text' : 'password'}
+                            value={videoApiToken}
+                            onChange={(e) => handleVideoTokenChange(e.target.value)}
+                            placeholder="r8_..."
+                            className="w-full pl-3 pr-8 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-indigo-400 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowVideoToken(!showVideoToken)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                          >
+                            {showVideoToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          disabled={!videoApiToken.trim() || testVideoTokenMutation.isPending}
+                          onClick={handleTestVideoToken}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+                        >
+                          {testVideoTokenMutation.isPending ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-3.5 h-3.5" />
+                          )}
+                          <span>Kiểm tra</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-mono uppercase text-zinc-400 font-medium block mb-1.5 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-indigo-400" />
+                        <span>AI Video Model</span>
+                      </label>
+                      <CustomSelect
+                        value={videoModel}
+                        onChange={handleVideoModelChange}
+                        options={
+                          videoModels.length > 0
+                            ? videoModels.map((m) => ({
+                                value: m.id,
+                                label: m.name + (m.is_recommended ? ' (Khuyên dùng)' : ''),
+                                subtext: `${m.description} • ${m.resolution}`,
+                                icon: <Video className="w-3.5 h-3.5 text-indigo-400" />,
+                              }))
+                            : [
+                                { value: 'wan-video/wan-2.1-i2v-480p', label: 'Wan 2.1 I2V (480p) (Khuyên dùng)', subtext: 'Alibaba Wan 2.1 — Cân bằng tốc độ & chất lượng • Tiết kiệm', icon: <Video className="w-3.5 h-3.5 text-indigo-400" /> },
+                                { value: 'wan-video/wan-2.1-i2v-720p', label: 'Wan 2.1 I2V (720p HD)', subtext: 'Alibaba Wan 2.1 — Độ nét cao 720p cinematic • Trung bình', icon: <Video className="w-3.5 h-3.5 text-indigo-400" /> },
+                                { value: 'minimax/video-01', label: 'Minimax Video-01', subtext: 'Hailuo AI — Chuyển động người chân thực, vật lý mượt mà • Cao cấp', icon: <Video className="w-3.5 h-3.5 text-indigo-400" /> },
+                                { value: 'kwaivgi/kling-v1.6-standard', label: 'Kling 1.6 Standard', subtext: 'Kuaishou Kling AI — Chuyển động dynamic mạnh mẽ • Cao cấp', icon: <Video className="w-3.5 h-3.5 text-indigo-400" /> },
+                                { value: 'stability-ai/stable-video-diffusion', label: 'Stable Video Diffusion (SVD)', subtext: 'Stability AI — Render nhanh cảnh quay ngắn 2.5s • Tiết kiệm', icon: <Video className="w-3.5 h-3.5 text-indigo-400" /> },
+                              ]
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {testVideoTokenStatus && (
+                    <p className={`text-[11px] font-mono flex items-center gap-1.5 ${testVideoTokenStatus.is_valid ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {testVideoTokenStatus.is_valid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                      <span>{testVideoTokenStatus.message}</span>
+                    </p>
+                  )}
+
+                  <p className="text-[11px] text-zinc-500 italic">
+                    * Ghi chú: Nếu Replicate API hết hạn hoặc quá tải, hệ thống sẽ tự động fallback sang Ken Burns 2.5D mượt mà để tiến trình làm phim không bị gián đoạn.
+                  </p>
                 </div>
               )}
 

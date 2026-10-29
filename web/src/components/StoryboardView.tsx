@@ -355,9 +355,20 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     })
   }
 
-  const handleRenderVideo = (shotId: string) => {
+  const handleRenderVideo = (shotId: string, engine?: string) => {
     setRenderingVideoShotId(shotId)
-    renderShotVideoMutation.mutate(shotId, {
+    const token = localStorage.getItem('studio_replicate_token') || undefined
+    const model = localStorage.getItem('studio_replicate_model') || undefined
+    const params = engine
+      ? {
+          shotId,
+          engine,
+          videoApiToken: engine === 'replicate' ? token : undefined,
+          videoModel: engine === 'replicate' ? model : undefined,
+        }
+      : shotId
+
+    renderShotVideoMutation.mutate(params, {
       onSettled: () => {
         setRenderingVideoShotId(null)
         setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
@@ -393,8 +404,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   }
 
   const handleAssembleMaster = () => {
+    const bgm_preset = localStorage.getItem('studio_bgm_preset') || undefined
+    const bgmVolStr = localStorage.getItem('studio_bgm_volume')
+    const bgm_volume = bgmVolStr ? parseFloat(bgmVolStr) : undefined
+    const ducking_level = localStorage.getItem('studio_ducking_level') || undefined
+
     assembleMasterMutation.mutate(
-      {},
+      {
+        bgm_preset,
+        bgm_volume,
+        ducking_level,
+      },
       {
         onSuccess: (data) => {
           alert(`🎉 Xuất bản video thành công! File: ${data.filename}`)
@@ -1554,6 +1574,28 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   <span>Xuất Premiere / DaVinci XML</span>
                 </a>
 
+                {/* Download Subtitles SRT & ASS */}
+                <div className="flex items-center gap-1.5">
+                  <a
+                    href="/api/storyboard/subtitles/srt"
+                    download
+                    className="px-3 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-emerald-300 font-semibold text-xs sm:text-sm border border-emerald-500/30 hover:border-emerald-400/50 shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] whitespace-nowrap"
+                    title="Tải file phụ đề chuẩn .SRT (Closed Captions)"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Tải SRT</span>
+                  </a>
+                  <a
+                    href="/api/storyboard/subtitles/ass"
+                    download
+                    className="px-3 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-indigo-300 font-semibold text-xs sm:text-sm border border-indigo-500/30 hover:border-indigo-400/50 shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] whitespace-nowrap"
+                    title="Tải file phụ đề điện ảnh .ASS (Typography & Karaoke)"
+                  >
+                    <Download className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    <span>Tải ASS</span>
+                  </a>
+                </div>
+
                 {/* Primary Master Assembly CTA */}
                 <button
                   type="button"
@@ -1861,19 +1903,34 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           <div className="flex flex-col items-center justify-center p-4 text-center gap-2">
                             <Video className="w-8 h-8 text-zinc-600" />
                             <p className="text-xs text-zinc-400">Chưa render video clip cho phân cảnh này.</p>
-                            <button
-                              type="button"
-                              onClick={() => handleRenderVideo(editingShot.id)}
-                              disabled={renderingVideoShotId === editingShot.id}
-                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-95"
-                            >
-                              {renderingVideoShotId === editingShot.id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Play className="w-3.5 h-3.5 fill-current" />
-                              )}
-                              <span>Render Video Clip Ngay</span>
-                            </button>
+                            <div className="flex flex-wrap items-center justify-center gap-2 mt-1">
+                              <button
+                                type="button"
+                                onClick={() => handleRenderVideo(editingShot.id, 'kenburns')}
+                                disabled={renderingVideoShotId === editingShot.id}
+                                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-95"
+                              >
+                                {renderingVideoShotId === editingShot.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Film className="w-3.5 h-3.5" />
+                                )}
+                                <span>Render Ken Burns 2.5D</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRenderVideo(editingShot.id, 'replicate')}
+                                disabled={renderingVideoShotId === editingShot.id}
+                                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-95"
+                              >
+                                {renderingVideoShotId === editingShot.id ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Video className="w-3.5 h-3.5" />
+                                )}
+                                <span>Render AI Video Pro</span>
+                              </button>
+                            </div>
                           </div>
                         )
                       ) : (
@@ -1936,17 +1993,32 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
                       <button
                         type="button"
-                        onClick={() => handleRenderVideo(editingShot.id)}
+                        onClick={() => handleRenderVideo(editingShot.id, 'kenburns')}
                         disabled={renderingVideoShotId === editingShot.id}
                         className="px-2.5 py-1.5 rounded-lg bg-studio-input hover:bg-studio-card text-zinc-300 hover:text-emerald-400 border border-studio-border text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-                        title="Tạo video chuyển động (Ken Burns)"
+                        title="Tạo video chuyển động (Ken Burns 2.5D VFX)"
                       >
                         {renderingVideoShotId === editingShot.id ? (
                           <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
                         ) : (
-                          <Video className="w-3.5 h-3.5 text-emerald-400" />
+                          <Film className="w-3.5 h-3.5 text-emerald-400" />
                         )}
-                        <span>{editingShot.has_video ? 'Render lại Video' : 'Render Video'}</span>
+                        <span>Ken Burns 2.5D</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRenderVideo(editingShot.id, 'replicate')}
+                        disabled={renderingVideoShotId === editingShot.id}
+                        className="px-2.5 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        title="Tạo video chuyển động bằng AI (Replicate Wan 2.1 / Minimax / Kling)"
+                      >
+                        {renderingVideoShotId === editingShot.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                        ) : (
+                          <Video className="w-3.5 h-3.5 text-indigo-400" />
+                        )}
+                        <span>AI Video Pro</span>
                       </button>
 
                       {editingShot.has_video && (

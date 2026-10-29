@@ -31,6 +31,15 @@ class StudioConfig:
     template_id: Optional[str] = None
     image_engine: str = "pollinations"
     image_api_url: Optional[str] = None
+    video_api_token: Optional[str] = None
+    video_model: str = "wan-video/wan-2.1-i2v-480p"
+    subtitle_style: str = "tiktok_bold"
+    subtitle_position: str = "bottom"
+    subtitle_karaoke: bool = False
+    bgm_preset: Optional[str] = "cinematic"
+    bgm_volume: float = 0.7
+    ducking_level: str = "medium"
+    voice_volume: float = 1.0
 
 def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) -> StudioConfig:
     """Load configuration from config.yaml merged with CLI kwargs."""
@@ -76,6 +85,30 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
                 merged["hardware_accel"] = str(v)
             elif k in ("hardware_profile", "hw_profile", "profile"):
                 merged["hardware_profile"] = str(v)
+            elif k in ("subtitle_style", "sub_style"):
+                merged["subtitle_style"] = str(v)
+            elif k in ("subtitle_position", "sub_pos", "sub_position"):
+                merged["subtitle_position"] = str(v)
+            elif k in ("subtitle_karaoke", "sub_karaoke", "karaoke"):
+                merged["subtitle_karaoke"] = bool(v)
+            elif k in ("bgm_preset", "bgm_track", "music_preset"):
+                merged["bgm_preset"] = str(v)
+            elif k in ("bgm_volume", "music_volume"):
+                merged["bgm_volume"] = float(v)
+            elif k in ("ducking_level", "ducking", "auto_ducking"):
+                merged["ducking_level"] = str(v)
+            elif k in ("voice_volume", "dialogue_volume"):
+                merged["voice_volume"] = float(v)
+            elif k in ("video_api_token", "replicate_token", "video_token"):
+                merged["video_api_token"] = str(v)
+            elif k in ("video_model", "replicate_model"):
+                merged["video_model"] = str(v)
+            elif k in ("template_id", "template"):
+                merged["template_id"] = str(v)
+            elif k in ("image_engine", "engine"):
+                merged["image_engine"] = str(v)
+            elif k in ("image_api_url", "local_image_url"):
+                merged["image_api_url"] = str(v)
             elif k in ("webhook_url", "webhook"):
                 merged["webhook_url"] = str(v)
             elif k == "bgm":
@@ -129,4 +162,16 @@ def load_config(cli_kwargs: Dict[str, Any], config_file: Optional[Path] = None) 
         tts_concurrency=int(merged["tts_concurrency"]) if merged.get("tts_concurrency") else None,
         hardware_accel=str(merged.get("hardware_accel", "auto")),
         hardware_profile=str(merged["hardware_profile"]) if merged.get("hardware_profile") else None,
+        template_id=merged.get("template_id"),
+        image_engine=str(merged.get("image_engine", "pollinations")),
+        image_api_url=merged.get("image_api_url"),
+        video_api_token=merged.get("video_api_token"),
+        video_model=str(merged.get("video_model", "wan-video/wan-2.1-i2v-480p")),
+        subtitle_style=str(merged.get("subtitle_style", "tiktok_bold")),
+        subtitle_position=str(merged.get("subtitle_position", "bottom")),
+        subtitle_karaoke=bool(merged.get("subtitle_karaoke", False)),
+        bgm_preset=merged.get("bgm_preset", "cinematic"),
+        bgm_volume=float(merged.get("bgm_volume", 0.7)),
+        ducking_level=str(merged.get("ducking_level", "medium")),
+        voice_volume=float(merged.get("voice_volume", 1.0)),
     )

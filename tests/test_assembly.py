@@ -47,6 +47,16 @@ def test_build_hardsub_filter(tmp_path):
     f2 = build_hardsub_filter(srt, aspect_ratio="9:16")
     assert "MarginV=90" in f2
 
+    # Custom style and position for SRT
+    f3 = build_hardsub_filter(srt, aspect_ratio="16:9", style_id="cyberpunk", position="top")
+    assert "Alignment=8" in f3
+    assert "Courier New" in f3
+
+    # Direct ASS file filter
+    ass_file = tmp_path / "sub.ass"
+    f4 = build_hardsub_filter(ass_file)
+    assert f4.startswith("ass='")
+
 def test_resolve_mood_bgm(tmp_path, monkeypatch):
     from studio.assembly import resolve_mood_bgm
     assert resolve_mood_bgm(None) is None
