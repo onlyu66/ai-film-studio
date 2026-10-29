@@ -78,8 +78,9 @@ def generate_image_for_shot(
     seed_override: Optional[int] = None,
     engine: Optional[str] = None,
     prompt_override: Optional[str] = None,
+    api_url: Optional[str] = None,
 ) -> Optional[Path]:
-    """Generate image via Pollinations API with automatic key support and robust fallback. Returns file path or None."""
+    """Generate image via local AI engine (SD WebUI / ComfyUI) or Pollinations API with robust fallback. Returns file path or None."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     out_file = output_dir / f"{shot.id}.png"
@@ -99,6 +100,18 @@ def generate_image_for_shot(
         w, h = 1024, 1024
     else:
         w, h = 1280, 720
+
+    # 1. Try local AI engine if requested
+    clean_engine = (engine or "pollinations").lower().strip()
+    if clean_engine in ("sd_webui", "sd", "forge", "automatic1111", "comfyui", "comfy"):
+        try:
+            from studio.image_providers import get_image_provider
+            provider = get_image_provider(clean_engine, api_url=api_url)
+            if provider.generate(clean_prompt, w, h, seed, out_file):
+                if out_file.exists() and out_file.stat().st_size > 1000:
+                    return out_file
+        except Exception:
+            pass  # Safe automatic fallback to cloud Pollinations
 
     pollen_key = os.environ.get("POLLINATIONS_API_KEY") or os.environ.get("POLLEN_API_KEY")
 
@@ -193,6 +206,8 @@ def run_image_stage(
                 style=config.style,
                 output_dir=img_dir,
                 aspect_ratio=aspect_ratio,
+                engine=getattr(config, "image_engine", "pollinations"),
+                api_url=getattr(config, "image_api_url", None),
             )
             if result and result.exists() and result.stat().st_size > 5000:
                 return shot.id, result

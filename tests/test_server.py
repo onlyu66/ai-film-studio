@@ -590,6 +590,27 @@ def test_get_storyboard_templates_endpoints():
     resp_404 = client.get("/api/storyboard/templates/non_existent")
     assert resp_404.status_code == 404
 
+def test_get_image_engines_endpoint():
+    resp = client.get("/api/system/image-engines")
+    assert resp.status_code == 200
+    engines = resp.json()
+    assert isinstance(engines, list)
+    ids = [e["id"] for e in engines]
+    assert "pollinations" in ids
+    assert "sd_webui" in ids
+    assert "comfyui" in ids
+
+def test_test_image_engine_connection_endpoint():
+    resp = client.post(
+        "/api/settings/test-image-engine",
+        json={"engine": "pollinations", "url": "https://image.pollinations.ai"}
+    )
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["id"] == "pollinations"
+    assert data["is_available"] is True
+
+
 
 
 

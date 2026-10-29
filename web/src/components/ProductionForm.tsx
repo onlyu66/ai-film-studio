@@ -30,10 +30,16 @@ import {
   Zap,
 } from 'lucide-react'
 import { CustomSelect } from './ui/select'
-import { useTestWebhook, useFetchLlmModels, useHardwareInfo } from '../api/queries'
-import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem, StoryTemplate } from '../types'
+import { useTestWebhook, useFetchLlmModels, useHardwareInfo, useImageEngines, useTestImageEngine } from '../api/queries'
+import type { PresetIdea, StyleOption, SelectOption, ProductionFormData, LLMModelItem, StoryTemplate, ImageEngineInfo } from '../types'
 
 const StoryTemplateModal = lazy(() => import('./StoryTemplateModal'))
+
+const IMAGE_ENGINE_OPTIONS: SelectOption[] = [
+  { value: 'pollinations', label: 'Flux Cloud (Pollinations)', subtext: 'Mặc định — Nhanh, không cần cài đặt', icon: <Sparkles className="w-3.5 h-3.5 text-amber-400" /> },
+  { value: 'sd_webui', label: 'Local SD WebUI / Forge', subtext: 'A1111 REST API (Port 7860)', icon: <Cpu className="w-3.5 h-3.5 text-emerald-400" /> },
+  { value: 'comfyui', label: 'Local ComfyUI', subtext: 'Graph Workflow API (Port 8188)', icon: <Server className="w-3.5 h-3.5 text-sky-400" /> },
+]
 
 const LANG_OPTIONS: SelectOption[] = [
   { value: 'vi', label: 'Tiếng Việt', subtext: 'Giọng AI tự nhiên, truyền cảm', icon: <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-studio-card border border-studio-border text-amber-300">VI</span> },
@@ -189,6 +195,55 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   const { data: hardwareInfo } = useHardwareInfo()
   const testWebhookMutation = useTestWebhook()
 
+  const [imageEngine, setImageEngine] = useState('pollinations')
+  const [imageApiUrl, setImageApiUrl] = useState('')
+  const [testImageEngineStatus, setTestImageEngineStatus] = useState<ImageEngineInfo | null>(null)
+
+  const { data: imageEngines = [] } = useImageEngines()
+  const testImageEngineMutation = useTestImageEngine()
+
+  useEffect(() => {
+    const savedEngine = localStorage.getItem('studio_image_engine') || 'pollinations'
+    const savedUrl = localStorage.getItem('studio_image_api_url') || ''
+    setImageEngine(savedEngine)
+    setImageApiUrl(savedUrl)
+  }, [])
+
+  const handleImageEngineChange = (val: string) => {
+    setImageEngine(val)
+    localStorage.setItem('studio_image_engine', val)
+    setTestImageEngineStatus(null)
+  }
+
+  const handleImageApiUrlChange = (val: string) => {
+    setImageApiUrl(val)
+    localStorage.setItem('studio_image_api_url', val)
+  }
+
+  const handleTestImageEngine = () => {
+    testImageEngineMutation.mutate(
+      {
+        engine: imageEngine,
+        url: imageApiUrl.trim() || undefined,
+      },
+      {
+        onSuccess: (data) => {
+          setTestImageEngineStatus(data)
+        },
+        onError: (err: any) => {
+          setTestImageEngineStatus({
+            id: imageEngine,
+            name: imageEngine,
+            is_available: false,
+            is_local: true,
+            url: imageApiUrl,
+            message: err?.message || 'Lỗi kết nối tới engine',
+          })
+        },
+      }
+    )
+  }
+
   useEffect(() => {
     if (initialData) {
       if (initialData.topic) setTopic(initialData.topic)
@@ -245,6 +300,8 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       hardware_profile: hardwareProfile === 'auto' ? undefined : hardwareProfile,
       hardware_accel: hardwareAccel,
       template_id: selectedTemplate?.id || undefined,
+      image_engine: imageEngine,
+      image_api_url: (imageEngine !== 'pollinations' && imageApiUrl.trim()) ? imageApiUrl.trim() : undefined,
     })
   }
 
@@ -606,7 +663,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
           </button>
 
           {showAdvanced && (
-            <div className="relative z-30 mt-3 p-4 sm:p-5 rounded-2xl bg-studio-deck border border-studio-border grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fadeIn">
+            <div className="relative z-30 mt-3 p-4 sm:p-5 rounded-2xl bg-studio-deck border border-studio-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-fadeIn">
               <div>
                 <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Bot className="w-3.5 h-3.5 text-amber-400" />
@@ -616,6 +673,19 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   value={llm}
                   onChange={setLlm}
                   options={LLM_OPTIONS}
+                  disabled={isRunning}
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Palette className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Cỗ máy sinh ảnh</span>
+                </label>
+                <CustomSelect
+                  value={imageEngine}
+                  onChange={handleImageEngineChange}
+                  options={IMAGE_ENGINE_OPTIONS}
                   disabled={isRunning}
                 />
               </div>
@@ -646,8 +716,71 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                 />
               </div>
 
+              {/* Local Image Engine URL & Live Status Card */}
+              {imageEngine !== 'pollinations' && (
+                <div className="sm:col-span-2 lg:col-span-4 p-4 rounded-xl bg-studio-card border border-studio-border space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-studio-border pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Server className="w-4 h-4 text-emerald-400" />
+                      <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
+                        Cấu hình {imageEngine === 'sd_webui' ? 'Stable Diffusion WebUI / Forge (A1111)' : 'ComfyUI Local'}
+                      </span>
+                    </div>
+
+                    {/* Live Status indicator */}
+                    {(() => {
+                      const discovered = imageEngines.find((e) => e.id === imageEngine)
+                      const isOnline = testImageEngineStatus ? testImageEngineStatus.is_available : discovered?.is_available
+                      return (
+                        <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 ${
+                          isOnline
+                            ? 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/30'
+                            : 'text-zinc-400 bg-zinc-800 border border-zinc-700'
+                        }`}>
+                          <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-400 animate-pulse' : 'bg-zinc-500'}`} />
+                          <span>{isOnline ? 'Máy chủ Online (Sẵn sàng)' : 'Offline / Chưa kết nối'}</span>
+                        </span>
+                      )
+                    })()}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={imageApiUrl}
+                        onChange={(e) => handleImageApiUrlChange(e.target.value)}
+                        placeholder={imageEngine === 'sd_webui' ? 'http://127.0.0.1:7860 (hoặc URL máy trạm của bạn)' : 'http://127.0.0.1:8188 (hoặc URL ComfyUI)'}
+                        className="w-full px-3 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-400 font-mono"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={testImageEngineMutation.isPending}
+                      onClick={handleTestImageEngine}
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+                    >
+                      {testImageEngineMutation.isPending ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      )}
+                      <span>Kiểm tra kết nối</span>
+                    </button>
+                  </div>
+
+                  {testImageEngineStatus && (
+                    <p className={`text-[11px] font-mono flex items-center gap-1.5 ${testImageEngineStatus.is_available ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {testImageEngineStatus.is_available ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                      <span>{testImageEngineStatus.message}</span>
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* API Key & Dynamic Model Selection Card */}
-              <div className="sm:col-span-3 p-4 rounded-xl bg-studio-card border border-studio-border space-y-3">
+              <div className="sm:col-span-2 lg:col-span-4 p-4 rounded-xl bg-studio-card border border-studio-border space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-studio-border pb-2.5">
                   <div className="flex items-center gap-2">
                     <Key className="w-4 h-4 text-amber-400" />

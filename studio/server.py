@@ -77,6 +77,8 @@ class ProduceRequest(BaseModel):
     hardware_accel: str = "auto"
     hardware_profile: Optional[str] = None
     template_id: Optional[str] = None
+    image_engine: str = "pollinations"
+    image_api_url: Optional[str] = None
 
 # Global pipeline execution state & cancel event
 _cancel_event = threading.Event()
@@ -336,6 +338,8 @@ def execute_pipeline_task(req: ProduceRequest, resume_only: bool = False):
             hardware_accel=getattr(req, "hardware_accel", "auto") or "auto",
             hardware_profile=getattr(req, "hardware_profile", None),
             template_id=getattr(req, "template_id", None),
+            image_engine=getattr(req, "image_engine", "pollinations") or "pollinations",
+            image_api_url=getattr(req, "image_api_url", None),
         )
 
         def _on_progress(stage: int, stage_name: str, progress: int, log_msg: str, **kwargs):
@@ -476,6 +480,23 @@ def get_status():
 def get_system_hardware():
     from studio.hardware import detect_hardware
     return detect_hardware()
+
+@app.get("/api/system/image-engines")
+def get_system_image_engines():
+    """Return status and list of all available image generation engines (cloud and local)."""
+    from studio.image_providers import discover_image_engines
+    return discover_image_engines()
+
+class TestImageEngineRequest(BaseModel):
+    engine: str = "pollinations"
+    url: Optional[str] = None
+
+@app.post("/api/settings/test-image-engine")
+def test_image_engine(req: TestImageEngineRequest):
+    """Test connection to a specific image engine URL and return its health status."""
+    from studio.image_providers import get_image_provider
+    provider = get_image_provider(req.engine, api_url=req.url)
+    return provider.check_health()
 
 class LLMModelsRequest(BaseModel):
     provider: str = "gemini"

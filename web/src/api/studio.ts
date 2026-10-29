@@ -305,6 +305,20 @@ export async function fetchStoryTemplate(templateId: string): Promise<import('..
   return response.data
 }
 
+export async function fetchImageEngines(): Promise<import('../types').ImageEngineInfo[]> {
+  const response = await apiClient.get<import('../types').ImageEngineInfo[]>('/api/system/image-engines')
+  return response.data
+}
+
+export async function testImageEngine(engine: string, url?: string): Promise<import('../types').ImageEngineInfo> {
+  const response = await apiClient.post<import('../types').ImageEngineInfo>('/api/settings/test-image-engine', {
+    engine,
+    url,
+  })
+  return response.data
+}
+
+
 
 
 

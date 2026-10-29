@@ -31,6 +31,8 @@ import {
   cancelPipeline,
   fetchHardwareInfo,
   fetchStoryTemplates,
+  fetchImageEngines,
+  testImageEngine,
   type UpdateShotParams,
   type AddShotParams,
   type DubProjectParams,
@@ -376,6 +378,21 @@ export function useStoryTemplates() {
     staleTime: 5 * 60_000,
   })
 }
+
+export function useImageEngines() {
+  return useQuery({
+    queryKey: ['system', 'image-engines'],
+    queryFn: fetchImageEngines,
+    staleTime: 30_000,
+  })
+}
+
+export function useTestImageEngine() {
+  return useMutation({
+    mutationFn: ({ engine, url }: { engine: string; url?: string }) => testImageEngine(engine, url),
+  })
+}
+
 
 
 

@@ -69,6 +69,8 @@ export interface ProductionFormData {
   image_concurrency?: number
   motion_concurrency?: number
   template_id?: string
+  image_engine?: string
+  image_api_url?: string
 }
 
 export interface StudioStatus {
@@ -206,4 +208,16 @@ export interface StoryTemplate {
   characters: Record<string, TemplateCharacter>
   genre_blueprint: string
 }
+
+export interface ImageEngineInfo {
+  id: string
+  name: string
+  is_available: boolean
+  is_local: boolean
+  url: string
+  models?: string[]
+  devices?: string[]
+  message: string
+}
+
 
