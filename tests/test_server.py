@@ -918,6 +918,65 @@ def test_reframe_endpoints(tmp_path, monkeypatch):
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
 
+def test_character_vault_endpoints(tmp_path):
+    # 1. GET /api/characters/vault
+    resp_get = client.get("/api/characters/vault")
+    assert resp_get.status_code == 200
+    vault_chars = resp_get.json()
+    assert isinstance(vault_chars, list)
+    assert len(vault_chars) >= 2
+
+    # 2. POST /api/characters/vault/save
+    resp_save = client.post(
+        "/api/characters/vault/save",
+        json={
+            "id": "char_vault_test_01",
+            "name": "Nữ Điệp Viên",
+            "visual_anchor": "28-year-old female secret agent in black catsuit",
+            "voice": "vi-VN-HoaiMyNeural",
+            "seed": 8888,
+        }
+    )
+    assert resp_save.status_code == 200
+    saved_data = resp_save.json()
+    assert saved_data["success"] is True
+    assert saved_data["character"]["id"] == "char_vault_test_01"
+
+    # 3. POST /api/characters/vault/import into project
+    import json
+    proj_dir = Path("outputs/projects/proj_test_vault_imp")
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    sb_path = proj_dir / "storyboard.json"
+    sb_path.write_text(json.dumps({
+        "title": "Vault Import Test",
+        "language": "vi",
+        "characters": {},
+        "shots": []
+    }), encoding="utf-8")
+
+    try:
+        resp_imp = client.post(
+            "/api/characters/vault/import",
+            json={
+                "project_id": "proj_test_vault_imp",
+                "vault_char_id": "char_vault_test_01"
+            }
+        )
+        assert resp_imp.status_code == 200
+        imp_data = resp_imp.json()
+        assert imp_data["success"] is True
+        assert imp_data["character"]["name"] == "Nữ Điệp Viên"
+
+        # 4. DELETE /api/characters/vault/char_vault_test_01
+        resp_del = client.delete("/api/characters/vault/char_vault_test_01")
+        assert resp_del.status_code == 200
+        assert resp_del.json()["success"] is True
+    finally:
+        import shutil
+        if proj_dir.exists():
+            shutil.rmtree(proj_dir, ignore_errors=True)
+
+
 def test_split_shot_endpoint(tmp_path):
     import json
     proj_dir = Path("outputs/projects/proj_test_split")
@@ -962,6 +1021,65 @@ def test_split_shot_endpoint(tmp_path):
         import shutil
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
+
+def test_character_vault_endpoints(tmp_path):
+    # 1. GET /api/characters/vault
+    resp_get = client.get("/api/characters/vault")
+    assert resp_get.status_code == 200
+    vault_chars = resp_get.json()
+    assert isinstance(vault_chars, list)
+    assert len(vault_chars) >= 2
+
+    # 2. POST /api/characters/vault/save
+    resp_save = client.post(
+        "/api/characters/vault/save",
+        json={
+            "id": "char_vault_test_01",
+            "name": "Nữ Điệp Viên",
+            "visual_anchor": "28-year-old female secret agent in black catsuit",
+            "voice": "vi-VN-HoaiMyNeural",
+            "seed": 8888,
+        }
+    )
+    assert resp_save.status_code == 200
+    saved_data = resp_save.json()
+    assert saved_data["success"] is True
+    assert saved_data["character"]["id"] == "char_vault_test_01"
+
+    # 3. POST /api/characters/vault/import into project
+    import json
+    proj_dir = Path("outputs/projects/proj_test_vault_imp")
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    sb_path = proj_dir / "storyboard.json"
+    sb_path.write_text(json.dumps({
+        "title": "Vault Import Test",
+        "language": "vi",
+        "characters": {},
+        "shots": []
+    }), encoding="utf-8")
+
+    try:
+        resp_imp = client.post(
+            "/api/characters/vault/import",
+            json={
+                "project_id": "proj_test_vault_imp",
+                "vault_char_id": "char_vault_test_01"
+            }
+        )
+        assert resp_imp.status_code == 200
+        imp_data = resp_imp.json()
+        assert imp_data["success"] is True
+        assert imp_data["character"]["name"] == "Nữ Điệp Viên"
+
+        # 4. DELETE /api/characters/vault/char_vault_test_01
+        resp_del = client.delete("/api/characters/vault/char_vault_test_01")
+        assert resp_del.status_code == 200
+        assert resp_del.json()["success"] is True
+    finally:
+        import shutil
+        if proj_dir.exists():
+            shutil.rmtree(proj_dir, ignore_errors=True)
+
 
 
 def test_sfx_endpoints(tmp_path):
@@ -1034,6 +1152,65 @@ def test_sfx_endpoints(tmp_path):
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
 
+def test_character_vault_endpoints(tmp_path):
+    # 1. GET /api/characters/vault
+    resp_get = client.get("/api/characters/vault")
+    assert resp_get.status_code == 200
+    vault_chars = resp_get.json()
+    assert isinstance(vault_chars, list)
+    assert len(vault_chars) >= 2
+
+    # 2. POST /api/characters/vault/save
+    resp_save = client.post(
+        "/api/characters/vault/save",
+        json={
+            "id": "char_vault_test_01",
+            "name": "Nữ Điệp Viên",
+            "visual_anchor": "28-year-old female secret agent in black catsuit",
+            "voice": "vi-VN-HoaiMyNeural",
+            "seed": 8888,
+        }
+    )
+    assert resp_save.status_code == 200
+    saved_data = resp_save.json()
+    assert saved_data["success"] is True
+    assert saved_data["character"]["id"] == "char_vault_test_01"
+
+    # 3. POST /api/characters/vault/import into project
+    import json
+    proj_dir = Path("outputs/projects/proj_test_vault_imp")
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    sb_path = proj_dir / "storyboard.json"
+    sb_path.write_text(json.dumps({
+        "title": "Vault Import Test",
+        "language": "vi",
+        "characters": {},
+        "shots": []
+    }), encoding="utf-8")
+
+    try:
+        resp_imp = client.post(
+            "/api/characters/vault/import",
+            json={
+                "project_id": "proj_test_vault_imp",
+                "vault_char_id": "char_vault_test_01"
+            }
+        )
+        assert resp_imp.status_code == 200
+        imp_data = resp_imp.json()
+        assert imp_data["success"] is True
+        assert imp_data["character"]["name"] == "Nữ Điệp Viên"
+
+        # 4. DELETE /api/characters/vault/char_vault_test_01
+        resp_del = client.delete("/api/characters/vault/char_vault_test_01")
+        assert resp_del.status_code == 200
+        assert resp_del.json()["success"] is True
+    finally:
+        import shutil
+        if proj_dir.exists():
+            shutil.rmtree(proj_dir, ignore_errors=True)
+
+
 def test_split_shot_endpoint(tmp_path):
     import json
     proj_dir = Path("outputs/projects/proj_test_split")
@@ -1078,6 +1255,65 @@ def test_split_shot_endpoint(tmp_path):
         import shutil
         if proj_dir.exists():
             shutil.rmtree(proj_dir, ignore_errors=True)
+
+def test_character_vault_endpoints(tmp_path):
+    # 1. GET /api/characters/vault
+    resp_get = client.get("/api/characters/vault")
+    assert resp_get.status_code == 200
+    vault_chars = resp_get.json()
+    assert isinstance(vault_chars, list)
+    assert len(vault_chars) >= 2
+
+    # 2. POST /api/characters/vault/save
+    resp_save = client.post(
+        "/api/characters/vault/save",
+        json={
+            "id": "char_vault_test_01",
+            "name": "Nữ Điệp Viên",
+            "visual_anchor": "28-year-old female secret agent in black catsuit",
+            "voice": "vi-VN-HoaiMyNeural",
+            "seed": 8888,
+        }
+    )
+    assert resp_save.status_code == 200
+    saved_data = resp_save.json()
+    assert saved_data["success"] is True
+    assert saved_data["character"]["id"] == "char_vault_test_01"
+
+    # 3. POST /api/characters/vault/import into project
+    import json
+    proj_dir = Path("outputs/projects/proj_test_vault_imp")
+    proj_dir.mkdir(parents=True, exist_ok=True)
+    sb_path = proj_dir / "storyboard.json"
+    sb_path.write_text(json.dumps({
+        "title": "Vault Import Test",
+        "language": "vi",
+        "characters": {},
+        "shots": []
+    }), encoding="utf-8")
+
+    try:
+        resp_imp = client.post(
+            "/api/characters/vault/import",
+            json={
+                "project_id": "proj_test_vault_imp",
+                "vault_char_id": "char_vault_test_01"
+            }
+        )
+        assert resp_imp.status_code == 200
+        imp_data = resp_imp.json()
+        assert imp_data["success"] is True
+        assert imp_data["character"]["name"] == "Nữ Điệp Viên"
+
+        # 4. DELETE /api/characters/vault/char_vault_test_01
+        resp_del = client.delete("/api/characters/vault/char_vault_test_01")
+        assert resp_del.status_code == 200
+        assert resp_del.json()["success"] is True
+    finally:
+        import shutil
+        if proj_dir.exists():
+            shutil.rmtree(proj_dir, ignore_errors=True)
+
 
 
 

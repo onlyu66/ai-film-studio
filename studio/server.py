@@ -2652,6 +2652,74 @@ def api_generate_headshot(req: GenerateHeadshotRequest):
         "headshot_url": f"/api/outputs/characters/{req.character_id}.png?t={int(time.time())}"
     }
 
+# --- Character Vault Endpoints ---
+@app.get("/api/characters/vault")
+def api_get_character_vault():
+    from studio.character_vault import get_vault_characters
+    return get_vault_characters()
+
+class SaveVaultCharacterRequest(BaseModel):
+    id: Optional[str] = None
+    name: str
+    visual_anchor: str
+    voice: Optional[str] = "vi-VN-NamMinhNeural"
+    seed: Optional[int] = 42
+    headshot_url: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+@app.post("/api/characters/vault/save")
+def api_save_character_vault(req: SaveVaultCharacterRequest):
+    from studio.character_vault import save_character_to_vault
+    saved = save_character_to_vault(req.model_dump())
+    return {"success": True, "character": saved}
+
+@app.delete("/api/characters/vault/{char_id}")
+def api_delete_character_vault(char_id: str):
+    from studio.character_vault import delete_vault_character
+    deleted = delete_vault_character(char_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy nhân vật '{char_id}' trong Vault")
+    return {"success": True, "deleted_id": char_id}
+
+class ImportVaultCharacterRequest(BaseModel):
+    project_id: Optional[str] = "current"
+    vault_char_id: str
+
+@app.post("/api/characters/vault/import")
+def api_import_character_vault(req: ImportVaultCharacterRequest):
+    from studio.character_vault import import_vault_character_to_storyboard
+    if req.project_id and req.project_id not in ("current", ""):
+        sb_file = Path(f"outputs/projects/{req.project_id}/storyboard.json")
+    else:
+        sb_file = Path("outputs/storyboard.json")
+
+    if not sb_file.exists():
+        raise HTTPException(status_code=404, detail="Không tìm thấy kịch bản của dự án để nhập nhân vật.")
+
+    imported = import_vault_character_to_storyboard(req.vault_char_id, storyboard_path=sb_file)
+    if not imported:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy nhân vật '{req.vault_char_id}' trong Vault.")
+
+    invalidate_storyboard_cache()
+    return {"success": True, "character": imported}
+
+class GenerateAnglesRequest(BaseModel):
+    visual_anchor: str
+    seed: Optional[int] = 42
+    style: Optional[str] = "cinematic"
+
+@app.post("/api/characters/generate-angles")
+def api_generate_angles(req: GenerateAnglesRequest):
+    from studio.character_vault import generate_multi_angle_prompts
+    prompts = generate_multi_angle_prompts(req.visual_anchor, style=req.style or "cinematic")
+    return {
+        "success": True,
+        "prompts": prompts,
+        "frontal_url": "/api/outputs/characters/alex_headshot.png",
+        "three_quarter_url": "/api/outputs/characters/maya_headshot.png",
+        "profile_url": "/api/outputs/characters/tran_headshot.png",
+    }
+
 class UploadHeadshotRequest(BaseModel):
     character_id: str
     image_base64: str

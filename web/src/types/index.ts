@@ -466,6 +466,51 @@ export interface SplitShotResponse {
   total_shots: number
 }
 
+// --- Character Vault Types ---
+export interface VaultCharacterItem {
+  id: string
+  name: string
+  visual_anchor: string
+  voice?: string
+  seed?: number
+  headshot_url?: string
+  tags?: string[]
+  created_at?: string
+}
+
+export interface SaveVaultCharacterPayload {
+  id?: string
+  name: string
+  visual_anchor: string
+  voice?: string
+  seed?: number
+  headshot_url?: string
+  tags?: string[]
+}
+
+export interface ImportVaultCharacterPayload {
+  project_id?: string
+  vault_char_id: string
+}
+
+export interface GenerateAnglesPayload {
+  visual_anchor: string
+  seed?: number
+  style?: string
+}
+
+export interface GenerateAnglesResponse {
+  success: boolean
+  prompts: {
+    frontal: string
+    three_quarter: string
+    profile: string
+  }
+  frontal_url?: string
+  three_quarter_url?: string
+  profile_url?: string
+}
+
 
 
 

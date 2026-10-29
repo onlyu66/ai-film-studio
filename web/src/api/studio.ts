@@ -475,6 +475,51 @@ export async function splitShot(payload: import('../types').SplitShotRequestPayl
   return response.data
 }
 
+// --- Character Vault API ---
+export async function fetchVaultCharacters(): Promise<import('../types').VaultCharacterItem[]> {
+  const response = await apiClient.get<import('../types').VaultCharacterItem[]>('/api/characters/vault')
+  return response.data
+}
+
+export async function saveCharacterToVault(
+  payload: import('../types').SaveVaultCharacterPayload
+): Promise<{ success: boolean; character: import('../types').VaultCharacterItem }> {
+  const response = await apiClient.post<{ success: boolean; character: import('../types').VaultCharacterItem }>(
+    '/api/characters/vault/save',
+    payload
+  )
+  return response.data
+}
+
+export async function deleteVaultCharacter(
+  charId: string
+): Promise<{ success: boolean; deleted_id: string }> {
+  const response = await apiClient.delete<{ success: boolean; deleted_id: string }>(
+    `/api/characters/vault/${encodeURIComponent(charId)}`
+  )
+  return response.data
+}
+
+export async function importVaultCharacter(
+  payload: import('../types').ImportVaultCharacterPayload
+): Promise<{ success: boolean; character: import('../types').VaultCharacterItem }> {
+  const response = await apiClient.post<{ success: boolean; character: import('../types').VaultCharacterItem }>(
+    '/api/characters/vault/import',
+    payload
+  )
+  return response.data
+}
+
+export async function generateCharacterAngles(
+  payload: import('../types').GenerateAnglesPayload
+): Promise<import('../types').GenerateAnglesResponse> {
+  const response = await apiClient.post<import('../types').GenerateAnglesResponse>(
+    '/api/characters/generate-angles',
+    payload
+  )
+  return response.data
+}
+
 
 
 

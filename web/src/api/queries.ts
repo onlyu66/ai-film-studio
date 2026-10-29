@@ -53,6 +53,11 @@ import {
   suggestSfx,
   batchSuggestSfx,
   splitShot,
+  fetchVaultCharacters,
+  saveCharacterToVault,
+  deleteVaultCharacter,
+  importVaultCharacter,
+  generateCharacterAngles,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -64,6 +69,7 @@ export const QUERY_KEYS = {
   status: ['studio', 'status'] as const,
   storyboard: ['studio', 'storyboard'] as const,
   projects: ['studio', 'projects'] as const,
+  vault: ['characters', 'vault'] as const,
 }
 
 export function useStudioStatus() {
@@ -596,6 +602,51 @@ export function useSplitShot() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
     },
+  })
+}
+
+// --- Character Vault Queries & Mutations ---
+export function useVaultCharacters() {
+  return useQuery({
+    queryKey: QUERY_KEYS.vault,
+    queryFn: fetchVaultCharacters,
+    staleTime: 60_000,
+  })
+}
+
+export function useSaveVaultCharacter() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: saveCharacterToVault,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vault })
+    },
+  })
+}
+
+export function useDeleteVaultCharacter() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteVaultCharacter,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.vault })
+    },
+  })
+}
+
+export function useImportVaultCharacter() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: importVaultCharacter,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useGenerateCharacterAngles() {
+  return useMutation({
+    mutationFn: generateCharacterAngles,
   })
 }
 

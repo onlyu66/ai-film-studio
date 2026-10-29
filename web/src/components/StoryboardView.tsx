@@ -29,6 +29,9 @@ import {
   Mic,
   Languages,
   Smartphone,
+  Lock,
+  BookmarkPlus,
+  Eye,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -40,11 +43,13 @@ import VoiceCloneModal from './VoiceCloneModal'
 import DubbingModal from './DubbingModal'
 import AutoReframeModal from './AutoReframeModal'
 import SFXSoundboardModal from './SFXSoundboardModal'
+import { CharacterVaultModal } from './CharacterVaultModal'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
   useBatchSuggestSfx,
   useSplitShot,
+  useSaveVaultCharacter,
   usePreviewVoice,
   useRerollShot,
   useUploadShotImage,
@@ -266,8 +271,39 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [isDubbingOpen, setIsDubbingOpen] = useState(false)
   const [isReframeOpen, setIsReframeOpen] = useState(false)
   const [sfxModalShot, setSfxModalShot] = useState<any | null>(null)
+  const [isVaultModalOpen, setIsVaultModalOpen] = useState(false)
+  const [savingToVaultCharId, setSavingToVaultCharId] = useState<string | null>(null)
+  const [savedToVaultCharId, setSavedToVaultCharId] = useState<string | null>(null)
   const batchSfxMutation = useBatchSuggestSfx()
   const splitShotMutation = useSplitShot()
+  const saveVaultMutation = useSaveVaultCharacter()
+
+  const handleSaveToVault = (id: string, char: CharacterData) => {
+    setSavingToVaultCharId(id)
+    const anchor = typeof char.visual_anchor === 'string' ? char.visual_anchor : JSON.stringify(char.visual_anchor || '')
+    saveVaultMutation.mutate(
+      {
+        id,
+        name: char.name || id,
+        visual_anchor: anchor,
+        voice: char.voice,
+        seed: typeof char.seed === 'number' ? char.seed : 42,
+        headshot_url: char.headshot_url,
+        tags: ['storyboard'],
+      },
+      {
+        onSuccess: () => {
+          setSavingToVaultCharId(null)
+          setSavedToVaultCharId(id)
+          setTimeout(() => setSavedToVaultCharId(null), 3000)
+        },
+        onError: (err: any) => {
+          setSavingToVaultCharId(null)
+          alert(err?.message || 'Lỗi khi lưu vào Vault')
+        },
+      }
+    )
+  }
 
   const handleSaveShotSfx = (shotId: string, sfxId: string | null, volume: number, offsetMs: number) => {
     updateShotMutation.mutate({
@@ -774,6 +810,18 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               </>
             )}
 
+            {activeTab === 'characters' && (
+              <button
+                type="button"
+                onClick={() => setIsVaultModalOpen(true)}
+                className="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Mở Kho Nhân Vật Nhất Quán để duyệt và nhập nhân vật"
+              >
+                <BookmarkPlus className="w-3.5 h-3.5 text-amber-400" />
+                <span>Kho Nhân Vật (Vault)</span>
+              </button>
+            )}
+
             <div className="flex items-center p-1 bg-cinema-canvas rounded-lg border border-cinema-border">
               <button
                 type="button"
@@ -884,9 +932,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        <span className="font-mono text-zinc-500 text-[10px] block">SEED</span>
-                        <span className="font-mono text-zinc-300 text-xs font-semibold">{String(char.seed ?? 'Auto')}</span>
+                      <div className="text-right flex flex-col items-end gap-1">
+                        <div>
+                          <span className="font-mono text-zinc-500 text-[10px] block">SEED</span>
+                          <span className="font-mono text-zinc-300 text-xs font-semibold">{String(char.seed ?? 'Auto')}</span>
+                        </div>
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <Lock className="w-2.5 h-2.5" /> 3-Lock
+                        </span>
                       </div>
                     </div>
 
@@ -906,7 +959,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     </div>
 
                     {/* Character Face Headshot Action Buttons */}
-                    <div className="flex items-center gap-2 mb-4">
+                    <div className="flex items-center gap-2 mb-2.5">
                       <button
                         type="button"
                         onClick={() => handleGenerateHeadshot(id, char)}
@@ -936,6 +989,36 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           disabled={uploadingCharId === id}
                         />
                       </label>
+                    </div>
+
+                    {/* Vault Actions: Save to Vault & Browse Vault */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <button
+                        type="button"
+                        onClick={() => handleSaveToVault(id, char)}
+                        disabled={savingToVaultCharId === id}
+                        className="flex-1 py-1.5 px-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-zinc-700/50"
+                        title="Lưu nhân vật này vào Kho Vault để dùng cho các phim khác"
+                      >
+                        {savingToVaultCharId === id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
+                        ) : savedToVaultCharId === id ? (
+                          <Check className="w-3 h-3 text-emerald-400" />
+                        ) : (
+                          <BookmarkPlus className="w-3 h-3 text-amber-400" />
+                        )}
+                        <span>{savedToVaultCharId === id ? 'Đã lưu Vault!' : 'Lưu vào Vault'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsVaultModalOpen(true)}
+                        className="flex-1 py-1.5 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-500/20"
+                        title="Mở kho nhân vật để duyệt 3 góc mặt và nhân vật mẫu"
+                      >
+                        <Eye className="w-3 h-3 text-amber-400" />
+                        <span>Kho Vault / Góc Mặt</span>
+                      </button>
                     </div>
                   </div>
 
@@ -2908,6 +2991,13 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         shot={sfxModalShot}
         genre={typeof (storyboard as any)?.genre === 'string' ? (storyboard as any).genre : ''}
         onSaveSfx={handleSaveShotSfx}
+      />
+
+      {/* Character Vault Consistency Engine Pro Modal */}
+      <CharacterVaultModal
+        isOpen={isVaultModalOpen}
+        onClose={() => setIsVaultModalOpen(false)}
+        currentProjectId="current"
       />
     </Card>
   )
