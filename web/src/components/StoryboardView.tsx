@@ -25,12 +25,14 @@ import {
   Download,
   Sliders,
   Zap,
+  Palette,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
 import { CustomSelect } from './ui/select'
 import TimelineScrubber from './TimelineScrubber'
 import CameraDirectorModal from './CameraDirectorModal'
+import ColorInspectorModal from './ColorInspectorModal'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
@@ -249,6 +251,11 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [renderingVideoShotId, setRenderingVideoShotId] = useState<string | null>(null)
   const [approvingShotId, setApprovingShotId] = useState<string | null>(null)
   const [directorModalShot, setDirectorModalShot] = useState<any | null>(null)
+  const [colorInspectorShot, setColorInspectorShot] = useState<{ shot: any; index: number } | null>(null)
+
+  const handleApplyLutToProject = (lutId: string) => {
+    localStorage.setItem('studio_color_lut', lutId)
+  }
   const [previewVideo, setPreviewVideo] = useState<{ url: string; title: string; shotId?: string } | null>(null)
   const [videoError, setVideoError] = useState<boolean>(false)
   const [playingSfx, setPlayingSfx] = useState<string | null>(null)
@@ -1401,6 +1408,16 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           title="Đạo diễn góc máy & Visual Prompt Canvas (3 góc máy Wide/Medium/Close-up, ống kính & ánh sáng)"
                         >
                           <Camera className="w-3.5 h-3.5 text-amber-400" />
+                        </button>
+
+                        {/* Color Grading A/B Inspector */}
+                        <button
+                          type="button"
+                          onClick={() => setColorInspectorShot({ shot, index })}
+                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-rose-500/20 text-zinc-300 hover:text-rose-400 border border-cinema-border hover:border-rose-400/50 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                          title="So màu A/B & Color Grading Inspector (Thanh trượt chia đôi 60 FPS)"
+                        >
+                          <Palette className="w-3.5 h-3.5 text-rose-400" />
                         </button>
                       </div>
 
@@ -2723,6 +2740,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         shot={directorModalShot}
         characters={characters}
       />
+
+      {/* Color Grading A/B Inspector Modal */}
+      {colorInspectorShot && (
+        <ColorInspectorModal
+          shot={colorInspectorShot.shot}
+          shotIndex={colorInspectorShot.index}
+          onClose={() => setColorInspectorShot(null)}
+          onApplyLutToProject={handleApplyLutToProject}
+          currentProjectLut={localStorage.getItem('studio_color_lut') || 'none'}
+        />
+      )}
     </Card>
   )
 }

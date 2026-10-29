@@ -1,8 +1,9 @@
-import { useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
-import { X, Download, FileText, Film, Sparkles } from 'lucide-react'
+import { X, Download, FileText, Film, Sparkles, Palette } from 'lucide-react'
 import { Badge } from './ui/badge'
+import ColorCompareSlider from './ColorCompareSlider'
 
 export interface VideoPlayerModalProps {
   videoUrl: string | null
@@ -11,16 +12,26 @@ export interface VideoPlayerModalProps {
 }
 
 export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPlayerModalProps) {
+  const [isCompareMode, setIsCompareMode] = useState<boolean>(false)
+  const [selectedLut, setSelectedLut] = useState<string>(
+    localStorage.getItem('studio_color_lut') || 'teal_and_orange'
+  )
+
   useEffect(() => {
     // Fire festive fireworks confetti
     confetti({
       particleCount: 80,
       spread: 70,
-      origin: { y: 0.6 }
+      origin: { y: 0.6 },
     })
   }, [])
 
   if (!videoUrl) return null
+
+  const handleSelectLut = (lutId: string) => {
+    setSelectedLut(lutId)
+    localStorage.setItem('studio_color_lut', lutId)
+  }
 
   return (
     <AnimatePresence>
@@ -29,10 +40,10 @@ export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPla
           initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
-          className="relative w-full max-w-5xl bg-cinema-deck border border-cinema-border rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+          className="relative w-full max-w-5xl bg-cinema-deck border border-cinema-border rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[96vh]"
         >
           {/* Cinema Header */}
-          <div className="flex items-center justify-between px-5 py-3.5 bg-cinema-card border-b border-cinema-border">
+          <div className="flex items-center justify-between px-5 py-3.5 bg-cinema-card border-b border-cinema-border shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-cinema-deck border border-cinema-border flex items-center justify-center text-cinema-amber font-bold">
                 <Film className="w-4 h-4 text-cinema-amber" />
@@ -42,37 +53,72 @@ export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPla
                   <h3 className="text-sm sm:text-base font-bold text-zinc-100">
                     Master Cinema Cut (Full HD 1080p)
                   </h3>
-                  <Badge variant="secondary" className="text-[10px] font-mono px-2 py-0 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] font-mono px-2 py-0 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  >
                     MASTER READY
                   </Badge>
                 </div>
-                <p className="text-xs text-zinc-400">Đã tích hợp âm thanh vòm, giọng đọc truyền cảm và phụ đề đồng bộ</p>
+                <p className="text-xs text-zinc-400">
+                  Đã tích hợp âm thanh vòm, giọng đọc truyền cảm và phụ đề đồng bộ
+                </p>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCompareMode(!isCompareMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                  isCompareMode
+                    ? 'bg-rose-500 text-white shadow-md shadow-rose-500/30'
+                    : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700'
+                }`}
+                title="Bật/Tắt chế độ so sánh màu sắc A/B Split-Screen"
+              >
+                <Palette className="w-3.5 h-3.5" />
+                <span>{isCompareMode ? 'Tắt So Màu A/B' : 'So Màu A/B (Split-Screen)'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Video Player */}
-          <div className="relative aspect-video bg-black flex items-center justify-center shadow-inner">
-            <video
-              src={videoUrl}
-              controls
-              autoPlay
-              className="w-full h-full object-contain focus:outline-none"
-            >
-              Trình duyệt của bạn không hỗ trợ thẻ video HTML5.
-            </video>
+          {/* Video Player or A/B Color Comparison Slider */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {isCompareMode ? (
+              <div className="p-4 bg-cinema-deck">
+                <ColorCompareSlider
+                  mediaSrc={videoUrl}
+                  isVideo={true}
+                  activeLut={selectedLut}
+                  onSelectLut={handleSelectLut}
+                  showLutSelector={true}
+                />
+              </div>
+            ) : (
+              <div className="relative aspect-video bg-black flex items-center justify-center shadow-inner">
+                <video
+                  src={videoUrl}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain focus:outline-none"
+                >
+                  Trình duyệt của bạn không hỗ trợ thẻ video HTML5.
+                </video>
+              </div>
+            )}
           </div>
 
           {/* Actions & Download Toolbar */}
-          <div className="p-4 bg-cinema-card border-t border-cinema-border flex flex-wrap items-center justify-between gap-4">
+          <div className="p-4 bg-cinema-card border-t border-cinema-border flex flex-wrap items-center justify-between gap-4 shrink-0">
             <div className="flex items-center gap-2 text-xs text-zinc-400">
               <Sparkles className="w-3.5 h-3.5 text-cinema-amber" />
               <span className="font-mono text-[11px]">AI FILM STUDIO WORKSTATION EDITION</span>
