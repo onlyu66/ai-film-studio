@@ -1649,13 +1649,19 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                           className={`w-5 h-5 rounded-md bg-gradient-to-tr ${lut.css_gradient} shrink-0 shadow-sm border border-white/20`}
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-xs font-semibold truncate leading-tight text-zinc-200">
+                          <div
+                            className="text-xs font-semibold leading-snug text-zinc-200 break-words"
+                            title={lut.name}
+                          >
                             {lut.name}
                           </div>
                         </div>
-                        {isActive && <Check className="w-3.5 h-3.5 text-rose-400 shrink-0" />}
+                        {isActive && <Check className="w-3.5 h-3.5 text-rose-400 shrink-0 ml-1" />}
                       </div>
-                      <p className="text-[10px] text-zinc-500 leading-tight line-clamp-1 group-hover:text-zinc-400">
+                      <p
+                        className="text-[10px] text-zinc-500 leading-relaxed line-clamp-2 group-hover:text-zinc-400 break-words"
+                        title={lut.description}
+                      >
                         {lut.description}
                       </p>
                     </button>
@@ -1677,7 +1683,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   </span>
                 </label>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {availableTransitions.map((trans) => {
                     const isActive = transitionPreset === trans.id
                     return (
@@ -1691,13 +1697,19 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                             : 'bg-studio-card/40 border-studio-border/60 hover:bg-studio-card text-zinc-400 hover:text-zinc-200'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-semibold truncate text-zinc-200">
+                        <div className="flex items-start justify-between gap-1.5 mb-1">
+                          <span
+                            className="text-xs font-semibold text-zinc-200 break-words leading-snug min-w-0"
+                            title={trans.name}
+                          >
                             {trans.name}
                           </span>
-                          {isActive && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0" />}
+                          {isActive && <Check className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />}
                         </div>
-                        <p className="text-[10px] text-zinc-500 line-clamp-1 leading-tight group-hover:text-zinc-400">
+                        <p
+                          className="text-[10px] text-zinc-500 line-clamp-2 leading-relaxed group-hover:text-zinc-400 break-words"
+                          title={trans.description}
+                        >
                           {trans.description}
                         </p>
                       </button>

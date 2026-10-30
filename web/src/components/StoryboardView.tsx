@@ -1485,9 +1485,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     </div>
 
                     {/* Bottom Action Bar: Fast Production Tools & Primary Sửa Button */}
-                    <div className="pt-3 border-t border-cinema-border/70 flex items-center justify-between gap-2 mt-auto">
+                    <div className="pt-3 border-t border-cinema-border/70 flex flex-wrap items-center justify-between gap-2 mt-auto">
                       {/* Left: Quick Production Tools */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                         {/* Audio TTS */}
                         <button
                           type="button"
@@ -1594,7 +1594,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       </div>
 
                       {/* Right: Primary Sửa Shot & Delete */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 ml-auto shrink-0">
                         <button
                           type="button"
                           onClick={() => handleOpenEditShot(shot)}
@@ -1761,7 +1761,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                 )}
               </div>
 
-              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5">
+              <div className="flex flex-wrap items-center justify-end gap-2.5">
                 {/* Approve all button if not all approved */}
                 {approvedShots < totalShots && (
                   <button

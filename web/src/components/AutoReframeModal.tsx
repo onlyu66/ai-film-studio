@@ -162,7 +162,7 @@ export default function AutoReframeModal({
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 mb-0.5">
+                          <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
                             <span className="text-xs font-bold text-zinc-100">{mode.name}</span>
                             <span className="text-[9px] font-mono px-2 py-0.2 rounded-md bg-white/10 text-zinc-300">
                               {mode.tag}
@@ -179,10 +179,10 @@ export default function AutoReframeModal({
               </div>
 
               {/* Safe-Zone Subtitle Option */}
-              <div className="p-3.5 rounded-xl bg-studio-deck border border-studio-border flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Type className="w-4 h-4 text-emerald-400" />
-                  <div>
+              <div className="p-3.5 rounded-xl bg-studio-deck border border-studio-border flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <Type className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div className="min-w-0">
                     <div className="text-xs font-semibold text-zinc-200">
                       Khắc Phụ Đề Chuẩn Vùng An Toàn (Safe Zone)
                     </div>
@@ -196,7 +196,7 @@ export default function AutoReframeModal({
                   type="checkbox"
                   checked={burnSubtitles}
                   onChange={(e) => setBurnSubtitles(e.target.checked)}
-                  className="w-4 h-4 accent-amber-500 rounded cursor-pointer"
+                  className="w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
                 />
               </div>
 

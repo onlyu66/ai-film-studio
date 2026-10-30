@@ -201,13 +201,16 @@ export default function ProjectLibraryModal({
                       {/* Details */}
                       <div className="p-3.5 flex-1 flex flex-col justify-between">
                         <div>
-                          <div className="flex items-center gap-1.5 mb-1">
+                          <div className="flex items-start gap-1.5 mb-1 min-w-0">
                             {p.series_title && (
-                              <span className="text-[10px] font-mono font-semibold text-cinema-amber uppercase tracking-wider">
+                              <span className="text-[10px] font-mono font-semibold text-cinema-amber uppercase tracking-wider shrink-0 mt-0.5">
                                 [{p.series_title}]
                               </span>
                             )}
-                            <h4 className="text-sm font-bold text-zinc-100 line-clamp-1">
+                            <h4
+                              className="text-sm font-bold text-zinc-100 line-clamp-2 leading-snug break-words min-w-0 flex-1"
+                              title={p.title || p.topic}
+                            >
                               {p.title || p.topic}
                             </h4>
                           </div>
@@ -254,12 +257,12 @@ export default function ProjectLibraryModal({
                               ))}
                           </div>
 
-                          <div className="flex items-center gap-1.5 pt-1">
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
                             {p.video_url && (
                               <button
                                 type="button"
                                 onClick={() => onPlayMovie(p.video_url!, p.srt_url)}
-                                className="flex-1 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                                className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-sm"
                               >
                                 <Play className="w-3.5 h-3.5 fill-current" />
                                 <span>Xem</span>

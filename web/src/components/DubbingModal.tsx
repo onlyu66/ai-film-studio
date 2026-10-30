@@ -188,17 +188,17 @@ export default function DubbingModal({
                   {Object.entries(characters).map(([charId, char]) => (
                     <div
                       key={charId}
-                      className="p-3 rounded-xl bg-studio-deck border border-studio-border flex items-center justify-between gap-3"
+                      className="p-3 rounded-xl bg-studio-deck border border-studio-border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="text-xs font-bold text-zinc-200 truncate">{char.name}</div>
-                        <div className="text-[10px] text-zinc-500 truncate">{char.visual_anchor}</div>
+                        <div className="text-[10px] text-zinc-500 truncate" title={char.visual_anchor}>{char.visual_anchor}</div>
                       </div>
 
                       <select
                         value={voiceMapping[charId] || ''}
                         onChange={(e) => handleVoiceChange(charId, e.target.value)}
-                        className="px-3 py-1.5 rounded-xl bg-cinema-card border border-cinema-border text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 font-medium max-w-[220px]"
+                        className="px-3 py-1.5 rounded-xl bg-cinema-card border border-cinema-border text-xs text-zinc-100 focus:outline-none focus:border-cyan-400 font-medium w-full sm:max-w-[240px] shrink-0 cursor-pointer"
                       >
                         <option value="">Giọng mặc định ({targetLang.toUpperCase()})</option>
                         {filteredVoices.map((v) => (

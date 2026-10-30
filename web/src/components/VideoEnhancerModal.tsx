@@ -207,15 +207,15 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
                       )}
 
                       <div>
-                        <div className="flex items-center gap-2.5 mb-2">
-                          <div className="p-2 rounded-xl bg-zinc-800/80 border border-zinc-700/60">
+                        <div className="flex items-center gap-2.5 mb-2 pr-6 min-w-0">
+                          <div className="p-2 rounded-xl bg-zinc-800/80 border border-zinc-700/60 shrink-0">
                             {getPresetIcon(preset.id)}
                           </div>
-                          <div>
-                            <h4 className="text-xs font-bold text-zinc-100 leading-tight">
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs font-bold text-zinc-100 leading-tight break-words">
                               {preset.name}
                             </h4>
-                            <span className="text-[10px] font-mono text-amber-400/90 font-semibold">
+                            <span className="text-[10px] font-mono text-amber-400/90 font-semibold block truncate">
                               {preset.badge || preset.target_resolution}
                             </span>
                           </div>

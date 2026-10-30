@@ -179,22 +179,22 @@ export default function StoryTemplateModal({
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start gap-3 min-w-0 flex-1">
                           <span className="text-2xl p-2 rounded-xl bg-zinc-800 border border-zinc-700/80 shadow-sm shrink-0">
                             {tmpl.icon || '🎬'}
                           </span>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-bold text-zinc-100 group-hover:text-cinema-amber transition-colors">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <h4 className="text-sm font-bold text-zinc-100 group-hover:text-cinema-amber transition-colors break-words">
                                 {tmpl.name}
                               </h4>
                               {isCurrent && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">
                                   <Check className="w-2.5 h-2.5" /> Đang dùng
                                 </span>
                               )}
                             </div>
-                            <span className="text-[11px] font-mono text-zinc-400 mt-0.5 block line-clamp-1">
+                            <span className="text-[11px] font-mono text-zinc-400 mt-0.5 block line-clamp-1" title={tmpl.tagline}>
                               {tmpl.tagline}
                             </span>
                           </div>

@@ -455,7 +455,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                     <div>
                       {/* Top Bar: Avatar & Title */}
                       <div className="flex items-start justify-between gap-3 mb-3.5">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
                           <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700/80 overflow-hidden flex items-center justify-center shrink-0">
                             {char.headshot_url ? (
                               <img
@@ -470,10 +470,10 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                               <Camera className="w-6 h-6 text-zinc-500" />
                             )}
                           </div>
-                          <div>
-                            <h4 className="text-sm font-bold text-zinc-100 leading-tight">{char.name}</h4>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-sm font-bold text-zinc-100 leading-tight break-words">{char.name}</h4>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <span className="text-[10px] font-mono text-amber-400/90 font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                              <span className="text-[10px] font-mono text-amber-400/90 font-semibold px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 shrink-0">
                                 Seed: {char.seed ?? 'Auto'}
                               </span>
                             </div>
@@ -488,7 +488,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                             }
                           }}
                           title="Xóa khỏi Vault"
-                          className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-colors cursor-pointer shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
