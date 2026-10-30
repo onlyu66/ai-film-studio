@@ -65,6 +65,14 @@ class CreateDubbingRequest(BaseModel):
     target_lang: str
     voice_mapping: Optional[Dict[str, str]] = None
 
+class SnapToBeatRequest(BaseModel):
+    project_id: str = "current"
+    bgm_track: Optional[str] = "cinematic"
+    shots: Optional[List[Dict[str, Any]]] = None
+    min_shot_duration: float = 1.5
+    max_shot_duration: float = 12.0
+    save_to_storyboard: bool = True
+
 AVAILABLE_SFX = [
     {"key": "rain", "name": "Mưa rào (Rain)", "category": "Thời tiết", "desc": "Tiếng mưa rơi rải rác"},
     {"key": "wind", "name": "Gió rít (Wind)", "category": "Thời tiết", "desc": "Tiếng gió hú lạnh lẽo"},
@@ -585,3 +593,115 @@ def api_create_dubbing(req: CreateDubbingRequest):
         return result
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Lỗi khi lồng tiếng: {exc}")
+
+
+@router.get("/api/audio/waveform")
+def api_get_audio_waveform(track: Optional[str] = "cinematic", shot_id: Optional[str] = None):
+    from studio.audio_beat_detector import detect_beats
+    audio_path = None
+
+    if shot_id:
+        shot_cand = srv.Path("outputs/audio") / f"{shot_id}.mp3"
+        if shot_cand.exists():
+            audio_path = shot_cand
+        else:
+            shot_wav = srv.Path("outputs/audio") / f"{shot_id}.wav"
+            if shot_wav.exists():
+                audio_path = shot_wav
+
+    if not audio_path and track:
+        clean_track = Path(track).stem
+        bgm_cand = srv.Path("assets/bgm") / f"{clean_track}.mp3"
+        if bgm_cand.exists():
+            audio_path = bgm_cand
+        else:
+            bgm_wav = srv.Path("assets/bgm") / f"{clean_track}.wav"
+            if bgm_wav.exists():
+                audio_path = bgm_wav
+
+    if audio_path and audio_path.exists():
+        result = detect_beats(audio_path)
+        return {
+            "success": True,
+            "track": track,
+            "shot_id": shot_id,
+            "duration": result["duration"],
+            "tempo_bpm": result["tempo_bpm"],
+            "beat_times": result["beat_times"],
+            "peaks": result["peaks"],
+        }
+
+    # Fallback khi audio chưa render hoặc track không tồn tại
+    import math
+    dummy_duration = 30.0
+    dummy_peaks = [round(abs(math.sin(i * 0.15)) * 0.8 + 0.1, 3) for i in range(150)]
+    dummy_beats = [round(i * 0.5, 2) for i in range(1, int(dummy_duration / 0.5))]
+    return {
+        "success": True,
+        "track": track,
+        "shot_id": shot_id,
+        "duration": dummy_duration,
+        "tempo_bpm": 120,
+        "beat_times": dummy_beats,
+        "peaks": dummy_peaks,
+    }
+
+
+@router.post("/api/audio/beat-sync/snap")
+def api_snap_timeline_to_beats(req: SnapToBeatRequest):
+    from studio.audio_beat_detector import detect_beats, calculate_snap_to_beats
+
+    clean_track = Path(req.bgm_track or "cinematic").stem
+    bgm_path = srv.Path("assets/bgm") / f"{clean_track}.mp3"
+    beat_times = []
+    tempo_bpm = 120
+
+    if bgm_path.exists():
+        analysis = detect_beats(bgm_path)
+        beat_times = analysis["beat_times"]
+        tempo_bpm = analysis["tempo_bpm"]
+    else:
+        beat_times = [round(i * 0.5, 2) for i in range(1, 120)]
+
+    storyboard_path = srv.Path("outputs/storyboard.json")
+    shots_to_snap = []
+    full_storyboard = {}
+
+    if req.shots:
+        shots_to_snap = req.shots
+    elif storyboard_path.exists():
+        full_storyboard = safe_read_json(storyboard_path, default={})
+        shots_to_snap = full_storyboard.get("shots", [])
+
+    if not shots_to_snap:
+        shots_to_snap = [
+            {"id": "shot_001", "duration": 5.0},
+            {"id": "shot_002", "duration": 5.0},
+        ]
+
+    snapped_shots = calculate_snap_to_beats(
+        shots=shots_to_snap,
+        beat_times=beat_times,
+        min_shot_duration=req.min_shot_duration,
+        max_shot_duration=req.max_shot_duration,
+    )
+
+    if req.save_to_storyboard and storyboard_path.exists():
+        if not full_storyboard:
+            full_storyboard = safe_read_json(storyboard_path, default={})
+        if "shots" in full_storyboard:
+            shot_dur_map = {s["id"]: s["duration"] for s in snapped_shots}
+            for s in full_storyboard["shots"]:
+                if s["id"] in shot_dur_map:
+                    s["duration"] = shot_dur_map[s["id"]]
+            atomic_write_json(storyboard_path, full_storyboard, backup=False)
+
+    total_duration = round(sum(float(s.get("duration", 0)) for s in snapped_shots), 2)
+    return {
+        "success": True,
+        "project_id": req.project_id,
+        "bgm_track": req.bgm_track,
+        "tempo_bpm": tempo_bpm,
+        "total_duration": total_duration,
+        "shots": snapped_shots,
+    }
