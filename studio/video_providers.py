@@ -584,3 +584,24 @@ class LumaDreamMachineProvider(BaseVideoProvider):
             return False
 
         return False
+
+
+def get_video_provider(
+    provider_type: str = "replicate",
+    api_token: Optional[str] = None,
+    model: Optional[str] = None,
+    **kwargs,
+) -> BaseVideoProvider:
+    """
+    Factory function returning a concrete VideoProvider instance.
+    provider_type can be: 'kling', 'luma', 'replicate', or auto-deduced from model.
+    """
+    p_lower = (provider_type or "").lower().strip()
+    m_lower = (model or "").lower().strip()
+
+    if p_lower == "kling" or ("kling-v1-6" in m_lower) or ("kling" in m_lower and "standard" not in m_lower and "replicate" not in m_lower):
+        return KlingDirectVideoProvider(api_key=api_token, model=model or "kling-v1-6", **kwargs)
+    elif p_lower == "luma" or "luma" in m_lower:
+        return LumaDreamMachineProvider(api_key=api_token, model=model or "luma-dream-machine", **kwargs)
+    else:
+        return ReplicateVideoProvider(api_token=api_token, model=model, **kwargs)

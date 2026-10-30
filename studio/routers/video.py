@@ -23,6 +23,7 @@ class RenderShotVideoRequest(BaseModel):
     engine: Optional[str] = None
     video_api_token: Optional[str] = None
     video_model: Optional[str] = None
+    trajectory: Optional[Dict[str, Any]] = None
     subtitle_style: Optional[str] = "tiktok_bold"
     subtitle_position: Optional[str] = "bottom"
     subtitle_karaoke: Optional[bool] = False
@@ -33,6 +34,23 @@ class RenderShotVideoRequest(BaseModel):
     color_lut: Optional[str] = "teal_and_orange"
     transition_preset: Optional[str] = "dissolve"
     transition_duration: Optional[float] = 0.6
+
+class TestTokenRequest(BaseModel):
+    provider: str
+    token: str
+
+class Camera3DPreviewRequest(BaseModel):
+    trajectory_type: Optional[str] = "custom"
+    pan: Optional[float] = 0.0
+    tilt: Optional[float] = 0.0
+    roll: Optional[float] = 0.0
+    x: Optional[float] = 0.0
+    y: Optional[float] = 0.0
+    z: Optional[float] = 0.0
+    zoom: Optional[float] = 1.0
+    speed: Optional[float] = 1.0
+    base_prompt: Optional[str] = ""
+    duration: Optional[float] = 3.0
 
 class AssembleMasterRequest(BaseModel):
     hardsub: Optional[bool] = None
@@ -79,6 +97,70 @@ def api_get_lut_presets():
 def api_get_transition_presets():
     from studio.color_grading import get_scene_transitions
     return get_scene_transitions()
+
+
+@router.get("/api/video/models")
+def api_get_video_models():
+    """Return all available AI Video models (Wan 2.1, Kling 1.6, Luma, Minimax, SVD)."""
+    from studio.video_providers import get_available_video_models
+    return get_available_video_models()
+
+
+@router.post("/api/video/test-token")
+def api_test_video_token(req: TestTokenRequest):
+    """Validate API token for Kling, Luma, or Replicate."""
+    from studio.video_providers import check_replicate_token, check_kling_token, check_luma_token
+    p = (req.provider or "").lower().strip()
+    if p == "kling":
+        return check_kling_token(req.token)
+    elif p == "luma":
+        return check_luma_token(req.token)
+    else:
+        return check_replicate_token(req.token)
+
+
+@router.get("/api/video/camera-3d/presets")
+def api_get_camera_3d_presets():
+    """Return 6 cinematic 3D camera trajectory presets."""
+    from studio.camera_3d import get_camera_3d_presets
+    return get_camera_3d_presets()
+
+
+@router.post("/api/video/camera-3d/preview")
+def api_camera_3d_preview(req: Camera3DPreviewRequest):
+    """Preview compiled camera parameters for Kling, Luma, and FFmpeg."""
+    from studio.camera_3d import (
+        Camera3DTrajectory,
+        compile_kling_camera_control,
+        compile_luma_camera_prompt,
+        compile_ffmpeg_3d_transform,
+    )
+    traj = Camera3DTrajectory(
+        trajectory_type=req.trajectory_type or "custom",
+        pan=req.pan or 0.0,
+        tilt=req.tilt or 0.0,
+        roll=req.roll or 0.0,
+        x=req.x or 0.0,
+        y=req.y or 0.0,
+        z=req.z or 0.0,
+        zoom=req.zoom or 1.0,
+        speed=req.speed or 1.0,
+    )
+    kling_cfg = compile_kling_camera_control(traj)
+    luma_p = compile_luma_camera_prompt(traj, req.base_prompt or "")
+    ffmpeg_f = compile_ffmpeg_3d_transform(traj, duration=req.duration or 3.0)
+    return {
+        "trajectory": traj.model_dump(),
+        "kling_config": kling_cfg,
+        "luma_prompt": luma_p,
+        "ffmpeg_filter": ffmpeg_f,
+    }
+
+
+@router.post("/api/video/render-shot")
+def api_render_shot_video_direct(req: RenderShotVideoRequest):
+    """Direct endpoint to render a shot video clip with optional 3D camera trajectory."""
+    return render_shot_video(req)
 
 @router.post("/api/storyboard/remux-shot-video")
 def remux_shot_video(req: RemuxShotVideoRequest):
