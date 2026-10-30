@@ -183,7 +183,7 @@ export const SFXSoundboardModal: React.FC<SFXSoundboardModalProps> = ({
     <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 cursor-pointer">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl max-h-[90vh] bg-slate-900/95 border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-100 cursor-default">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/60 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400">
               <Volume2 className="w-6 h-6" />
@@ -208,7 +208,7 @@ export const SFXSoundboardModal: React.FC<SFXSoundboardModalProps> = ({
         </div>
 
         {/* Shot Context Strip */}
-        <div className="px-6 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs">
+        <div className="px-6 py-2.5 bg-slate-950/40 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs shrink-0">
           <div className="flex-1 min-w-[280px]">
             <span className="text-slate-400 font-medium">Bối cảnh phân cảnh: </span>
             <span className="text-slate-200 italic line-clamp-1">
@@ -238,7 +238,7 @@ export const SFXSoundboardModal: React.FC<SFXSoundboardModalProps> = ({
         )}
 
         {/* Category Tabs & Search Bar */}
-        <div className="px-6 pt-3 pb-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-800/60">
+        <div className="px-6 pt-3 pb-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-b border-slate-800/60 shrink-0">
           {/* Tabs */}
           <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-thin">
             {CATEGORY_TABS.map((tab) => {
@@ -275,7 +275,7 @@ export const SFXSoundboardModal: React.FC<SFXSoundboardModalProps> = ({
         </div>
 
         {/* Soundboard Grid (Scrollable) */}
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6 scrollbar-thin">
           {isCatalogLoading ? (
             <div className="flex flex-col items-center justify-center h-48 text-slate-400 gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
@@ -354,7 +354,7 @@ export const SFXSoundboardModal: React.FC<SFXSoundboardModalProps> = ({
 
         {/* Sound Settings & Controls Strip (Sliders) */}
         {selectedSfxId && (
-          <div className="px-6 py-3.5 bg-slate-950/80 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div className="px-6 py-3.5 bg-slate-950/80 border-t border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs shrink-0">
             {/* Volume slider */}
             <div>
               <div className="flex items-center justify-between mb-1 text-slate-300">
@@ -398,7 +398,7 @@ export const SFXSoundboardModal: React.FC<SFXSoundboardModalProps> = ({
         )}
 
         {/* Footer Actions */}
-        <div className="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-3">
+        <div className="px-6 py-3.5 bg-slate-950 border-t border-slate-800 flex items-center justify-between gap-3 shrink-0">
           <div>
             {shot.sfx && (
               <button

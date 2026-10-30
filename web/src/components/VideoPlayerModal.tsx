@@ -51,7 +51,7 @@ export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPla
           initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
-          className="relative w-full max-w-5xl bg-cinema-deck border border-cinema-border rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[96vh] cursor-default"
+          className="relative w-full max-w-5xl bg-cinema-deck border border-cinema-border rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] cursor-default"
         >
           {/* Cinema Header */}
           <div className="flex items-center justify-between px-5 py-3.5 bg-cinema-card border-b border-cinema-border shrink-0">
@@ -103,7 +103,7 @@ export default function VideoPlayerModal({ videoUrl, srtUrl, onClose }: VideoPla
           </div>
 
           {/* Video Player or A/B Color Comparison Slider */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar">
             {isCompareMode ? (
               <div className="p-4 bg-cinema-deck">
                 <ColorCompareSlider

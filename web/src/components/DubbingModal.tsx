@@ -116,7 +116,7 @@ export default function DubbingModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-2xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] cursor-default"
+          className="relative w-full max-w-2xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] cursor-default"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 bg-cinema-card border-b border-cinema-border shrink-0">
@@ -146,7 +146,7 @@ export default function DubbingModal({
           </div>
 
           {/* Body */}
-          <div className="p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1">
+          <div className="p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1 min-h-0">
             {/* 1. Target Language */}
             <div>
               <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">

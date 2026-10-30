@@ -93,7 +93,7 @@ export default function ProjectLibraryModal({
           className="relative w-full max-w-5xl max-h-[90vh] rounded-2xl bg-cinema-deck border border-cinema-border p-6 shadow-2xl flex flex-col text-left cursor-default overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between pb-4 border-b border-cinema-border">
+          <div className="flex items-center justify-between pb-4 border-b border-cinema-border shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-cinema-card border border-cinema-border flex items-center justify-center text-cinema-amber font-bold">
                 <Film className="w-4 h-4" />
@@ -123,7 +123,7 @@ export default function ProjectLibraryModal({
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto py-5 pr-1">
+          <div className="flex-1 min-h-0 overflow-y-auto py-5 pr-1 custom-scrollbar">
             {isLoading ? (
               <div className="py-20 text-center text-zinc-400 flex flex-col items-center justify-center gap-3">
                 <Loader2 className="w-7 h-7 animate-spin text-cinema-amber" />

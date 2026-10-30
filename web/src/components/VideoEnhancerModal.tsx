@@ -137,9 +137,9 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
 
   return (
     <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md">
-      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between gap-4">
+        <div className="p-5 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
               <Award className="w-6 h-6 stroke-[2]" />
@@ -173,7 +173,7 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-6 custom-scrollbar">
           {errorMsg && (
             <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
               <X className="w-4 h-4 shrink-0 text-rose-400" />
@@ -337,7 +337,7 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 sm:p-5 border-t border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-t border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 text-xs text-zinc-400">
             <Sparkles className="w-4 h-4 text-amber-400" />
             <span className="hidden sm:inline">

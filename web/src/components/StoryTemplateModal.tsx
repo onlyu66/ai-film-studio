@@ -84,7 +84,7 @@ export default function StoryTemplateModal({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.98, opacity: 0, y: 15 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-6xl max-h-[92vh] flex flex-col rounded-2xl bg-cinema-deck border border-cinema-border shadow-2xl text-left cursor-default overflow-hidden"
+          className="relative w-full max-w-6xl max-h-[90vh] flex flex-col rounded-2xl bg-cinema-deck border border-cinema-border shadow-2xl text-left cursor-default overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-cinema-border bg-cinema-deck/90 backdrop-blur-sm shrink-0">
@@ -149,9 +149,9 @@ export default function StoryTemplateModal({
           </div>
 
           {/* Main 2-Column Content */}
-          <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+          <div className="flex-1 min-h-0 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
             {/* Left Column: Template Cards List (7 cols) */}
-            <div className="lg:col-span-7 overflow-y-auto p-5 border-r border-cinema-border space-y-3.5">
+            <div className="lg:col-span-7 overflow-y-auto p-5 border-r border-cinema-border space-y-3.5 min-h-0 custom-scrollbar">
               {isLoading ? (
                 <div className="py-24 text-center text-zinc-400 flex flex-col items-center justify-center gap-3">
                   <Loader2 className="w-8 h-8 animate-spin text-cinema-amber" />
@@ -259,7 +259,7 @@ export default function StoryTemplateModal({
             </div>
 
             {/* Right Column: Detailed Preview (5 cols) */}
-            <div className="lg:col-span-5 overflow-y-auto p-5 bg-zinc-950/40 flex flex-col justify-between">
+            <div className="lg:col-span-5 overflow-y-auto p-5 bg-zinc-950/40 flex flex-col justify-between min-h-0 custom-scrollbar">
               {activeTemplate ? (
                 <div className="space-y-4">
                   {/* Title & Tagline Banner */}
@@ -356,7 +356,7 @@ export default function StoryTemplateModal({
 
               {/* Action Button */}
               {activeTemplate && (
-                <div className="pt-4 border-t border-cinema-border mt-4">
+                <div className="pt-4 border-t border-cinema-border mt-4 shrink-0">
                   <button
                     type="button"
                     onClick={() => handleApply(activeTemplate)}

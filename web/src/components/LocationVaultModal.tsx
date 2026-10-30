@@ -304,7 +304,7 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-6xl max-h-[92vh] bg-cinema-card border border-cinema-border/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-zinc-100"
+        className="relative w-full max-w-6xl max-h-[90vh] bg-cinema-card border border-cinema-border/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-zinc-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -371,7 +371,7 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
         <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 p-6 overflow-hidden">
           {/* Left Column: Create / Edit Form */}
           {isCreatingNew && (
-            <div className="w-full lg:w-[420px] shrink-0 max-h-[72vh] overflow-y-auto scrollbar-thin pr-2 flex flex-col bg-cinema-canvas/60 rounded-xl border border-cinema-border/40 p-4">
+            <div className="w-full lg:w-[420px] shrink-0 max-h-full overflow-y-auto scrollbar-thin pr-2 flex flex-col bg-cinema-canvas/60 rounded-xl border border-cinema-border/40 p-4">
               <div className="flex items-center justify-between mb-3 shrink-0">
                 <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5" /> Thiết lập Bối Cảnh Mới

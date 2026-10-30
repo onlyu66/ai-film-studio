@@ -100,7 +100,7 @@ export default function AutoReframeModal({
           initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
-          className="relative w-full max-w-4xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]"
+          className="relative w-full max-w-4xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 bg-cinema-card border-b border-cinema-border shrink-0">
@@ -131,7 +131,7 @@ export default function AutoReframeModal({
           </div>
 
           {/* Body: Split 2 columns (Left: Options, Right: Smartphone Mockup) */}
-          <div className="p-6 overflow-y-auto custom-scrollbar flex-1 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          <div className="p-5 sm:p-6 overflow-y-auto custom-scrollbar flex-1 min-h-0 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
             {/* Left: Options (7 cols) */}
             <div className="md:col-span-7 space-y-4">
               <div>
@@ -394,6 +394,43 @@ export default function AutoReframeModal({
                 <div className="w-24 h-1 bg-zinc-700 rounded-full mt-1.5" />
               </div>
               <span className="text-[10px] font-mono text-zinc-500 mt-2">Mô hình hiển thị Smartphone 9:16</span>
+            </div>
+          </div>
+
+          {/* Dedicated Fixed Footer */}
+          <div className="px-6 py-3.5 bg-cinema-card border-t border-cinema-border flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>GPU FFmpeg Filter • Chuẩn Full HD 1080x1920 (Shorts, TikTok, Reels)</span>
+            </div>
+
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+
+              <button
+                type="button"
+                onClick={handleStartReframe}
+                disabled={reframeMutation.isPending}
+                className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-zinc-950 font-bold text-xs tracking-wide shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 active:scale-[0.98]"
+              >
+                {reframeMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-950 shrink-0" />
+                    <span>Đang render 9:16...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5 text-zinc-950" />
+                    <span>Bắt Đầu Chuyển Đổi Sang 9:16</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </motion.div>

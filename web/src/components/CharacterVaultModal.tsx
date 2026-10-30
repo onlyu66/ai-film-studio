@@ -284,7 +284,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
 
   return (
     <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md">
-      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl max-h-[90vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shrink-0">
           <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
@@ -341,7 +341,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               onSubmit={handleCreateSubmit}
-              className="shrink-0 max-h-[72vh] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 border-b border-amber-500/20 bg-gradient-to-b from-amber-500/10 via-zinc-950/80 to-zinc-950 p-4 sm:p-5"
+              className="shrink-0 max-h-[62vh] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 border-b border-amber-500/20 bg-gradient-to-b from-amber-500/10 via-zinc-950/80 to-zinc-950 p-4 sm:p-5"
             >
               {/* Form Title */}
               <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-zinc-800/80">

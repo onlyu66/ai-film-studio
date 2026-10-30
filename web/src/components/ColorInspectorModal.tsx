@@ -57,7 +57,7 @@ export default function ColorInspectorModal({
           initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
-          className="relative w-full max-w-5xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh] cursor-default"
+          className="relative w-full max-w-5xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] cursor-default"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 bg-cinema-card border-b border-cinema-border shrink-0">
@@ -90,7 +90,7 @@ export default function ColorInspectorModal({
           </div>
 
           {/* Body with Comparison Slider */}
-          <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col gap-4">
+          <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar flex-1 min-h-0 flex flex-col gap-4">
             <ColorCompareSlider
               mediaSrc={mediaSrc}
               isVideo={isVideo}

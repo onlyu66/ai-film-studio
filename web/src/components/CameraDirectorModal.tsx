@@ -179,7 +179,7 @@ export default function CameraDirectorModal({
     <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn cursor-pointer">
       <div onClick={(e) => e.stopPropagation()} className="cursor-default relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl bg-zinc-950 border border-amber-500/30 shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/60 flex items-center justify-between gap-4">
+        <div className="p-4 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/60 flex items-center justify-between gap-4 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2.5 rounded-2xl bg-gradient-to-br from-amber-500/20 to-yellow-500/10 text-amber-400 border border-amber-500/30 shadow-inner">
               <Camera className="w-5 h-5" />
@@ -209,7 +209,7 @@ export default function CameraDirectorModal({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-zinc-800 bg-zinc-900/40 px-4 sm:px-6 gap-2">
+        <div className="flex border-b border-zinc-800 bg-zinc-900/40 px-4 sm:px-6 gap-2 shrink-0">
           <button
             type="button"
             onClick={() => setActiveTab('multi_angle')}
@@ -238,20 +238,20 @@ export default function CameraDirectorModal({
 
         {/* Alerts */}
         {actionSuccessMsg && (
-          <div className="mx-6 mt-4 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn">
+          <div className="mx-6 mt-4 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn shrink-0">
             <Check className="w-4 h-4 shrink-0" />
             <span>{actionSuccessMsg}</span>
           </div>
         )}
         {actionErrorMsg && (
-          <div className="mx-6 mt-4 p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2 animate-fadeIn">
+          <div className="mx-6 mt-4 p-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs flex items-center gap-2 animate-fadeIn shrink-0">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{actionErrorMsg}</span>
           </div>
         )}
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
           {/* TAB 1: Multi-Camera Coverage */}
           {activeTab === 'multi_angle' && (
             <div className="space-y-5 animate-fadeIn">
@@ -523,7 +523,7 @@ export default function CameraDirectorModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 sm:p-5 border-t border-zinc-800 bg-zinc-900/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 border-t border-zinc-800 bg-zinc-900/80 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
           <div className="text-xs text-zinc-500 italic">
             * Các thông số góc máy, ống kính và ánh sáng sẽ được lưu vĩnh viễn trong kịch bản phân cảnh.
           </div>
