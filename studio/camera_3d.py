@@ -158,17 +158,17 @@ def get_camera_3d_presets() -> Dict[str, Dict[str, Any]]:
 def compile_kling_camera_control(trajectory: Camera3DTrajectory) -> Dict[str, Any]:
     """
     Compile 3D Camera Trajectory parameters into Kling AI camera_control schema.
-    Kling expects type ('simple') and config dict with pan, tilt, roll, zoom, horizontal, vertical.
+    Kling expects type ('simple') and config dict with all values scaled to [-10.0, 10.0].
     """
     return {
         "type": "simple",
         "config": {
-            "pan": float(trajectory.pan),
-            "tilt": float(trajectory.tilt),
-            "roll": float(trajectory.roll),
-            "zoom": float(trajectory.zoom),
-            "horizontal": float(trajectory.x),
-            "vertical": float(trajectory.y),
+            "pan": round(_clamp(trajectory.pan / 18.0, -10.0, 10.0), 3),
+            "tilt": round(_clamp(trajectory.tilt / 9.0, -10.0, 10.0), 3),
+            "roll": round(_clamp(trajectory.roll / 18.0, -10.0, 10.0), 3),
+            "zoom": round(_clamp((trajectory.zoom - 1.0) * 5.0, -10.0, 10.0), 3),
+            "horizontal": round(_clamp(trajectory.x, -10.0, 10.0), 3),
+            "vertical": round(_clamp(trajectory.y, -10.0, 10.0), 3),
         },
     }
 
@@ -205,6 +205,8 @@ def compile_luma_camera_prompt(trajectory: Camera3DTrajectory, base_prompt: str)
         cues.append("steady cinematic camera tracking shot")
 
     combined_cues = ", ".join(cues)
+    if not base_prompt or not base_prompt.strip():
+        return combined_cues
     return f"{base_prompt.strip()}, {combined_cues}"
 
 

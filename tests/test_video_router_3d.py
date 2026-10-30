@@ -40,7 +40,7 @@ def test_api_camera_3d_preview():
     assert "kling_config" in data
     assert "luma_prompt" in data
     assert "ffmpeg_filter" in data
-    assert data["kling_config"]["config"]["pan"] == 90.0
+    assert data["kling_config"]["config"]["pan"] == 5.0
     assert "orbit" in data["luma_prompt"].lower() or "car" in data["luma_prompt"].lower()
 
 def test_api_test_token_kling():
@@ -76,3 +76,10 @@ def test_get_video_provider_factory():
     # Deduced by model
     p4 = get_video_provider("auto", api_token="secret", model="kling-v1-6")
     assert isinstance(p4, KlingDirectVideoProvider)
+
+    # Overridden model default check
+    p_kling_override = get_video_provider("kling", api_token="secret", model="wan-video/wan-2.1-i2v-480p")
+    assert p_kling_override.model == "kling-v1-6"
+
+    p_luma_override = get_video_provider("luma", api_token="secret", model="wan-video/wan-2.1-i2v-480p")
+    assert p_luma_override.model == "luma-dream-machine"

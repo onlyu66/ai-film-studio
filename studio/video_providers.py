@@ -7,6 +7,7 @@ import base64
 import json
 import hmac
 import hashlib
+import mimetypes
 import requests
 
 AI_VIDEO_MODELS: List[Dict[str, Any]] = [
@@ -400,10 +401,19 @@ class KlingDirectVideoProvider(BaseVideoProvider):
             poll_url = f"https://api.klingai.com/v1/videos/image2video/{task_id}"
 
             video_url = None
+            consecutive_errors = 0
             while time.time() - start_time < self.max_poll_seconds:
                 time.sleep(self.poll_interval)
-                poll_resp = requests.get(poll_url, headers=headers, timeout=10)
+                try:
+                    poll_resp = requests.get(poll_url, headers=headers, timeout=10)
+                except Exception:
+                    consecutive_errors += 1
+                    if consecutive_errors >= 4:
+                        return False
+                    continue
+
                 if poll_resp.status_code == 200:
+                    consecutive_errors = 0
                     poll_data = poll_resp.json()
                     task_data = poll_data.get("data", {})
                     task_status = task_data.get("task_status")
@@ -416,7 +426,9 @@ class KlingDirectVideoProvider(BaseVideoProvider):
                     elif task_status in ("failed", "canceled"):
                         return False
                 else:
-                    break
+                    consecutive_errors += 1
+                    if consecutive_errors >= 4:
+                        break
 
             if not video_url:
                 return False
@@ -522,6 +534,7 @@ class LumaDreamMachineProvider(BaseVideoProvider):
             "User-Agent": "AIFilmStudio/1.0",
         }
 
+        mime_type = mimetypes.guess_type(str(image_path))[0] or "image/png"
         payload: Dict[str, Any] = {
             "prompt": final_prompt,
             "aspect_ratio": "16:9" if aspect_ratio == "16:9" else "9:16",
@@ -529,7 +542,7 @@ class LumaDreamMachineProvider(BaseVideoProvider):
             "keyframes": {
                 "frame0": {
                     "type": "image",
-                    "url": f"data:image/png;base64,{img_b64}",
+                    "url": f"data:{mime_type};base64,{img_b64}",
                 }
             },
         }
@@ -549,6 +562,7 @@ class LumaDreamMachineProvider(BaseVideoProvider):
             start_time = time.time()
             poll_url = f"https://api.lumalabs.ai/dream-machine/v1/generations/{gen_id}"
             video_url = None
+            consecutive_errors = 0
 
             while time.time() - start_time < self.max_poll_seconds:
                 if state == "completed":
@@ -558,12 +572,22 @@ class LumaDreamMachineProvider(BaseVideoProvider):
                     return False
 
                 time.sleep(self.poll_interval)
-                poll_resp = requests.get(poll_url, headers=headers, timeout=10)
+                try:
+                    poll_resp = requests.get(poll_url, headers=headers, timeout=10)
+                except Exception:
+                    consecutive_errors += 1
+                    if consecutive_errors >= 4:
+                        return False
+                    continue
+
                 if poll_resp.status_code == 200:
+                    consecutive_errors = 0
                     gen_data = poll_resp.json()
                     state = gen_data.get("state")
                 else:
-                    break
+                    consecutive_errors += 1
+                    if consecutive_errors >= 4:
+                        break
 
             if not video_url and state == "completed":
                 video_url = gen_data.get("assets", {}).get("video")
@@ -600,8 +624,10 @@ def get_video_provider(
     m_lower = (model or "").lower().strip()
 
     if p_lower == "kling" or ("kling-v1-6" in m_lower) or ("kling" in m_lower and "standard" not in m_lower and "replicate" not in m_lower):
-        return KlingDirectVideoProvider(api_key=api_token, model=model or "kling-v1-6", **kwargs)
+        actual_model = model if (model and "kling" in model.lower()) else "kling-v1-6"
+        return KlingDirectVideoProvider(api_key=api_token, model=actual_model, **kwargs)
     elif p_lower == "luma" or "luma" in m_lower:
-        return LumaDreamMachineProvider(api_key=api_token, model=model or "luma-dream-machine", **kwargs)
+        actual_model = model if (model and "luma" in model.lower()) else "luma-dream-machine"
+        return LumaDreamMachineProvider(api_key=api_token, model=actual_model, **kwargs)
     else:
         return ReplicateVideoProvider(api_token=api_token, model=model, **kwargs)

@@ -280,6 +280,14 @@ def run_motion_stage(
                     lipsync_success = True
 
             if not lipsync_success:
+                shot_traj = getattr(shot, "camera_3d_trajectory", None)
+                if shot_traj and isinstance(shot_traj, dict):
+                    try:
+                        from studio.camera_3d import Camera3DTrajectory
+                        shot_traj = Camera3DTrajectory(**shot_traj)
+                    except Exception:
+                        shot_traj = None
+
                 render_motion_for_shot(
                     image_path=img_file,
                     output_path=out_file,
@@ -293,6 +301,7 @@ def run_motion_stage(
                     accel=getattr(config, "hardware_accel", "auto"),
                     video_api_token=getattr(config, "video_api_token", None),
                     video_model=getattr(config, "video_model", None),
+                    trajectory=shot_traj,
                 )
 
             return shot.id, out_file

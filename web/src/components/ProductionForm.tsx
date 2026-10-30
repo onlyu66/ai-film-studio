@@ -1016,7 +1016,14 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       template_id: selectedTemplate?.id || undefined,
       image_engine: imageEngine,
       image_api_url: (imageEngine !== 'pollinations' && imageApiUrl.trim()) ? imageApiUrl.trim() : undefined,
-      video_api_token: motion === 'replicate' && videoApiToken.trim() ? videoApiToken.trim() : undefined,
+      video_api_token:
+        motion === 'replicate'
+          ? (videoModel.includes('kling') && klingApiKey.trim()
+              ? klingApiKey.trim()
+              : videoModel.includes('luma') && lumaApiKey.trim()
+              ? lumaApiKey.trim()
+              : videoApiToken.trim() || undefined)
+          : undefined,
       video_model: motion === 'replicate' ? videoModel : undefined,
       subtitle_style: hardsub ? subtitleStyle : undefined,
       subtitle_position: hardsub ? subtitlePosition : undefined,

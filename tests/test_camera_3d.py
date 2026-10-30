@@ -22,7 +22,7 @@ def test_kling_camera_control_compilation():
     traj = Camera3DTrajectory(
         trajectory_type="orbit_360",
         pan=90.0,
-        tilt=15.0,
+        tilt=18.0,
         roll=0.0,
         x=2.0,
         y=0.0,
@@ -33,9 +33,22 @@ def test_kling_camera_control_compilation():
     kling_ctrl = compile_kling_camera_control(traj)
     assert kling_ctrl["type"] == "simple"
     assert "config" in kling_ctrl
-    assert kling_ctrl["config"]["pan"] == 90.0
-    assert kling_ctrl["config"]["tilt"] == 15.0
-    assert kling_ctrl["config"]["zoom"] == 1.0
+    # All Kling config values must be clamped in [-10.0, 10.0]
+    for key, val in kling_ctrl["config"].items():
+        assert -10.0 <= val <= 10.0
+    # pan=90 deg scaled to 5.0 in [-10, 10]
+    assert kling_ctrl["config"]["pan"] == 5.0
+    # tilt=18 deg scaled to 2.0 in [-10, 10]
+    assert kling_ctrl["config"]["tilt"] == 2.0
+    # zoom=1.0 optical neutral scaled to 0.0 in Kling
+    assert kling_ctrl["config"]["zoom"] == 0.0
+
+
+def test_luma_camera_prompt_no_leading_comma():
+    traj = Camera3DTrajectory(trajectory_type="orbit_360")
+    prompt = compile_luma_camera_prompt(traj, "")
+    assert not prompt.startswith(",")
+    assert not prompt.startswith(" ")
 
 def test_luma_camera_prompt_compilation():
     traj = Camera3DTrajectory(

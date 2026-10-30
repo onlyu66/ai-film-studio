@@ -270,6 +270,11 @@ def render_shot_video(req: RenderShotVideoRequest):
         if req.trajectory:
             from studio.camera_3d import Camera3DTrajectory
             trajectory = Camera3DTrajectory(**req.trajectory)
+            target_shot.camera_3d_trajectory = trajectory.model_dump()
+            try:
+                atomic_write_json(sb_file, sb.to_dict())
+            except Exception:
+                pass
         elif getattr(target_shot, "camera_3d_trajectory", None):
             from studio.camera_3d import Camera3DTrajectory
             trajectory = Camera3DTrajectory(**target_shot.camera_3d_trajectory)

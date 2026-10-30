@@ -274,9 +274,16 @@ export const Camera3DTrajectoryPanel: React.FC<Camera3DTrajectoryPanelProps> = (
   // Handle Render Shot Video
   const handleRenderShot = async () => {
     try {
+      const token = selectedEngine === 'kling'
+        ? localStorage.getItem('studio_kling_key') || undefined
+        : selectedEngine === 'luma'
+        ? localStorage.getItem('studio_luma_key') || undefined
+        : localStorage.getItem('studio_replicate_token') || undefined
+
       const result = await renderShot3DMutation.mutateAsync({
         shot_id: shotId,
         engine: selectedEngine,
+        video_api_token: token,
         trajectory,
       })
       if (result.success) {

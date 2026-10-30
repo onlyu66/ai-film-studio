@@ -634,7 +634,11 @@ export async function renderShot3DVideo(
     trajectory?: import('../types').Camera3DTrajectory
   }
 ): Promise<{ success: boolean; shot_id: string; video_url?: string }> {
-  const response = await apiClient.post<{ success: boolean; shot_id: string; video_url?: string }>('/api/video/render-shot', payload)
+  const response = await apiClient.post<{ success: boolean; shot_id: string; video_url?: string }>(
+    '/api/video/render-shot',
+    payload,
+    { timeout: 240000 }
+  )
   return response.data
 }
 
