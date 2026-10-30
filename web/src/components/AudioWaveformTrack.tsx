@@ -1,5 +1,11 @@
 import React, { useRef, useEffect } from 'react'
 
+export interface DuckingRegion {
+  startSec: number
+  endSec: number
+  duckRatio?: number
+}
+
 export interface AudioWaveformTrackProps {
   peaks: number[]
   beatTimes: number[]
@@ -11,6 +17,7 @@ export interface AudioWaveformTrackProps {
   showBeatMarkers?: boolean
   height?: number
   isLoading?: boolean
+  duckingRegions?: DuckingRegion[]
 }
 
 export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
@@ -24,6 +31,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   showBeatMarkers = true,
   height = 36,
   isLoading = false,
+  duckingRegions = [],
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
@@ -72,6 +80,30 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
       dimFill = 'rgba(245, 158, 11, 0.45)'
     }
 
+    // 0. Vẽ vùng đánh dấu Auto-Ducking mờ ở nền (nếu có)
+    if (duckingRegions && duckingRegions.length > 0 && totalDuration > 0) {
+      for (const reg of duckingRegions) {
+        const startX = Math.max(0, (reg.startSec / totalDuration) * displayWidth)
+        const endX = Math.min(displayWidth, (reg.endSec / totalDuration) * displayWidth)
+        const regW = Math.max(2, endX - startX)
+
+        ctx.fillStyle = 'rgba(147, 51, 234, 0.08)'
+        ctx.fillRect(startX, 1, regW, displayHeight - 2)
+
+        const duckLevel = maxBarH * (reg.duckRatio ?? 0.35)
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.25)'
+        ctx.lineWidth = 1
+        ctx.setLineDash([2, 2])
+        ctx.beginPath()
+        ctx.moveTo(startX, midY - duckLevel)
+        ctx.lineTo(endX, midY - duckLevel)
+        ctx.moveTo(startX, midY + duckLevel)
+        ctx.lineTo(endX, midY + duckLevel)
+        ctx.stroke()
+        ctx.setLineDash([])
+      }
+    }
+
     // 1. Vẽ các cột sóng âm đối xứng (Mirror Waveform)
     // Căn chỉnh chính xác theo trục thời gian thực tế của bài nhạc và timeline
     if (peaks && peaks.length > 0) {
@@ -91,11 +123,44 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
         )
 
         const peakVal = Math.max(0.08, Math.min(1.0, peaks[peakIndex] || 0.1))
-        const barH = peakVal * maxBarH
+
+        // Tính toán hệ số né giọng nói Auto-Ducking với concave dip curve
+        let duckFactor = 1.0
+        let isDucked = false
+        if (duckingRegions && duckingRegions.length > 0) {
+          const leadIn = 0.3
+          const rampUp = 0.5
+          for (const region of duckingRegions) {
+            const ratio = region.duckRatio ?? 0.35
+            const regionStart = region.startSec
+            const regionEnd = region.endSec
+
+            if (timelineSec >= regionStart - leadIn && timelineSec <= regionEnd + rampUp) {
+              isDucked = true
+              let currentFactor = 1.0
+              if (timelineSec < regionStart) {
+                const p = (timelineSec - (regionStart - leadIn)) / leadIn
+                currentFactor = 1.0 - (1.0 - ratio) * p
+              } else if (timelineSec <= regionEnd) {
+                currentFactor = ratio
+              } else {
+                const p = (timelineSec - regionEnd) / rampUp
+                currentFactor = ratio + (1.0 - ratio) * p
+              }
+              duckFactor = Math.min(duckFactor, Math.max(0.1, currentFactor))
+            }
+          }
+        }
+
+        const barH = peakVal * maxBarH * duckFactor
 
         // Phân biệt trạng thái đã phát qua Playhead
         const isPlayed = x <= playheadPositionPx
-        ctx.fillStyle = isPlayed ? activeFill : dimFill
+        if (isDucked && duckFactor < 0.9) {
+          ctx.fillStyle = isPlayed ? 'rgba(192, 132, 252, 0.75)' : 'rgba(168, 85, 247, 0.28)'
+        } else {
+          ctx.fillStyle = isPlayed ? activeFill : dimFill
+        }
 
         // Vẽ thanh trên và dưới đối xứng
         const topY = midY - barH
@@ -142,6 +207,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     showBeatMarkers,
     height,
     isLoading,
+    duckingRegions,
   ])
 
   return (
