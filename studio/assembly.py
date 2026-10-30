@@ -139,6 +139,8 @@ def mix_sfx_into_shot_audio(
     voice_volume: float = 1.0,
     sfx_volume: float = 1.0,
     sfx_offset_ms: int = 0,
+    fade_in_sec: float = 0.0,
+    fade_out_sec: float = 0.0,
 ) -> Path:
     """Mix speech audio with ambient/environmental SFX into a high-quality audio file for shot preview.
     Supports independent volume scaling (0.0 to 2.0) and custom start timing offset.
@@ -160,6 +162,15 @@ def mix_sfx_into_shot_audio(
                 import math
                 gain = 20 * math.log10(v_vol)
                 segment = segment.apply_gain(gain)
+
+            if fade_in_sec and fade_in_sec > 0.0:
+                f_in_ms = min(len(segment), int(fade_in_sec * 1000))
+                if f_in_ms > 0:
+                    segment = segment.fade_in(f_in_ms)
+            if fade_out_sec and fade_out_sec > 0.0:
+                f_out_ms = min(len(segment), int(fade_out_sec * 1000))
+                if f_out_ms > 0:
+                    segment = segment.fade_out(f_out_ms)
 
             if len(segment) < shot_dur_ms:
                 silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
@@ -240,12 +251,23 @@ def build_master_audio(
         effective_voice_vol = getattr(shot, "voice_volume", 1.0) * voice_volume
         effective_sfx_vol = getattr(shot, "sfx_volume", 1.0)
         effective_sfx_offset = getattr(shot, "sfx_offset_ms", 0)
+        fade_in_sec = getattr(shot, "fade_in", 0.0) or 0.0
+        fade_out_sec = getattr(shot, "fade_out", 0.0) or 0.0
 
         if normal_audio_file.exists() and normal_audio_file.stat().st_size > 0:
             segment = AudioSegment.from_file(str(normal_audio_file))
             if voice_volume != 1.0 and voice_volume > 0.0:
                 gain_db = (voice_volume - 1.0) * 10.0
                 segment = segment.apply_gain(gain_db)
+            if fade_in_sec and fade_in_sec > 0.0:
+                f_in_ms = min(len(segment), int(fade_in_sec * 1000))
+                if f_in_ms > 0:
+                    segment = segment.fade_in(f_in_ms)
+            if fade_out_sec and fade_out_sec > 0.0:
+                f_out_ms = min(len(segment), int(fade_out_sec * 1000))
+                if f_out_ms > 0:
+                    segment = segment.fade_out(f_out_ms)
+
             if len(segment) < shot_dur_ms:
                 silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
                 segment = segment + silence_gap
@@ -261,8 +283,19 @@ def build_master_audio(
                 voice_volume=effective_voice_vol,
                 sfx_volume=effective_sfx_vol,
                 sfx_offset_ms=effective_sfx_offset,
+                fade_in_sec=fade_in_sec,
+                fade_out_sec=fade_out_sec,
             )
             segment = AudioSegment.from_file(str(normal_audio_file))
+            if fade_in_sec and fade_in_sec > 0.0:
+                f_in_ms = min(len(segment), int(fade_in_sec * 1000))
+                if f_in_ms > 0:
+                    segment = segment.fade_in(f_in_ms)
+            if fade_out_sec and fade_out_sec > 0.0:
+                f_out_ms = min(len(segment), int(fade_out_sec * 1000))
+                if f_out_ms > 0:
+                    segment = segment.fade_out(f_out_ms)
+
             if len(segment) < shot_dur_ms:
                 silence_gap = AudioSegment.silent(duration=shot_dur_ms - len(segment))
                 segment = segment + silence_gap

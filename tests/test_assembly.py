@@ -94,3 +94,24 @@ def test_mix_sfx_volume_controls(tmp_path):
     )
     assert res.exists()
     assert res.stat().st_size > 0
+
+
+def test_mix_sfx_fade_in_fade_out(tmp_path):
+    from pydub import AudioSegment
+    from studio.assembly import mix_sfx_into_shot_audio
+
+    speech = tmp_path / "speech.mp3"
+    AudioSegment.silent(duration=3000).export(str(speech), format="mp3")
+    out = tmp_path / "faded.mp3"
+
+    res = mix_sfx_into_shot_audio(
+        speech_audio_path=speech,
+        sfx_str=None,
+        shot_duration=3.0,
+        output_path=out,
+        voice_volume=1.0,
+        fade_in_sec=0.5,
+        fade_out_sec=0.5,
+    )
+    assert res.exists()
+    assert res.stat().st_size > 0
