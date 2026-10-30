@@ -48,7 +48,7 @@ export default function Navbar({
       return (
         <div
           onClick={() => scrollTo('storyboard-section')}
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-semibold cursor-pointer hover:bg-amber-500/25 transition-all shadow-sm shadow-amber-500/20 active:scale-95"
+          className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-semibold cursor-pointer hover:bg-amber-500/25 transition-all shadow-sm shadow-amber-500/20 active:scale-95 shrink-0"
           title="Bấm để cuộn đến bảng duyệt kịch bản & phân cảnh"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
@@ -115,36 +115,36 @@ export default function Navbar({
   }
 
   return (
-    <header className="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2 transition-all duration-300">
+    <header className="sticky top-0 z-40 px-1 sm:px-6 pt-2 sm:pt-3 pb-2 transition-all duration-300">
       <div
-        className={`max-w-7xl mx-auto rounded-2xl px-4 py-2.5 flex items-center justify-between gap-3 transition-all duration-300 ${
+        className={`max-w-7xl mx-auto rounded-2xl px-2 sm:px-4 py-1.5 sm:py-2.5 flex items-center justify-between gap-1 sm:gap-3 transition-all duration-300 ${
           scrolled
             ? 'navbar-scrolled shadow-2xl'
             : 'studio-panel shadow-xl'
         }`}
       >
         {/* Brand Logo */}
-        <div className="flex items-center gap-2.5 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm shadow-amber-500/15 group-hover:scale-105 transition-transform">
-            <Clapperboard className="w-4 h-4 text-amber-400 stroke-[2.2]" />
+        <div className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer group shrink-0" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-sm shadow-amber-500/15 group-hover:scale-105 transition-transform">
+            <Clapperboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 stroke-[2.2]" />
           </div>
           <div className="flex flex-col">
-            <div className="flex items-center gap-1.5 leading-none">
-              <span className="text-sm font-black tracking-tight text-zinc-100 font-sans">
+            <div className="flex items-center gap-1 sm:gap-1.5 leading-none">
+              <span className="text-xs sm:text-sm font-black tracking-tight text-zinc-100 font-sans">
                 AI FILM STUDIO
               </span>
-              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1.5 py-0.2 rounded-md">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest text-amber-400 bg-amber-500/15 border border-amber-500/30 px-1 py-0.2 rounded-md">
                 PRO
               </span>
             </div>
-            <span className="text-[10px] font-mono text-zinc-500 tracking-wider uppercase mt-0.5">
+            <span className="text-[10px] font-mono text-zinc-500 tracking-wider uppercase mt-0.5 hidden sm:inline">
               Cinema Workstation
             </span>
           </div>
         </div>
 
         {/* Center Section Navigations */}
-        <nav className="hidden md:flex items-center p-1 rounded-xl bg-studio-input/80 border border-studio-border text-xs font-medium text-studio-muted">
+        <nav className="hidden lg:flex items-center p-1 rounded-xl bg-studio-input/80 border border-studio-border text-xs font-medium text-studio-muted">
           <button
             type="button"
             onClick={() => scrollTo('director-inspector')}
@@ -169,7 +169,7 @@ export default function Navbar({
         </nav>
 
         {/* Status & Studio Action Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {getStatusBadge()}
 
           {/* Toggle Console Logs */}
@@ -177,7 +177,7 @@ export default function Navbar({
             <button
               type="button"
               onClick={onToggleConsole}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer border ${
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-xl text-xs font-mono font-medium transition-all cursor-pointer border shrink-0 ${
                 showConsole
                   ? 'bg-amber-500/15 text-amber-300 border-amber-500/40'
                   : 'bg-studio-deck text-studio-muted hover:text-zinc-200 hover:bg-studio-card border-studio-border'
@@ -199,10 +199,10 @@ export default function Navbar({
               variant="default"
               size="sm"
               onClick={onWatchMovie}
-              className="gap-1.5 text-xs h-8 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold shadow-md shadow-emerald-500/20 cursor-pointer"
+              className="gap-1 sm:gap-1.5 text-xs h-7.5 sm:h-8 px-2 sm:px-3 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold shadow-md shadow-emerald-500/20 cursor-pointer shrink-0"
             >
               <MonitorPlay className="w-3.5 h-3.5 fill-current" />
-              <span>Xem Phim</span>
+              <span className="hidden sm:inline">Xem Phim</span>
             </Button>
           )}
 
@@ -210,7 +210,7 @@ export default function Navbar({
             variant="outline"
             size="sm"
             onClick={onOpenLibrary}
-            className="gap-1.5 text-xs h-8 border-studio-border hover:bg-studio-elevated text-zinc-300 cursor-pointer"
+            className="gap-1 sm:gap-1.5 text-xs h-7.5 sm:h-8 px-2 sm:px-3 border-studio-border hover:bg-studio-elevated text-zinc-300 cursor-pointer shrink-0"
             title="Thư viện phim đã sản xuất"
           >
             <Film className="w-3.5 h-3.5 text-zinc-400" />
@@ -222,7 +222,7 @@ export default function Navbar({
             size="sm"
             onClick={onClean}
             disabled={isRunning || isCleaning}
-            className="h-8 text-xs text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer"
+            className="h-7.5 sm:h-8 w-7.5 sm:w-8 p-0 text-xs text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 cursor-pointer shrink-0"
             title="Làm mới dự án"
           >
             <Trash2 className="w-3.5 h-3.5" />

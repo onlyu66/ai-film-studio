@@ -62,6 +62,16 @@ export default function CameraDirectorModal({
     }
   }, [shot])
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
+
   if (!isOpen || !shot) return null
 
   const multiAngleOptions = shot.multi_angle_options || {}
@@ -166,8 +176,8 @@ export default function CameraDirectorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl bg-zinc-950 border border-amber-500/30 shadow-2xl overflow-hidden">
+    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md animate-fadeIn cursor-pointer">
+      <div onClick={(e) => e.stopPropagation()} className="cursor-default relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl bg-zinc-950 border border-amber-500/30 shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/60 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">

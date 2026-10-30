@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Palette, CheckCircle2, Clapperboard, Sparkles } from 'lucide-react'
 import type { Shot } from '../types'
@@ -33,6 +33,14 @@ export default function ColorInspectorModal({
 
   const activeLutObj = COLOR_LUT_PRESETS.find((l) => l.id === selectedLut) || COLOR_LUT_PRESETS[0]
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   const handleApply = () => {
     onApplyLutToProject(selectedLut)
     setAppliedToast(activeLutObj.name)
@@ -43,12 +51,13 @@ export default function ColorInspectorModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md animate-fadeIn">
+      <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md animate-fadeIn cursor-pointer">
         <motion.div
+          onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
-          className="relative w-full max-w-5xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh]"
+          className="relative w-full max-w-5xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[95vh] cursor-default"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 bg-cinema-card border-b border-cinema-border shrink-0">

@@ -12,6 +12,11 @@ class ProgressBroadcaster:
     def subscribe(self) -> asyncio.Queue:
         q: asyncio.Queue = asyncio.Queue(maxsize=100)
         self.subscribers.add(q)
+        if self.loop is None:
+            try:
+                self.loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
         return q
 
     def unsubscribe(self, queue: asyncio.Queue):

@@ -279,7 +279,7 @@ export default function TimelineScrubber({
       {/* Top Scrubber Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cinema-border">
         {/* Playback Controls & Timestamp */}
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
             <button
               type="button"
@@ -477,7 +477,7 @@ export default function TimelineScrubber({
         </div>
 
         {/* Right Scrollable Timeline View */}
-        <div className="flex-1 overflow-x-auto relative select-none scrollbar-thin">
+        <div className="flex-1 min-w-0 overflow-x-auto relative select-none scrollbar-thin">
           <div style={{ width: `${timelineWidth}px` }} className="relative">
             {/* 1. Time Ruler Bar (Interactive click & scrub) */}
             <div
