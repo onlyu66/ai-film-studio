@@ -16,7 +16,7 @@ export interface TrackState {
 
 export interface ShotAudioItem {
   id: string
-  duration: number
+  duration?: number
   dialogue?: string
   audio_url?: string
   has_audio?: boolean
@@ -179,7 +179,7 @@ export class WebAudioMixer {
   /**
    * Helper to locate which shot is active at a given timecode.
    */
-  public findShotAtTime<T extends { id: string; duration: number }>(
+  public findShotAtTime<T extends { id: string; duration?: number }>(
     timeSec: number,
     shots: T[]
   ): { shot: T; startSec: number; endSec: number; offsetSec: number } | null {
@@ -204,7 +204,7 @@ export class WebAudioMixer {
   /**
    * Calculate cumulative timeline start/end for shots.
    */
-  public calculateTimeline<T extends { duration: number }>(
+  public calculateTimeline<T extends { duration?: number }>(
     shots: T[]
   ): Array<{ shot: T; startSec: number; endSec: number; duration: number }> {
     let accumulated = 0

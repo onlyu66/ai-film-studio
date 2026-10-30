@@ -1007,6 +1007,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
             onUpdateShotDuration={(shotId, duration) => {
               updateShotMutation.mutate({ shot_id: shotId, duration })
             }}
+            onUpdateShot={(shotId, updates) => {
+              updateShotMutation.mutate({ shot_id: shotId, ...updates })
+            }}
             onBatchUpdateDurations={(updates) => {
               queryClient.setQueryData(QUERY_KEYS.storyboard, (old: any) => {
                 if (!old || !old.shots) return old

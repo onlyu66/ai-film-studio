@@ -140,6 +140,8 @@ export interface Shot {
   sfx_volume?: number
   sfx_offset_ms?: number
   sfx?: string
+  fade_in?: number
+  fade_out?: number
   act?: number
   mood?: string
   emotion?: string
