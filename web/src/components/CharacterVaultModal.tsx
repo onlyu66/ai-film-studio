@@ -159,29 +159,29 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
     <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
-              <Users className="w-6 h-6 stroke-[2]" />
+        <div className="p-4 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10 shrink-0">
+              <Users className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-bold text-zinc-100">Kho Nhân Vật (Character Vault Pro)</h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base sm:text-lg font-bold text-zinc-100 truncate">Kho Nhân Vật (Character Vault Pro)</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 shrink-0">
                   <Lock className="w-2.5 h-2.5" /> 3-Lock Consistency
                 </span>
               </div>
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1 sm:line-clamp-none">
                 Quản lý kho nhân vật tái sử dụng đa kịch bản với khuôn mặt, trang phục & giọng nói bất biến
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setIsCreatingNew(!isCreatingNew)}
-              className="px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer active:scale-95"
+              className="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer active:scale-95 whitespace-nowrap"
             >
               <Plus className="w-4 h-4" />
               <span>{isCreatingNew ? 'Đóng Form' : 'Tạo Nhân Vật Mới'}</span>
@@ -191,7 +191,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
               onClick={onClose}
               title="Đóng cửa sổ"
               aria-label="Đóng"
-              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition-colors cursor-pointer shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -304,12 +304,12 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
         </AnimatePresence>
 
         {/* Filter bar: Search & Tags */}
-        <div className="px-5 py-3 border-b border-zinc-800/80 bg-zinc-900/30 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-x-auto py-1">
+        <div className="px-4 sm:px-5 py-3 border-b border-zinc-800/80 bg-zinc-900/30 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 overflow-x-auto py-1 flex-1 min-w-0 scrollbar-thin">
             <button
               type="button"
               onClick={() => setSelectedTag('all')}
-              className={`px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+              className={`px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                 selectedTag === 'all'
                   ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
                   : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
@@ -322,7 +322,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                 key={tag}
                 type="button"
                 onClick={() => setSelectedTag(tag)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-mono cursor-pointer transition-colors ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
                   selectedTag === tag
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
                     : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
@@ -333,7 +333,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
             ))}
           </div>
 
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full sm:w-64 shrink-0">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
@@ -572,15 +572,15 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between text-xs text-zinc-400">
+        <div className="p-4 border-t border-zinc-800/80 bg-zinc-900/50 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs text-zinc-400">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>Mỗi nhân vật được bảo chứng tính nhất quán qua Seed, Visual Anchor và ảnh Headshot tham chiếu.</span>
+            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="line-clamp-2 sm:line-clamp-none">Mỗi nhân vật được bảo chứng tính nhất quán qua Seed, Visual Anchor và ảnh Headshot tham chiếu.</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold cursor-pointer shrink-0 text-center"
           >
             Đóng
           </button>
