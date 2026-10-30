@@ -146,8 +146,8 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md">
-      <div className="relative w-full max-w-5xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
+    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-5 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
@@ -179,6 +179,8 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
             <button
               type="button"
               onClick={onClose}
+              title="Đóng cửa sổ"
+              aria-label="Đóng"
               className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
@@ -449,6 +451,9 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                               <img
                                 src={char.headshot_url}
                                 alt={char.name}
+                                onError={(e) => {
+                                  ;(e.target as HTMLElement).style.display = 'none'
+                                }}
                                 className="w-full h-full object-cover"
                               />
                             ) : (

@@ -48,6 +48,30 @@ DEFAULT_VAULT_CHARACTERS: List[Dict[str, Any]] = [
 
 DEFAULT_VAULT_PATH = Path("outputs/characters/vault.json")
 
+def ensure_sample_headshots(char_dir: Path) -> None:
+    """Ensure placeholder headshots for sample vault characters exist."""
+    import subprocess
+    char_dir = Path(char_dir)
+    char_dir.mkdir(parents=True, exist_ok=True)
+    colors = {
+        "alex_headshot.png": "0x102035",
+        "maya_headshot.png": "0x281028",
+        "tran_headshot.png": "0x352010",
+        "linh_headshot.png": "0x0a1f25",
+    }
+    for name, col in colors.items():
+        p = char_dir / name
+        if not p.exists():
+            try:
+                subprocess.run(
+                    ["ffmpeg", "-y", "-f", "lavfi", "-i", f"color=c={col}:s=400x400", "-frames:v", "1", str(p)],
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+            except Exception:
+                pass
+
 def get_vault_path(override_path: Optional[Path] = None) -> Path:
     """Return the canonical path to the Character Vault file."""
     if override_path:
@@ -60,6 +84,7 @@ def get_vault_characters(vault_file: Optional[Path] = None) -> List[Dict[str, An
 
     path = get_vault_path(vault_file)
     path.parent.mkdir(parents=True, exist_ok=True)
+    ensure_sample_headshots(path.parent)
 
     if not path.exists():
         # Initialize with curated defaults

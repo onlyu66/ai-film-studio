@@ -115,8 +115,8 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
   const currentPreviewUrl = enhancedVideoUrl || (shot?.video_url ? `/api/outputs/videos/${shot.id}.mp4` : sourceVideoUrl)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md">
-      <div className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
+    <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/85 backdrop-blur-md">
+      <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="p-5 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
@@ -143,6 +143,8 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
           <button
             type="button"
             onClick={onClose}
+            title="Đóng cửa sổ"
+            aria-label="Đóng"
             className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
