@@ -38,3 +38,28 @@ def test_projects_router_endpoints_mounted():
     # Verify projects list responds
     resp = client.get("/api/projects")
     assert resp.status_code == 200
+
+def test_generate_headshot_endpoint():
+    resp = client.post("/api/characters/generate-headshot", json={
+        "character_id": "test_hero",
+        "visual_anchor": "Cyberpunk female warrior with glowing neon eye",
+        "seed": 42
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["character_id"] == "test_hero"
+    assert "headshot_url" in data
+
+def test_upload_headshot_endpoint():
+    import base64
+    tiny_png_b64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+    resp = client.post("/api/characters/upload-headshot", json={
+        "character_id": "test_uploaded_hero",
+        "image_base64": tiny_png_b64
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["character_id"] == "test_uploaded_hero"
+    assert "headshot_url" in data

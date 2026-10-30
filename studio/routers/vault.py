@@ -48,11 +48,31 @@ def api_generate_headshot(req: GenerateHeadshotRequest):
     char_dir.mkdir(parents=True, exist_ok=True)
     out_file = char_dir / f"{req.character_id}.png"
 
-    from studio.images import generate_image_for_shot
+    from studio.images import generate_image_for_shot, _create_fallback_image
     from studio.storyboard import Shot
     prompt = f"Cinematic studio character portrait headshot photo of {req.visual_anchor}, dramatic lighting, 8k, detailed facial features"
-    dummy_shot = Shot(id=f"char_{req.character_id}", chapter=1, character_id=req.character_id, dialogue="", image_prompt=prompt)
-    generate_image_for_shot(dummy_shot, out_file, engine="fallback", prompt_override=prompt, aspect_ratio="1:1")
+    dummy_shot = Shot(
+        id=req.character_id,
+        chapter=1,
+        character_id=req.character_id,
+        dialogue="",
+        image_prompt=prompt,
+    )
+
+    try:
+        img_path = generate_image_for_shot(
+            shot=dummy_shot,
+            characters={},
+            style="cinematic",
+            output_dir=char_dir,
+            aspect_ratio="1:1",
+            seed_override=req.seed,
+            prompt_override=prompt,
+        )
+        if not img_path or not img_path.exists():
+            _create_fallback_image(out_file, width=1024, height=1024, label=f"HEADSHOT {req.character_id.upper()}")
+    except Exception:
+        _create_fallback_image(out_file, width=1024, height=1024, label=f"HEADSHOT {req.character_id.upper()}")
 
     sb_file = srv.Path("outputs/storyboard.json")
     if sb_file.exists():
@@ -62,6 +82,23 @@ def api_generate_headshot(req: GenerateHeadshotRequest):
             if "characters" in sb_data and req.character_id in sb_data["characters"]:
                 sb_data["characters"][req.character_id]["headshot_url"] = f"/api/outputs/characters/{req.character_id}.png"
                 atomic_write_json(sb_file, sb_data, backup=True)
+                srv.invalidate_storyboard_cache()
+        except Exception:
+            pass
+
+    vault_file = srv.Path("outputs/characters/vault.json")
+    if vault_file.exists():
+        try:
+            with open(vault_file, "r", encoding="utf-8") as f:
+                vault_chars = json.load(f)
+            updated = False
+            for vc in vault_chars:
+                if vc.get("id") == req.character_id:
+                    vc["headshot_url"] = f"/api/outputs/characters/{req.character_id}.png"
+                    updated = True
+                    break
+            if updated:
+                atomic_write_json(vault_file, vault_chars, backup=True)
         except Exception:
             pass
 
@@ -144,6 +181,23 @@ def api_upload_headshot(req: UploadHeadshotRequest):
             if "characters" in sb_data and req.character_id in sb_data["characters"]:
                 sb_data["characters"][req.character_id]["headshot_url"] = f"/api/outputs/characters/{req.character_id}.png"
                 atomic_write_json(sb_file, sb_data, backup=True)
+                srv.invalidate_storyboard_cache()
+        except Exception:
+            pass
+
+    vault_file = srv.Path("outputs/characters/vault.json")
+    if vault_file.exists():
+        try:
+            with open(vault_file, "r", encoding="utf-8") as f:
+                vault_chars = json.load(f)
+            updated = False
+            for vc in vault_chars:
+                if vc.get("id") == req.character_id:
+                    vc["headshot_url"] = f"/api/outputs/characters/{req.character_id}.png"
+                    updated = True
+                    break
+            if updated:
+                atomic_write_json(vault_file, vault_chars, backup=True)
         except Exception:
             pass
 
