@@ -1848,6 +1848,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                                 <span className="text-sky-300">{String(shot.camera_lens).replace('_', ' ')}</span>
                               </>
                             )}
+                            {Boolean((shot as any).camera_3d_trajectory) && (
+                              <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-bold text-[9px] flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                                <span>3D: {String((shot as any).camera_3d_trajectory.trajectory_type || 'Orbit').toUpperCase()}</span>
+                              </span>
+                            )}
                           </button>
 
                           <div className="flex items-center gap-2">

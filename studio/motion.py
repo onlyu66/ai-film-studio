@@ -161,6 +161,7 @@ def render_motion_for_shot(
     video_api_token: Optional[str] = None,
     video_model: Optional[str] = None,
     color_lut: Optional[str] = None,
+    trajectory: Optional[Any] = None,
 ) -> Path:
     """Execute motion rendering for a single shot according to selected engine."""
     if not shutil.which("ffmpeg"):
@@ -169,7 +170,13 @@ def render_motion_for_shot(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if engine == "replicate":
+    if engine in ("replicate", "kling", "luma") or (video_model and ("kling" in video_model or "luma" in video_model)):
+        from studio.video_providers import get_video_provider
+        provider = get_video_provider(
+            provider_type=engine,
+            api_token=video_api_token,
+            model=video_model,
+        )
         ai_prompt = prompt
         try:
             from studio.camera_director import CAMERA_MOTIONS
@@ -179,17 +186,19 @@ def render_motion_for_shot(
         except Exception:
             pass
 
-        res = _render_replicate_i2v(
-            image_path=image_path,
-            output_path=output_path,
-            prompt=ai_prompt,
-            api_token=video_api_token,
-            model=video_model,
-            duration=duration,
-            aspect_ratio=aspect_ratio,
-        )
-        if res:
-            return res
+        try:
+            success = provider.render_shot_video(
+                image_path=image_path,
+                output_path=output_path,
+                prompt=ai_prompt,
+                duration=duration,
+                aspect_ratio=aspect_ratio,
+                trajectory=trajectory,
+            )
+            if success and output_path.exists() and output_path.stat().st_size > 100:
+                return output_path
+        except Exception as exc:
+            print(f"  [Motion] Video provider {engine} failed ({exc}). Falling back to Ken Burns.")
 
     vfx = (engine == "vfx")
     cmd = build_ffmpeg_command(

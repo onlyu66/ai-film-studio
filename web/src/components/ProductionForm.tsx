@@ -48,6 +48,7 @@ import {
   useTestImageEngine,
   useVideoModels,
   useTestVideoToken,
+  useTestProviderToken,
   useSubtitlePresets,
   useBgmTracks,
   useUploadCustomBgm,
@@ -616,15 +617,81 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   const [videoModel, setVideoModel] = useState('wan-video/wan-2.1-i2v-480p')
   const [testVideoTokenStatus, setTestVideoTokenStatus] = useState<{ is_valid: boolean; username?: string; message: string } | null>(null)
 
+  // Direct AI Video Provider Tokens (Kling & Luma)
+  const [klingApiKey, setKlingApiKey] = useState('')
+  const [showKlingKey, setShowKlingKey] = useState(false)
+  const [klingStatus, setKlingStatus] = useState<{ is_valid: boolean; message: string } | null>(null)
+
+  const [lumaApiKey, setLumaApiKey] = useState('')
+  const [showLumaKey, setShowLumaKey] = useState(false)
+  const [lumaStatus, setLumaStatus] = useState<{ is_valid: boolean; message: string } | null>(null)
+
   const { data: videoModels = [] } = useVideoModels()
   const testVideoTokenMutation = useTestVideoToken()
+  const testProviderTokenMutation = useTestProviderToken()
 
   useEffect(() => {
     const savedToken = localStorage.getItem('studio_replicate_token') || ''
     const savedModel = localStorage.getItem('studio_replicate_model') || 'wan-video/wan-2.1-i2v-480p'
+    const savedKling = localStorage.getItem('studio_kling_key') || ''
+    const savedLuma = localStorage.getItem('studio_luma_key') || ''
     setVideoApiToken(savedToken)
     setVideoModel(savedModel)
+    setKlingApiKey(savedKling)
+    setLumaApiKey(savedLuma)
   }, [])
+
+  const handleKlingKeyChange = (val: string) => {
+    setKlingApiKey(val)
+    localStorage.setItem('studio_kling_key', val)
+    setKlingStatus(null)
+  }
+
+  const handleLumaKeyChange = (val: string) => {
+    setLumaApiKey(val)
+    localStorage.setItem('studio_luma_key', val)
+    setLumaStatus(null)
+  }
+
+  const handleTestKlingToken = () => {
+    if (!klingApiKey.trim()) {
+      toast.warning('Vui lòng nhập API Key Kling AI.')
+      return
+    }
+    testProviderTokenMutation.mutate(
+      { provider: 'kling', token: klingApiKey.trim() },
+      {
+        onSuccess: (data) => {
+          setKlingStatus(data)
+          if (data.is_valid) toast.success('API Key Kling AI hợp lệ!')
+          else toast.error(data.message || 'API Key Kling AI không hợp lệ.')
+        },
+        onError: (err: any) => {
+          toast.error(`Lỗi kiểm tra Kling AI: ${err?.message || 'Lỗi kết nối'}`)
+        },
+      }
+    )
+  }
+
+  const handleTestLumaToken = () => {
+    if (!lumaApiKey.trim()) {
+      toast.warning('Vui lòng nhập API Key Luma Dream Machine.')
+      return
+    }
+    testProviderTokenMutation.mutate(
+      { provider: 'luma', token: lumaApiKey.trim() },
+      {
+        onSuccess: (data) => {
+          setLumaStatus(data)
+          if (data.is_valid) toast.success('API Key Luma Dream Machine hợp lệ!')
+          else toast.error(data.message || 'API Key Luma không hợp lệ.')
+        },
+        onError: (err: any) => {
+          toast.error(`Lỗi kiểm tra Luma: ${err?.message || 'Lỗi kết nối'}`)
+        },
+      }
+    )
+  }
 
   const handleVideoTokenChange = (val: string) => {
     setVideoApiToken(val)
@@ -2081,6 +2148,108 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   <p className="text-[11px] text-zinc-500 italic">
                     * Ghi chú: Nếu Replicate API hết hạn hoặc quá tải, hệ thống sẽ tự động fallback sang Ken Burns 2.5D mượt mà để tiến trình làm phim không bị gián đoạn.
                   </p>
+                </div>
+              )}
+
+              {/* Kling AI & Luma Dream Machine Direct API Card */}
+              {motion === 'replicate' && (
+                <div className="sm:col-span-2 lg:col-span-4 p-4 rounded-xl bg-studio-card border border-studio-border space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-studio-border pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-cyan-400" />
+                      <span className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
+                        Kling AI & Luma Dream Machine Direct OpenAPI (Tùy Chọn)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* Kling API Key */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[10px] font-mono uppercase text-zinc-400 font-medium flex items-center gap-1">
+                          <Key className="w-3 h-3 text-cyan-400" />
+                          <span>Kling AI API Key (AccessKey:SecretKey hoặc Token)</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type={showKlingKey ? 'text' : 'password'}
+                            value={klingApiKey}
+                            onChange={(e) => handleKlingKeyChange(e.target.value)}
+                            placeholder="ak_...:sk_... hoặc Bearer Token"
+                            className="w-full pl-3 pr-8 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-cyan-400 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowKlingKey(!showKlingKey)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                          >
+                            {showKlingKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!klingApiKey.trim() || testProviderTokenMutation.isPending}
+                          onClick={handleTestKlingToken}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+                        >
+                          {testProviderTokenMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                          <span>Kiểm tra</span>
+                        </button>
+                      </div>
+                      {klingStatus && (
+                        <p className={`mt-1.5 text-[11px] font-mono flex items-center gap-1.5 ${klingStatus.is_valid ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {klingStatus.is_valid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                          <span>{klingStatus.message}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Luma Dream Machine API Key */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[10px] font-mono uppercase text-zinc-400 font-medium flex items-center gap-1">
+                          <Key className="w-3 h-3 text-purple-400" />
+                          <span>Luma Dream Machine API Key</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                          <input
+                            type={showLumaKey ? 'text' : 'password'}
+                            value={lumaApiKey}
+                            onChange={(e) => handleLumaKeyChange(e.target.value)}
+                            placeholder="luma-api-key-..."
+                            className="w-full pl-3 pr-8 py-2 rounded-xl bg-studio-input border border-studio-border hover:border-studio-border-hover text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-purple-400 font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowLumaKey(!showLumaKey)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                          >
+                            {showLumaKey ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={!lumaApiKey.trim() || testProviderTokenMutation.isPending}
+                          onClick={handleTestLumaToken}
+                          className="px-3.5 py-2 rounded-xl text-xs font-bold bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+                        >
+                          {testProviderTokenMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+                          <span>Kiểm tra</span>
+                        </button>
+                      </div>
+                      {lumaStatus && (
+                        <p className={`mt-1.5 text-[11px] font-mono flex items-center gap-1.5 ${lumaStatus.is_valid ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {lumaStatus.is_valid ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                          <span>{lumaStatus.message}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 

@@ -266,6 +266,14 @@ def render_shot_video(req: RenderShotVideoRequest):
         out_video = vid_dir / f"{target_shot.id}.mp4"
         srv.log_message(f"[Motion] Đang render video clip cho phân cảnh '{req.shot_id}' ({dur:.1f}s)...")
 
+        trajectory = None
+        if req.trajectory:
+            from studio.camera_3d import Camera3DTrajectory
+            trajectory = Camera3DTrajectory(**req.trajectory)
+        elif getattr(target_shot, "camera_3d_trajectory", None):
+            from studio.camera_3d import Camera3DTrajectory
+            trajectory = Camera3DTrajectory(**target_shot.camera_3d_trajectory)
+
         render_motion_for_shot(
             image_path=img_path,
             output_path=out_video,
@@ -278,6 +286,7 @@ def render_shot_video(req: RenderShotVideoRequest):
             style=style,
             video_api_token=video_token,
             video_model=video_mdl,
+            trajectory=trajectory,
         )
 
         if audio_path.exists() and audio_path.stat().st_size > 0:
