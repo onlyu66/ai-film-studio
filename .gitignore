@@ -8,4 +8,4 @@ outputs/
 web/node_modules/
 *.tsbuildinfo
 .agent/
-
+powershell.bat
