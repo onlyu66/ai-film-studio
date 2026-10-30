@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   Film,
   Volume2,
@@ -72,6 +73,7 @@ import {
   useRenderShotVideo,
   useRemuxShotVideo,
   useAssembleMaster,
+  QUERY_KEYS,
 } from '../api/queries'
 import { getTimelineExportUrl } from '../api/studio'
 import type { StoryboardData, SelectOption } from '../types'
@@ -258,6 +260,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [draggedShotId, setDraggedShotId] = useState<string | null>(null)
   const [dragOverShotId, setDragOverShotId] = useState<string | null>(null)
 
+  const queryClient = useQueryClient()
   const updateVoiceMutation = useUpdateCharacterVoice()
   const updateShotMutation = useUpdateShot()
   const previewVoiceMutation = usePreviewVoice()
@@ -1002,6 +1005,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
             }}
             onUpdateShotDuration={(shotId, duration) => {
               updateShotMutation.mutate({ shot_id: shotId, duration })
+            }}
+            onBatchUpdateDurations={(_updates) => {
+              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
             }}
             onReorderShots={(newIds) => {
               reorderShotsMutation.mutate(newIds)

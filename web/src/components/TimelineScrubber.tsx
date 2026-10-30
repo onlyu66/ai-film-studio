@@ -15,8 +15,15 @@ import {
   Scissors,
   GripVertical,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Badge } from './ui/badge'
-import { getTimelineExportUrl } from '../api/studio'
+import { getTimelineExportUrl, snapTimelineToBeat } from '../api/studio'
+import {
+  fetchWaveformData,
+  snapShotsToBeatTimes,
+  type WaveformData,
+} from '../utils/audioWaveform'
+import AudioWaveformTrack from './AudioWaveformTrack'
 import type { Shot } from '../types'
 
 export interface TimelineScrubberProps {
@@ -24,8 +31,10 @@ export interface TimelineScrubberProps {
   onSelectShot?: (shotId: string) => void
   selectedShotId?: string | null
   onUpdateShotDuration?: (shotId: string, duration: number) => void
+  onBatchUpdateDurations?: (updates: Array<{ id: string; duration: number }>) => void
   onReorderShots?: (newShotIds: string[]) => void
   onSplitShot?: (shotId: string, splitAtSec: number) => void
+  bgmTrack?: string
 }
 
 interface TrimmingState {
@@ -41,17 +50,83 @@ export default function TimelineScrubber({
   onSelectShot,
   selectedShotId,
   onUpdateShotDuration,
+  onBatchUpdateDurations,
   onReorderShots,
   onSplitShot,
+  bgmTrack,
 }: TimelineScrubberProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [zoomScale, setZoomScale] = useState(1.0) // 0.6x - 2.5x
 
+  // Waveform & Beat-Sync States
+  const [waveformData, setWaveformData] = useState<WaveformData>({
+    duration: 30,
+    tempoBpm: 120,
+    beatTimes: [],
+    peaks: [],
+  })
+  const [showBeatGrid, setShowBeatGrid] = useState(true)
+  const [isSnapping, setIsSnapping] = useState(false)
+
   // Track Mute States
   const [isVoiceMuted, setIsVoiceMuted] = useState(false)
   const [isSfxMuted, setIsSfxMuted] = useState(false)
   const [isBgmMuted, setIsBgmMuted] = useState(false)
+
+  // Load Waveform & Beat Data when component mounts or BGM changes
+  useEffect(() => {
+    let isMounted = true
+    const activeTrack = bgmTrack || localStorage.getItem('studio_bgm_preset') || 'cinematic'
+    fetchWaveformData(activeTrack).then((data) => {
+      if (isMounted) {
+        setWaveformData(data)
+      }
+    })
+    return () => {
+      isMounted = false
+    }
+  }, [bgmTrack])
+
+  // Handle Snap-to-Beat
+  const handleSnapToBeat = async () => {
+    if (shots.length === 0) return
+    setIsSnapping(true)
+    const activeTrack = bgmTrack || localStorage.getItem('studio_bgm_preset') || 'cinematic'
+
+    try {
+      // 1. Phản hồi client-side tức thì (0ms latency)
+      if (waveformData.beatTimes && waveformData.beatTimes.length > 0) {
+        const clientSnapped = snapShotsToBeatTimes(
+          shots.map((s) => ({ id: s.id, duration: Number(s.duration) || 5.0 })),
+          waveformData.beatTimes,
+          1.5,
+          12.0
+        )
+        onBatchUpdateDurations?.(clientSnapped)
+      }
+
+      // 2. Gửi request đồng bộ lưu xuống backend và storyboard.json
+      const res = await snapTimelineToBeat({
+        project_id: 'current',
+        bgm_track: activeTrack,
+        min_shot_duration: 1.5,
+        save_to_storyboard: true,
+      })
+
+      if (res.success && res.shots) {
+        onBatchUpdateDurations?.(res.shots)
+        toast.success(
+          `Đã bắt nhịp thành công! ${res.shots.length} phân cảnh đã được khớp chính xác theo phách bài nhạc (${res.tempo_bpm} BPM).`
+        )
+      }
+    } catch (err) {
+      console.error('[SnapToBeat] Lỗi bắt nhịp:', err)
+      toast.error('Không thể bắt nhịp âm nhạc tự động. Vui lòng thử lại.')
+    } finally {
+      setIsSnapping(false)
+    }
+  }
 
   // Drag & Drop reorder state
   const [draggedShotId, setDraggedShotId] = useState<string | null>(null)
@@ -334,6 +409,22 @@ export default function TimelineScrubber({
             <Scissors className="w-3.5 h-3.5" />
             <span>Cắt Phân Cảnh (Split)</span>
           </button>
+
+          {/* Snap to Beat CTA */}
+          <button
+            type="button"
+            onClick={handleSnapToBeat}
+            disabled={isSnapping || shots.length === 0}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+              isSnapping
+                ? 'bg-purple-950/40 text-purple-300 border-purple-500/30 opacity-70 cursor-wait'
+                : 'bg-purple-500/15 hover:bg-purple-500/25 text-purple-200 border-purple-500/40 hover:border-purple-300 shadow-sm active:scale-95 cursor-pointer'
+            }`}
+            title={`Tự động co giãn thời lượng ${shots.length} phân cảnh khớp theo phách nhạc BGM (~${waveformData.tempoBpm} BPM)`}
+          >
+            <Music className={`w-3.5 h-3.5 ${isSnapping ? 'animate-spin' : ''}`} />
+            <span>{isSnapping ? 'Đang Bắt Nhịp...' : '🎵 Bắt Nhịp (Snap to Beat)'}</span>
+          </button>
         </div>
 
         {/* Right Tools: Export & Zoom */}
@@ -450,29 +541,48 @@ export default function TimelineScrubber({
           </div>
 
           {/* Track 4 Header: BGM */}
-          <div className="h-9 px-2.5 flex items-center justify-between">
+          <div className="h-10 px-2.5 flex items-center justify-between border-t border-cinema-border/40">
             <div className="flex items-center gap-1.5 min-w-0">
               <Music className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-              <span className="text-xs font-medium text-zinc-300 truncate">
-                A3: BGM
-              </span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-medium text-zinc-300 truncate">
+                  A3: BGM
+                </span>
+                <span className="text-[9px] font-mono text-purple-400 font-bold">
+                  {waveformData.tempoBpm} BPM
+                </span>
+              </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsBgmMuted(!isBgmMuted)}
-              className={`p-1 rounded transition-colors ${
-                isBgmMuted
-                  ? 'text-rose-400 hover:bg-rose-950/40'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-              }`}
-              title={isBgmMuted ? 'Bật nhạc nền' : 'Tắt nhạc nền (Mute)'}
-            >
-              {isBgmMuted ? (
-                <VolumeX className="w-3 h-3" />
-              ) : (
-                <Volume2 className="w-3 h-3" />
-              )}
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setShowBeatGrid(!showBeatGrid)}
+                className={`px-1.5 py-0.5 rounded text-[9px] font-mono transition-colors border ${
+                  showBeatGrid
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                    : 'bg-zinc-800 text-zinc-500 border-zinc-700 hover:text-zinc-300'
+                }`}
+                title={showBeatGrid ? 'Ẩn lưới nhịp phách' : 'Hiện lưới nhịp phách'}
+              >
+                Nhịp
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsBgmMuted(!isBgmMuted)}
+                className={`p-1 rounded transition-colors ${
+                  isBgmMuted
+                    ? 'text-rose-400 hover:bg-rose-950/40'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
+                }`}
+                title={isBgmMuted ? 'Bật nhạc nền' : 'Tắt nhạc nền (Mute)'}
+              >
+                {isBgmMuted ? (
+                  <VolumeX className="w-3 h-3" />
+                ) : (
+                  <Volume2 className="w-3 h-3" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -690,29 +800,50 @@ export default function TimelineScrubber({
               })}
             </div>
 
-            {/* Track 4: Dynamic Mood BGM */}
+            {/* Track 4: Dynamic Mood BGM with Real Waveform & Beat Markers */}
             <div
-              className={`h-9 flex items-stretch transition-opacity ${
+              className={`h-10 flex items-stretch border border-purple-900/40 rounded-md bg-purple-950/20 relative overflow-hidden transition-opacity ${
                 isBgmMuted ? 'opacity-35 grayscale' : ''
               }`}
+              style={{ width: `${timelineWidth}px` }}
             >
-              {shotTimeline.map(({ shot, duration }) => {
-                const widthPx = duration * pxPerSec
-                const mood = String(shot.mood || 'cinematic')
+              {/* Audio Waveform Canvas Layer */}
+              <div className="absolute inset-0 pointer-events-none">
+                <AudioWaveformTrack
+                  peaks={waveformData.peaks}
+                  beatTimes={waveformData.beatTimes}
+                  totalDuration={totalDuration}
+                  timelineWidth={timelineWidth}
+                  playheadPositionPx={playheadPositionPx}
+                  color="purple"
+                  showBeatMarkers={showBeatGrid}
+                  height={38}
+                />
+              </div>
 
-                return (
-                  <div
-                    key={shot.id}
-                    style={{ width: `${widthPx}px` }}
-                    className="rounded-md border border-purple-800/30 bg-purple-950/20 px-1.5 py-0.5 flex items-center justify-center text-purple-300 font-mono text-[9px] shrink-0 font-medium"
-                  >
-                    <span className="flex items-center gap-1 truncate">
-                      <Music className="w-2.5 h-2.5 text-purple-400" />
-                      <span>{mood}</span>
-                    </span>
-                  </div>
-                )
-              })}
+              {/* Shot markers overlay */}
+              <div className="absolute inset-0 flex items-stretch pointer-events-none">
+                {shotTimeline.map(({ shot, duration }, idx) => {
+                  const widthPx = duration * pxPerSec
+                  const mood = String(shot.mood || 'cinematic')
+
+                  return (
+                    <div
+                      key={shot.id}
+                      style={{ width: `${widthPx}px` }}
+                      className="border-r border-purple-500/30 px-1.5 py-0.5 flex items-center justify-between text-purple-300 font-mono text-[9px] shrink-0 font-medium bg-purple-950/20 backdrop-blur-[1px]"
+                    >
+                      <span className="flex items-center gap-1 truncate opacity-80">
+                        <Music className="w-2.5 h-2.5 text-purple-400 shrink-0" />
+                        <span className="truncate">#{idx + 1} {mood}</span>
+                      </span>
+                      <span className="text-[8px] text-purple-400/80 font-mono">
+                        {duration.toFixed(1)}s
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
