@@ -813,6 +813,7 @@ export default function TimelineScrubber({
                   peaks={waveformData.peaks}
                   beatTimes={waveformData.beatTimes}
                   totalDuration={totalDuration}
+                  audioDuration={waveformData.duration}
                   timelineWidth={timelineWidth}
                   playheadPositionPx={playheadPositionPx}
                   color="purple"

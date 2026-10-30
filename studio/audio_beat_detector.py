@@ -3,21 +3,24 @@ from typing import Union, List, Dict, Any, Optional
 import math
 import statistics
 
-def extract_audio_peaks(audio_path: Union[str, Path], num_peaks: int = 300) -> List[float]:
+def extract_audio_peaks(audio_input: Any, num_peaks: int = 300) -> List[float]:
     """
-    Trích xuất mảng đỉnh biên độ (normalized peaks [0.0, 1.0]) từ file audio
+    Trích xuất mảng đỉnh biên độ (normalized peaks [0.0, 1.0]) từ file audio hoặc AudioSegment
     dùng cho biểu đồ dạng sóng âm (waveform).
     """
-    path_obj = Path(audio_path)
-    if not path_obj.exists():
-        return [0.0] * num_peaks
-
     from pydub import AudioSegment
 
-    try:
-        sound = AudioSegment.from_file(str(path_obj))
-    except Exception:
-        return [0.0] * num_peaks
+    if isinstance(audio_input, AudioSegment):
+        sound = audio_input
+    else:
+        path_obj = Path(audio_input)
+        if not path_obj.exists():
+            return [0.0] * num_peaks
+
+        try:
+            sound = AudioSegment.from_file(str(path_obj))
+        except Exception:
+            return [0.0] * num_peaks
 
     samples = sound.get_array_of_samples()
     total_samples = len(samples)
@@ -164,8 +167,14 @@ def detect_beats(
                 raw_bpm /= 2
             tempo_bpm = int(round(raw_bpm))
 
-    # Trích xuất 200 peaks để hiển thị biểu đồ
-    peaks = extract_audio_peaks(audio_path, num_peaks=200)
+    # Nếu không phát hiện phách nhịp rõ ràng (nhạc tĩnh / ambient drone), sinh lưới phách đều
+    if not beat_times and duration_sec > 0:
+        step = round(60.0 / max(60, tempo_bpm), 2)
+        count = max(1, int(duration_sec / step))
+        beat_times = [round(i * step, 2) for i in range(1, count + 1)]
+
+    # Trích xuất 200 peaks từ segment âm thanh đã nạp sẵn trong RAM (không decode lại)
+    peaks = extract_audio_peaks(sound, num_peaks=200)
 
     return {
         "duration": duration_sec,

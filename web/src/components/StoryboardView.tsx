@@ -999,6 +999,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         {shots.length > 0 && (
           <TimelineScrubber
             shots={shots as any}
+            bgmTrack={(storyboard as any)?.bgm_preset || 'cinematic'}
             onSelectShot={(shotId) => {
               const s = shots.find((x) => x.id === shotId)
               if (s) handleOpenEditShot(s)
@@ -1006,8 +1007,20 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
             onUpdateShotDuration={(shotId, duration) => {
               updateShotMutation.mutate({ shot_id: shotId, duration })
             }}
-            onBatchUpdateDurations={(_updates) => {
-              queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+            onBatchUpdateDurations={(updates) => {
+              queryClient.setQueryData(QUERY_KEYS.storyboard, (old: any) => {
+                if (!old || !old.shots) return old
+                const durMap = new Map(updates.map((u) => [u.id, u.duration]))
+                return {
+                  ...old,
+                  shots: old.shots.map((s: any) =>
+                    durMap.has(s.id) ? { ...s, duration: durMap.get(s.id)! } : s
+                  ),
+                }
+              })
+              setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+              }, 400)
             }}
             onReorderShots={(newIds) => {
               reorderShotsMutation.mutate(newIds)

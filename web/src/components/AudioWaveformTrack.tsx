@@ -4,6 +4,7 @@ export interface AudioWaveformTrackProps {
   peaks: number[]
   beatTimes: number[]
   totalDuration: number
+  audioDuration?: number
   timelineWidth: number
   playheadPositionPx?: number
   color?: 'cyan' | 'purple' | 'amber'
@@ -16,6 +17,7 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
   peaks,
   beatTimes,
   totalDuration,
+  audioDuration,
   timelineWidth,
   playheadPositionPx = 0,
   color = 'purple',
@@ -35,12 +37,16 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     const displayWidth = Math.max(100, Math.floor(timelineWidth))
     const displayHeight = Math.max(20, Math.floor(height))
 
-    canvas.width = displayWidth * dpr
-    canvas.height = displayHeight * dpr
-    canvas.style.width = `${displayWidth}px`
-    canvas.style.height = `${displayHeight}px`
+    const targetW = displayWidth * dpr
+    const targetH = displayHeight * dpr
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW
+      canvas.height = targetH
+      canvas.style.width = `${displayWidth}px`
+      canvas.style.height = `${displayHeight}px`
+    }
 
-    ctx.scale(dpr, dpr)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, displayWidth, displayHeight)
 
     if (isLoading) {
@@ -67,16 +73,25 @@ export const AudioWaveformTrack: React.FC<AudioWaveformTrackProps> = ({
     }
 
     // 1. Vẽ các cột sóng âm đối xứng (Mirror Waveform)
+    // Căn chỉnh chính xác theo trục thời gian thực tế của bài nhạc và timeline
     if (peaks && peaks.length > 0) {
       const barCount = Math.min(peaks.length, Math.floor(displayWidth / 3))
       const step = displayWidth / barCount
       const barWidth = Math.max(1.5, step * 0.65)
+      const baseAudioDur = audioDuration && audioDuration > 0 ? audioDuration : (totalDuration || 30.0)
 
       for (let i = 0; i < barCount; i++) {
-        const peakIndex = Math.floor((i / barCount) * peaks.length)
+        const x = i * step
+        // Quy đổi tọa độ x trên timeline ra giây thực tế
+        const timelineSec = (x / displayWidth) * totalDuration
+        const peakSec = timelineSec % baseAudioDur
+        const peakIndex = Math.min(
+          peaks.length - 1,
+          Math.max(0, Math.floor((peakSec / baseAudioDur) * peaks.length))
+        )
+
         const peakVal = Math.max(0.08, Math.min(1.0, peaks[peakIndex] || 0.1))
         const barH = peakVal * maxBarH
-        const x = i * step
 
         // Phân biệt trạng thái đã phát qua Playhead
         const isPlayed = x <= playheadPositionPx

@@ -65,3 +65,17 @@ def test_calculate_snap_to_beats_empty_beats_fallback():
     assert len(snapped) == 2
     assert snapped[0]["duration"] == 4.0
     assert snapped[1]["duration"] == 5.0
+
+def test_detect_beats_ambient_drone_generates_grid(tmp_path):
+    from pydub.generators import Sine
+    # Tạo 3 giây âm thanh drone đơn điệu hoàn toàn không có tiếng trống gõ
+    drone = Sine(220).to_audio_segment(duration=3000)
+    test_audio = tmp_path / "ambient_drone.mp3"
+    drone.export(str(test_audio), format="mp3")
+
+    result = detect_beats(test_audio)
+    assert result["duration"] >= 2.9
+    # Ambient drone phải tự động sinh beat grid đều thay vì trả về mảng rỗng
+    assert len(result["beat_times"]) > 0
+    assert result["tempo_bpm"] > 0
+

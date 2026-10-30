@@ -690,11 +690,14 @@ def api_snap_timeline_to_beats(req: SnapToBeatRequest):
         if not full_storyboard:
             full_storyboard = safe_read_json(storyboard_path, default={})
         if "shots" in full_storyboard:
-            shot_dur_map = {s["id"]: s["duration"] for s in snapped_shots}
+            shot_dur_map = {s.get("id"): s.get("duration") for s in snapped_shots if s.get("id")}
             for s in full_storyboard["shots"]:
-                if s["id"] in shot_dur_map:
-                    s["duration"] = shot_dur_map[s["id"]]
-            atomic_write_json(storyboard_path, full_storyboard, backup=False)
+                s_id = s.get("id")
+                if s_id and s_id in shot_dur_map:
+                    s["duration"] = shot_dur_map[s_id]
+            atomic_write_json(storyboard_path, full_storyboard, backup=True)
+            if hasattr(srv, "invalidate_storyboard_cache"):
+                srv.invalidate_storyboard_cache()
 
     total_duration = round(sum(float(s.get("duration", 0)) for s in snapped_shots), 2)
     return {

@@ -100,7 +100,11 @@ print("Sonner Toast Check:", eval_toast)
 ss_res = send_cmd("Page.captureScreenshot", {"format": "png"})
 if "data" in ss_res:
     img_data = base64.b64decode(ss_res["data"])
-    out_path = Path("/home/hieunv1/.gemini/antigravity-cli/brain/edfe7aad-59b7-4f89-ac33-6efb6125efaf/waveform_beat_sync_verified.png")
+    out_dir = Path("/home/hieunv1/.gemini/antigravity-cli/brain/edfe7aad-59b7-4f89-ac33-6efb6125efaf")
+    if not out_dir.exists():
+        out_dir = Path(__file__).parent / "screenshots"
+        out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / "waveform_beat_sync_verified.png"
     out_path.write_bytes(img_data)
     print("Screenshot saved to:", out_path)
 
