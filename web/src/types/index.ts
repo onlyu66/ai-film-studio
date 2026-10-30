@@ -401,6 +401,7 @@ export interface ReframeRequestPayload {
   project_id: string
   mode: string
   burn_subtitles?: boolean
+  subtitle_style?: string
 }
 
 export interface ReframeResultResponse {

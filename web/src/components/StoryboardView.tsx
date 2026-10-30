@@ -34,6 +34,7 @@ import {
   Eye,
   Award,
   Copy,
+  GripVertical,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -246,6 +247,11 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [newShotLighting, setNewShotLighting] = useState('chiaroscuro')
   const [newShotMood, setNewShotMood] = useState('epic')
   const [newShotEmotion, setNewShotEmotion] = useState('neutral')
+  const [insertAfterShotId, setInsertAfterShotId] = useState<string | null>(null)
+
+  // Drag and drop reordering state
+  const [draggedShotId, setDraggedShotId] = useState<string | null>(null)
+  const [dragOverShotId, setDragOverShotId] = useState<string | null>(null)
 
   const updateVoiceMutation = useUpdateCharacterVoice()
   const updateShotMutation = useUpdateShot()
@@ -590,10 +596,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         lighting: newShotLighting || undefined,
         mood: newShotMood || undefined,
         emotion: newShotEmotion || undefined,
+        after_shot_id: insertAfterShotId || undefined,
       },
       {
         onSuccess: () => {
           setIsAddingShot(false)
+          setInsertAfterShotId(null)
           setNewShotDialogue('')
           setNewShotPrompt('')
           setNewShotSfx('')
@@ -807,7 +815,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               <>
                 <button
                   type="button"
-                  onClick={() => setIsAddingShot(true)}
+                  onClick={() => {
+                    setInsertAfterShotId(null)
+                    setIsAddingShot(true)
+                  }}
                   className="px-3 py-1.5 rounded-lg bg-cinema-amber hover:bg-amber-400 text-zinc-950 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -1232,10 +1243,50 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               return (
                 <motion.div
                   key={shot.id}
-                  whileHover={{ y: -4 }}
+                  whileHover={!draggedShotId ? { y: -4 } : undefined}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className={`group rounded-2xl bg-cinema-card border overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-black/60 transition-[border-color,box-shadow] duration-200 flex flex-col relative ${
-                    shot.is_approved
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    if (draggedShotId && draggedShotId !== shot.id) {
+                      setDragOverShotId(shot.id)
+                    }
+                  }}
+                  onDragLeave={() => {
+                    if (dragOverShotId === shot.id) {
+                      setDragOverShotId(null)
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault()
+                    const sourceId = e.dataTransfer.getData('text/plain') || draggedShotId
+                    if (!sourceId || sourceId === shot.id) {
+                      setDraggedShotId(null)
+                      setDragOverShotId(null)
+                      return
+                    }
+
+                    const sourceIdx = rawShots.findIndex((s) => s.id === sourceId)
+                    const targetIdx = rawShots.findIndex((s) => s.id === shot.id)
+                    if (sourceIdx === -1 || targetIdx === -1) {
+                      setDraggedShotId(null)
+                      setDragOverShotId(null)
+                      return
+                    }
+
+                    const newShots = [...rawShots]
+                    const [moved] = newShots.splice(sourceIdx, 1)
+                    newShots.splice(targetIdx, 0, moved)
+
+                    reorderShotsMutation.mutate(newShots.map((s) => s.id))
+                    setDraggedShotId(null)
+                    setDragOverShotId(null)
+                  }}
+                  className={`group rounded-2xl bg-cinema-card border overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-black/60 transition-[border-color,box-shadow,transform,opacity] duration-200 flex flex-col relative ${
+                    draggedShotId === shot.id
+                      ? 'opacity-40 scale-[0.98] border-dashed border-amber-500/60 ring-2 ring-amber-500/20'
+                      : dragOverShotId === shot.id
+                      ? 'border-amber-400 ring-2 ring-amber-400/80 shadow-2xl shadow-amber-500/20 -translate-y-1'
+                      : shot.is_approved
                       ? 'border-cinema-border hover:border-emerald-500/50 hover:shadow-emerald-500/5'
                       : 'border-cinema-border hover:border-amber-500/50 hover:shadow-amber-500/5'
                   }`}
@@ -1250,8 +1301,24 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   />
                   {/* Top Bar: Sequence Number, Act/Scene, Up/Down Reorder & Approval Toggle */}
                   <div className="px-3.5 py-2.5 flex items-center justify-between gap-2 border-b border-cinema-border/70 bg-cinema-deck/60">
-                    {/* Left: Shot ID & Act/Scene */}
-                    <div className="flex items-center gap-2 min-w-0">
+                    {/* Left: Drag Grip Handle + Shot ID & Act/Scene */}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', shot.id)
+                          e.dataTransfer.effectAllowed = 'move'
+                          setDraggedShotId(shot.id)
+                        }}
+                        onDragEnd={() => {
+                          setDraggedShotId(null)
+                          setDragOverShotId(null)
+                        }}
+                        className="p-1 -ml-1 rounded-md hover:bg-zinc-800 text-zinc-500 hover:text-amber-400 cursor-grab active:cursor-grabbing transition-colors shrink-0"
+                        title="Kéo & thả để sắp xếp lại thứ tự phân cảnh (Drag & Drop)"
+                      >
+                        <GripVertical className="w-3.5 h-3.5" />
+                      </div>
                       <span className="font-mono font-bold text-xs text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
                         #{String(index + 1).padStart(2, '0')}
                       </span>
@@ -1260,9 +1327,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       </span>
                     </div>
 
-                    {/* Right: Quick Reorder & Approval */}
+                    {/* Right: Quick Reorder, Insert After & Approval */}
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {/* Reorder Buttons */}
+                      {/* Reorder Buttons & Insert After */}
                       <div className="flex items-center bg-cinema-canvas/90 rounded-lg border border-cinema-border/80 p-0.5">
                         <button
                           type="button"
@@ -1281,6 +1348,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           title="Di chuyển phân cảnh xuống sau"
                         >
                           <ArrowDown className="w-3 h-3" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInsertAfterShotId(shot.id)
+                            setIsAddingShot(true)
+                          }}
+                          className="w-5 h-5 flex items-center justify-center text-zinc-400 hover:text-amber-300 rounded hover:bg-cinema-deck transition-colors cursor-pointer ml-0.5 border-l border-zinc-800"
+                          title={`Chèn phân cảnh mới ngay sau cảnh #${String(index + 1).padStart(2, '0')}`}
+                        >
+                          <Plus className="w-3 h-3" />
                         </button>
                       </div>
 
@@ -2779,7 +2857,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => !addShotMutation.isPending && setIsAddingShot(false)}
+            onClick={() => {
+              if (!addShotMutation.isPending) {
+                setIsAddingShot(false)
+                setInsertAfterShotId(null)
+              }
+            }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md cursor-pointer"
           >
             <motion.div
@@ -2795,15 +2878,26 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     <Plus className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-zinc-100">Chèn thêm phân cảnh mới</h3>
-                    <span className="text-[11px] text-zinc-400">Tạo một shot quay tùy chỉnh bổ sung vào kịch bản</span>
+                    <h3 className="text-sm font-bold text-zinc-100">
+                      {insertAfterShotId
+                        ? `Chèn phân cảnh sau cảnh #${String((shots.findIndex((s) => s.id === insertAfterShotId) + 1) || '').padStart(2, '0')}`
+                        : 'Thêm phân cảnh mới'}
+                    </h3>
+                    <span className="text-[11px] text-zinc-400">
+                      {insertAfterShotId
+                        ? 'Phân cảnh mới sẽ được chèn trực tiếp vào vị trí này trong kịch bản'
+                        : 'Tạo một shot quay tùy chỉnh bổ sung vào kịch bản'}
+                    </span>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   disabled={addShotMutation.isPending}
-                  onClick={() => setIsAddingShot(false)}
+                  onClick={() => {
+                    setIsAddingShot(false)
+                    setInsertAfterShotId(null)
+                  }}
                   className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-studio-card transition-colors cursor-pointer"
                 >
                   <X className="w-5 h-5" />

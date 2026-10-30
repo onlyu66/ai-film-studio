@@ -56,6 +56,7 @@ export default function AutoReframeModal({
 }: AutoReframeModalProps) {
   const [selectedMode, setSelectedMode] = useState<string>('blur_padding')
   const [burnSubtitles, setBurnSubtitles] = useState<boolean>(true)
+  const [subtitleStyle, setSubtitleStyle] = useState<string>('mrbeast')
   const [reframeResult, setReframeResult] = useState<ReframeResultResponse | null>(null)
   const [videoError, setVideoError] = useState<boolean>(false)
 
@@ -79,6 +80,7 @@ export default function AutoReframeModal({
         project_id: projectId,
         mode: selectedMode,
         burn_subtitles: burnSubtitles,
+        subtitle_style: subtitleStyle,
       },
       {
         onSuccess: (data) => {
@@ -179,25 +181,80 @@ export default function AutoReframeModal({
               </div>
 
               {/* Safe-Zone Subtitle Option */}
-              <div className="p-3.5 rounded-xl bg-studio-deck border border-studio-border flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <Type className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-zinc-200">
-                      Khắc Phụ Đề Chuẩn Vùng An Toàn (Safe Zone)
-                    </div>
-                    <div className="text-[10px] text-zinc-400">
-                      Tự động dịch vị trí lên cao để không bị che bởi nút Like/Share của TikTok UI
+              <div className="p-3.5 rounded-xl bg-studio-deck border border-studio-border space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <Type className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-zinc-200">
+                        Khắc Phụ Đề Chuẩn Vùng An Toàn (Safe Zone)
+                      </div>
+                      <div className="text-[10px] text-zinc-400">
+                        Tự động căn lề cao để không bị che bởi thanh tương tác TikTok / Shorts
+                      </div>
                     </div>
                   </div>
+
+                  <input
+                    type="checkbox"
+                    checked={burnSubtitles}
+                    onChange={(e) => setBurnSubtitles(e.target.checked)}
+                    className="w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
+                  />
                 </div>
 
-                <input
-                  type="checkbox"
-                  checked={burnSubtitles}
-                  onChange={(e) => setBurnSubtitles(e.target.checked)}
-                  className="w-4 h-4 accent-amber-500 rounded cursor-pointer shrink-0"
-                />
+                {/* Subtitle Style Chooser if enabled */}
+                {burnSubtitles && (
+                  <div className="pt-2 border-t border-zinc-800/80">
+                    <label className="block text-[11px] font-semibold text-zinc-300 mb-2">
+                      Phong Cách Phụ Đề Viral (Subtitle Typography):
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {[
+                        {
+                          id: 'mrbeast',
+                          name: '⚡ MrBeast Yellow',
+                          sub: 'Vàng viền đen đậm, viral cao',
+                          badge: 'CHỮ VÀNG',
+                          badgeStyle: 'bg-yellow-400 text-black font-black',
+                        },
+                        {
+                          id: 'neon_cyan',
+                          name: '💎 Neon Cyan',
+                          sub: 'Xanh huỳnh quang hiện đại',
+                          badge: 'CHỮ CYAN',
+                          badgeStyle: 'bg-cyan-400 text-black font-black',
+                        },
+                        {
+                          id: 'cinema_white',
+                          name: '🎬 Cinema White',
+                          sub: 'Trắng thanh lịch tối giản',
+                          badge: 'CHỮ TRẮNG',
+                          badgeStyle: 'bg-white text-black font-bold',
+                        },
+                      ].map((style) => (
+                        <button
+                          key={style.id}
+                          type="button"
+                          onClick={() => setSubtitleStyle(style.id)}
+                          className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
+                            subtitleStyle === style.id
+                              ? 'bg-amber-500/15 border-amber-400/80 shadow-sm shadow-amber-500/10'
+                              : 'bg-zinc-900 border-zinc-800 hover:border-zinc-700 text-zinc-400'
+                          }`}
+                        >
+                          <div>
+                            <div className="text-xs font-bold text-zinc-200">{style.name}</div>
+                            <div className="text-[10px] text-zinc-500 leading-tight mt-0.5">{style.sub}</div>
+                          </div>
+                          <div className={`px-2 py-0.5 rounded text-[10px] text-center tracking-wider w-fit mt-1 ${style.badgeStyle}`}>
+                            {style.badge}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Start Button */}

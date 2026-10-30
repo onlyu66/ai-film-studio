@@ -24,6 +24,13 @@ REFRAME_PRESETS: Dict[str, Dict[str, Any]] = {
 }
 
 
+SUBTITLE_STYLES: Dict[str, str] = {
+    "mrbeast": "FontName=Arial,FontSize=26,Bold=1,PrimaryColour=&H0000FFFF&,OutlineColour=&H00000000&,Outline=3.5,Shadow=2,MarginV=160",
+    "neon_cyan": "FontName=Arial,FontSize=24,Bold=1,PrimaryColour=&H00FFFF00&,OutlineColour=&H00000000&,Outline=2.5,Shadow=1.5,MarginV=150",
+    "cinema_white": "FontName=Helvetica,FontSize=20,Bold=0,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00000000&,Outline=2,Shadow=1,MarginV=140",
+}
+
+
 def get_reframe_presets() -> List[Dict[str, Any]]:
     """Return list of available reframe presets."""
     return list(REFRAME_PRESETS.values())
@@ -32,6 +39,7 @@ def get_reframe_presets() -> List[Dict[str, Any]]:
 def build_reframe_filtergraph(
     mode: str = "blur_padding",
     subtitle_path: Optional[Path] = None,
+    subtitle_style: str = "mrbeast",
 ) -> Tuple[str, bool]:
     """
     Build FFmpeg filtergraph for vertical 9:16 (1080x1920).
@@ -41,7 +49,8 @@ def build_reframe_filtergraph(
     sub_filter = ""
     if subtitle_path:
         sub_esc = str(subtitle_path).replace("\\", "/").replace(":", "\\:")
-        sub_filter = f",subtitles='{sub_esc}':force_style='MarginV=140,FontSize=20'"
+        style_force = SUBTITLE_STYLES.get(subtitle_style, SUBTITLE_STYLES["mrbeast"])
+        sub_filter = f",subtitles='{sub_esc}':force_style='{style_force}'"
 
     if mode == "blur_padding":
         base_fg = (
@@ -52,7 +61,8 @@ def build_reframe_filtergraph(
         )
         if sub_filter:
             sub_esc = str(subtitle_path).replace("\\", "/").replace(":", "\\:")
-            base_fg += f"[out_base];[out_base]subtitles='{sub_esc}':force_style='MarginV=140,FontSize=20'[outv]"
+            style_force = SUBTITLE_STYLES.get(subtitle_style, SUBTITLE_STYLES["mrbeast"])
+            base_fg += f"[out_base];[out_base]subtitles='{sub_esc}':force_style='{style_force}'[outv]"
         else:
             base_fg += "[outv]"
         return base_fg, True
@@ -73,6 +83,7 @@ def reframe_video(
     output_path: Path,
     mode: str = "blur_padding",
     subtitle_path: Optional[Path] = None,
+    subtitle_style: str = "mrbeast",
     hardware_accel: str = "auto",
 ) -> Path:
     """
@@ -82,7 +93,11 @@ def reframe_video(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    filter_str, is_complex = build_reframe_filtergraph(mode, subtitle_path=subtitle_path)
+    filter_str, is_complex = build_reframe_filtergraph(
+        mode,
+        subtitle_path=subtitle_path,
+        subtitle_style=subtitle_style,
+    )
 
     encoder_name, enc_flags = get_ffmpeg_video_encoder(hardware_accel)
 

@@ -53,6 +53,7 @@ class ReframeRequest(BaseModel):
     project_id: str = "current"
     mode: str = "smart_center"
     burn_subtitles: bool = True
+    subtitle_style: Optional[str] = "mrbeast"
 
 class EnhanceShotRequest(BaseModel):
     shot_id: str
@@ -379,6 +380,7 @@ def api_create_reframe(req: ReframeRequest):
             output_path=out_file,
             mode=req.mode,
             subtitle_path=subtitle_path,
+            subtitle_style=getattr(req, "subtitle_style", "mrbeast") or "mrbeast",
         )
         rel_url = f"/api/outputs/projects/{req.project_id}/{out_file.name}" if req.project_id != "current" and "outputs/projects" in str(project_dir) else f"/api/outputs/{out_file.name}"
         return {
