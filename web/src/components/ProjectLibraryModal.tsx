@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Film, X, Trash2, Download, Play, Calendar, Clock, MonitorPlay, Loader2, Share2, Clapperboard, Globe } from 'lucide-react'
 import { useProjects, useDeleteProject, useDubProject } from '../api/queries'
@@ -56,12 +57,12 @@ export default function ProjectLibraryModal({
       },
       {
         onSuccess: (data) => {
-          alert(`Đã lồng tiếng thành công sang ${dubTargetLang.toUpperCase()}! Bạn có thể xem ngay phiên bản mới.`)
+          toast.success(`Đã lồng tiếng thành công sang ${dubTargetLang.toUpperCase()}!`)
           setDubbingProject(null)
           onPlayMovie(data.video_url, data.srt_url)
         },
         onError: (err: any) => {
-          alert(`Lỗi lồng tiếng: ${err?.message || 'Không thể lồng tiếng'}`)
+          toast.error(`Lỗi lồng tiếng: ${err?.message || 'Không thể lồng tiếng'}`)
         },
       }
     )
@@ -70,7 +71,10 @@ export default function ProjectLibraryModal({
   const handleDelete = (p: ProjectItem) => {
     if (!window.confirm(`Bạn có chắc muốn xóa vĩnh viễn bộ phim "${p.title}" khỏi thư viện?`)) return
     deleteProjectMutation.mutate(p.id, {
-      onError: (err: any) => alert(err.message || 'Lỗi khi xóa dự án'),
+      onSuccess: () => {
+        toast.success(`Đã xóa bộ phim "${p.title}" khỏi thư viện!`)
+      },
+      onError: (err: any) => toast.error(err.message || 'Lỗi khi xóa dự án'),
     })
   }
 

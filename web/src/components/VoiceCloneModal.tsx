@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -15,6 +16,7 @@ import {
   Volume2,
 } from 'lucide-react'
 import { useCloneVoice, usePreviewVoiceSpeech } from '../api/queries'
+import { voiceCloneSchema } from '../schemas/formSchemas'
 import type { VoiceProfileItem } from '../types'
 
 export interface VoiceCloneModalProps {
@@ -140,7 +142,7 @@ export default function VoiceCloneModal({
         setRecordDuration((prev) => prev + 1)
       }, 1000)
     } catch (err: any) {
-      alert(`Không thể truy cập microphone: ${err?.message || 'Quyền bị từ chối'}`)
+      toast.error(`Không thể truy cập microphone: ${err?.message || 'Quyền bị từ chối'}`)
     }
   }
 
@@ -178,10 +180,11 @@ export default function VoiceCloneModal({
             audio.play().catch(() => setIsPlayingPreview(false))
             audio.onended = () => setIsPlayingPreview(false)
             audio.onerror = () => setIsPlayingPreview(false)
+            toast.success('Đang phát thử mẫu giọng đọc AI...')
           }
         },
         onError: (err: any) => {
-          alert(`Lỗi phát thử giọng: ${err?.message || 'Không thể tạo âm thanh'}`)
+          toast.error(`Lỗi phát thử giọng: ${err?.message || 'Không thể tạo âm thanh'}`)
         },
       }
     )
@@ -209,14 +212,25 @@ export default function VoiceCloneModal({
     }
   }
 
-  // Clone Submit
+  // Clone Submit with Zod Schema Validation
   const handleCloneSubmit = () => {
-    if (!voiceName.trim()) {
-      alert('Vui lòng nhập tên cho giọng nhân bản')
+    const validation = voiceCloneSchema.safeParse({
+      name: voiceName.trim(),
+      provider,
+      gender,
+      lang,
+      description: description.trim() || undefined,
+      apiKey: apiKey.trim() || undefined,
+      apiUrl: apiUrl.trim() || undefined,
+    })
+
+    if (!validation.success) {
+      toast.error(validation.error.issues[0]?.message || 'Dữ liệu không hợp lệ')
       return
     }
+
     if (!audioBase64) {
-      alert('Vui lòng tải lên hoặc thu âm mẫu giọng nói (10s - 60s)')
+      toast.warning('Vui lòng tải lên hoặc thu âm mẫu giọng nói (10s - 60s)')
       return
     }
 
@@ -238,11 +252,12 @@ export default function VoiceCloneModal({
       },
       {
         onSuccess: (clonedVoice) => {
+          toast.success(`Nhân bản thành công giọng "${clonedVoice.name}"!`)
           onVoiceCloned(clonedVoice)
           onClose()
         },
         onError: (err: any) => {
-          alert(`Lỗi nhân bản giọng nói: ${err?.message || 'Không thể xử lý'}`)
+          toast.error(`Lỗi nhân bản giọng nói: ${err?.message || 'Không thể xử lý'}`)
         },
       }
     )

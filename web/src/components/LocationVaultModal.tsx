@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import {
   X,
   Sparkles,
@@ -24,6 +27,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { VaultLocationItem, SaveVaultLocationPayload } from '../types'
+import { locationVaultSchema, LocationVaultFormValues } from '../schemas/formSchemas'
 import {
   useVaultLocations,
   useSaveVaultLocation,
@@ -110,13 +114,26 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
   const [generatingPreviewId, setGeneratingPreviewId] = useState<string | null>(null)
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
 
-  // Form State
-  const [newName, setNewName] = useState('')
-  const [newDna, setNewDna] = useState('')
-  const [newLighting, setNewLighting] = useState('Cinematic chiaroscuro, atmospheric rim lighting')
-  const [newPalette, setNewPalette] = useState('Deep teal, warm amber, obsidian black')
-  const [newSeed, setNewSeed] = useState(42)
-  const [newTags, setNewTags] = useState('cinema, interior')
+  // Form State with React Hook Form & Zod
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<LocationVaultFormValues>({
+    resolver: zodResolver(locationVaultSchema),
+    defaultValues: {
+      name: '',
+      environment_dna: '',
+      lighting: 'Cinematic chiaroscuro, atmospheric rim lighting',
+      color_palette: 'Deep teal, warm amber, obsidian black',
+      seed: 42,
+      tags: 'cinema, interior',
+    },
+  })
+
   const [newPreviewBase64, setNewPreviewBase64] = useState<string | null>(null)
   const [newPreviewUrl, setNewPreviewUrl] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -125,6 +142,7 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
   const handleCopyText = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
     setCopiedId(id)
+    toast.success('Đã sao chép prompt bối cảnh vào bộ nhớ tạm!')
     setTimeout(() => setCopiedId(null), 2000)
   }
 
@@ -142,27 +160,31 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
   }, [isOpen, onClose, lightboxImage])
 
   const applyPreset = (preset: typeof LOCATION_PRESETS[0]) => {
-    setNewName(preset.name)
-    setNewDna(preset.dna)
-    setNewLighting(preset.lighting)
-    setNewPalette(preset.palette)
-    setNewTags(preset.tags)
+    setValue('name', preset.name, { shouldValidate: true })
+    setValue('environment_dna', preset.dna, { shouldValidate: true })
+    setValue('lighting', preset.lighting, { shouldValidate: true })
+    setValue('color_palette', preset.palette, { shouldValidate: true })
+    setValue('tags', preset.tags, { shouldValidate: true })
     setFormError(null)
   }
 
   const handleRandomSeed = () => {
-    setNewSeed(Math.floor(Math.random() * 90000) + 1000)
+    setValue('seed', Math.floor(Math.random() * 90000) + 1000, { shouldValidate: true })
   }
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      setFormError('Vui lòng chọn tệp hình ảnh hợp lệ (PNG, JPG, WebP).')
+      const msg = 'Vui lòng chọn tệp hình ảnh hợp lệ (PNG, JPG, WebP).'
+      setFormError(msg)
+      toast.error(msg)
       return
     }
     if (file.size > 8 * 1024 * 1024) {
-      setFormError('Kích thước ảnh không được vượt quá 8MB.')
+      const msg = 'Kích thước ảnh không được vượt quá 8MB.'
+      setFormError(msg)
+      toast.error(msg)
       return
     }
 
@@ -176,17 +198,7 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
     reader.readAsDataURL(file)
   }
 
-  const handleSaveLocation = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newName.trim()) {
-      setFormError('Vui lòng nhập tên bối cảnh / địa điểm.')
-      return
-    }
-    if (!newDna.trim()) {
-      setFormError('Vui lòng nhập mô tả kiến trúc và môi trường (Environment DNA).')
-      return
-    }
-
+  const onSubmitLocation = async (data: LocationVaultFormValues) => {
     setIsSubmitting(true)
     setFormError(null)
 
@@ -203,33 +215,42 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
         previewUrl = uploadRes.preview_url
       }
 
-      const tagsArray = newTags
+      const tagsArray = data.tags
         .split(',')
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean)
 
       const payload: SaveVaultLocationPayload = {
         id: locId,
-        name: newName.trim(),
-        environment_dna: newDna.trim(),
-        lighting: newLighting.trim(),
-        color_palette: newPalette.trim(),
-        seed: newSeed,
+        name: data.name.trim(),
+        environment_dna: data.environment_dna.trim(),
+        lighting: data.lighting.trim(),
+        color_palette: data.color_palette.trim(),
+        seed: data.seed,
         preview_url: previewUrl || undefined,
         tags: tagsArray.length > 0 ? tagsArray : ['custom'],
       }
 
       const res = await saveMutation.mutateAsync(payload)
       if (res.success) {
+        toast.success(`Đã lưu bối cảnh "${data.name}" vào kho Vault thành công!`)
         // Reset form
-        setNewName('')
-        setNewDna('')
+        reset({
+          name: '',
+          environment_dna: '',
+          lighting: 'Cinematic chiaroscuro, atmospheric rim lighting',
+          color_palette: 'Deep teal, warm amber, obsidian black',
+          seed: Math.floor(Math.random() * 90000) + 1000,
+          tags: 'cinema, interior',
+        })
         setNewPreviewBase64(null)
         setNewPreviewUrl(null)
         setIsCreatingNew(false)
       }
     } catch (err: any) {
-      setFormError(err?.response?.data?.detail || 'Lỗi khi lưu bối cảnh vào kho Vault.')
+      const msg = err?.response?.data?.detail || err?.message || 'Lỗi khi lưu bối cảnh vào kho Vault.'
+      setFormError(msg)
+      toast.error(msg)
     } finally {
       setIsSubmitting(false)
     }
@@ -242,10 +263,11 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
         project_id: currentProjectId,
       })
       setImportedLocId(loc.id)
+      toast.success(`Đã nhập bối cảnh "${loc.name}" vào kịch bản!`)
       onLocationImported?.(loc)
       setTimeout(() => setImportedLocId(null), 3000)
     } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Không thể nhập bối cảnh vào kịch bản.')
+      toast.error(err?.response?.data?.detail || 'Không thể nhập bối cảnh vào kịch bản.')
     }
   }
 
@@ -257,10 +279,11 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
         location_id: locId,
         project_id: currentProjectId,
       })
+      toast.success(`Đã gán bối cảnh cho cảnh #${assigningShotId}!`)
       onAssignToShot?.(locId)
       onClose()
     } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Không thể gán bối cảnh cho phân cảnh.')
+      toast.error(err?.response?.data?.detail || 'Không thể gán bối cảnh cho phân cảnh.')
     }
   }
 
@@ -274,8 +297,9 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
         color_palette: loc.color_palette,
         seed: loc.seed || 42,
       })
+      toast.success(`Đã cập nhật ảnh xem trước cho bối cảnh "${loc.name}"!`)
     } catch (err: any) {
-      alert(err?.response?.data?.detail || 'Lỗi khi sinh ảnh xem trước bối cảnh.')
+      toast.error(err?.response?.data?.detail || 'Lỗi khi sinh ảnh xem trước bối cảnh.')
     } finally {
       setGeneratingPreviewId(null)
     }
@@ -393,7 +417,7 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                 ))}
               </div>
 
-              <form onSubmit={handleSaveLocation} className="space-y-4 flex-1">
+              <form onSubmit={handleFormSubmit(onSubmitLocation)} className="space-y-4 flex-1">
                 {formError && (
                   <div className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300 text-xs flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
@@ -408,12 +432,15 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
+                    {...register('name')}
                     placeholder="Ví dụ: Phòng Thí Nghiệm Lượng Tử AI"
-                    className="w-full px-3 py-2 rounded-lg bg-zinc-900/90 border border-zinc-700/80 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500 transition-colors"
-                    required
+                    className={`w-full px-3 py-2 rounded-lg bg-zinc-900/90 border ${
+                      errors.name ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700/80 focus:border-cyan-500'
+                    } text-xs text-white placeholder-zinc-500 focus:outline-none transition-colors`}
                   />
+                  {errors.name && (
+                    <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.name.message}</p>
+                  )}
                 </div>
 
                 {/* Environment DNA Anchor */}
@@ -422,16 +449,19 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                     <label className="text-xs font-semibold text-zinc-300">
                       Mô Tả Kiến Trúc & Môi Trường (Environment DNA) <span className="text-red-400">*</span>
                     </label>
-                    <span className="text-[10px] text-zinc-500">{newDna.length}/600 ký tự</span>
+                    <span className="text-[10px] text-zinc-500">{(watch('environment_dna') || '').length}/1500 ký tự</span>
                   </div>
                   <textarea
-                    value={newDna}
-                    onChange={(e) => setNewDna(e.target.value.slice(0, 600))}
+                    {...register('environment_dna')}
                     placeholder="Mô tả cấu trúc phòng, vật liệu, cửa kính, máy móc, độ phản chiếu mặt đất..."
                     rows={4}
-                    className="w-full px-3 py-2 rounded-lg bg-zinc-900/90 border border-zinc-700/80 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500 transition-colors leading-relaxed resize-none"
-                    required
+                    className={`w-full px-3 py-2 rounded-lg bg-zinc-900/90 border ${
+                      errors.environment_dna ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700/80 focus:border-cyan-500'
+                    } text-xs text-white placeholder-zinc-500 focus:outline-none transition-colors leading-relaxed resize-none`}
                   />
+                  {errors.environment_dna && (
+                    <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.environment_dna.message}</p>
+                  )}
                   <p className="text-[10px] text-zinc-500 mt-1">
                     Environment DNA sẽ được tự động kết hợp với Visual DNA của nhân vật và hành động của phân cảnh.
                   </p>
@@ -445,11 +475,15 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={newLighting}
-                      onChange={(e) => setNewLighting(e.target.value)}
+                      {...register('lighting')}
                       placeholder="Chiaroscuro, neon rim light"
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-700/80 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500"
+                      className={`w-full px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border ${
+                        errors.lighting ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700/80 focus:border-cyan-500'
+                      } text-xs text-white placeholder-zinc-500 focus:outline-none`}
                     />
+                    {errors.lighting && (
+                      <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.lighting.message}</p>
+                    )}
                   </div>
 
                   <div>
@@ -458,11 +492,15 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={newPalette}
-                      onChange={(e) => setNewPalette(e.target.value)}
+                      {...register('color_palette')}
                       placeholder="Cyan, magenta, dark obsidian"
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-700/80 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500"
+                      className={`w-full px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border ${
+                        errors.color_palette ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700/80 focus:border-cyan-500'
+                      } text-xs text-white placeholder-zinc-500 focus:outline-none`}
                     />
+                    {errors.color_palette && (
+                      <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.color_palette.message}</p>
+                    )}
                   </div>
                 </div>
 
@@ -475,9 +513,10 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                     <div className="flex items-center gap-1.5">
                       <input
                         type="number"
-                        value={newSeed}
-                        onChange={(e) => setNewSeed(parseInt(e.target.value) || 0)}
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-700/80 text-xs text-white focus:outline-none focus:border-cyan-500"
+                        {...register('seed', { valueAsNumber: true })}
+                        className={`w-full px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border ${
+                          errors.seed ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700/80 focus:border-cyan-500'
+                        } text-xs text-white focus:outline-none`}
                       />
                       <button
                         type="button"
@@ -488,6 +527,9 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                         <Dice5 className="w-4 h-4" />
                       </button>
                     </div>
+                    {errors.seed && (
+                      <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.seed.message}</p>
+                    )}
                   </div>
 
                   <div>
@@ -496,11 +538,15 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={newTags}
-                      onChange={(e) => setNewTags(e.target.value)}
+                      {...register('tags')}
                       placeholder="sci-fi, interior, lab"
-                      className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border border-zinc-700/80 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-500"
+                      className={`w-full px-2.5 py-1.5 rounded-lg bg-zinc-900/90 border ${
+                        errors.tags ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700/80 focus:border-cyan-500'
+                      } text-xs text-white placeholder-zinc-500 focus:outline-none`}
                     />
+                    {errors.tags && (
+                      <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.tags.message}</p>
+                    )}
                   </div>
                 </div>
 
@@ -795,8 +841,15 @@ export const LocationVaultModal: React.FC<LocationVaultModalProps> = ({
                             <button
                               type="button"
                               onClick={() => {
-                                if (window.confirm(`Bạn có chắc chắn muốn xóa bối cảnh "${loc.name}"?`)) {
-                                  deleteMutation.mutate(loc.id)
+                                if (window.confirm(`Bạn có chắc chắn muốn xóa bối cảnh "${loc.name}" khỏi Vault?`)) {
+                                  deleteMutation.mutate(loc.id, {
+                                    onSuccess: () => {
+                                      toast.success(`Đã xóa bối cảnh "${loc.name}" khỏi Vault thành công!`)
+                                    },
+                                    onError: (err: any) => {
+                                      toast.error(err?.message || 'Lỗi khi xóa bối cảnh khỏi Vault')
+                                    },
+                                  })
                                 }
                               }}
                               className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"

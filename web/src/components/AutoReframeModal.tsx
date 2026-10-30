@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -85,9 +86,10 @@ export default function AutoReframeModal({
       {
         onSuccess: (data) => {
           setReframeResult(data)
+          toast.success('Chuyển đổi video 9:16 Shorts/TikTok hoàn tất!')
         },
         onError: (err: any) => {
-          alert(`Lỗi chuyển đổi video dọc 9:16: ${err?.message || 'Không thể xử lý'}`)
+          toast.error(`Lỗi chuyển đổi video dọc 9:16: ${err?.message || 'Không thể xử lý'}`)
         },
       }
     )

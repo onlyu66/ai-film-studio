@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react'
+import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Film,
@@ -50,6 +51,7 @@ import SFXSoundboardModal from './SFXSoundboardModal'
 import { CharacterVaultModal } from './CharacterVaultModal'
 import { LocationVaultModal } from './LocationVaultModal'
 import { VideoEnhancerModal } from './VideoEnhancerModal'
+import { shotStudioSchema, addShotSchema } from '../schemas/formSchemas'
 import { useProgressSSE } from '../hooks/useProgressSSE'
 import {
   useUpdateCharacterVoice,
@@ -323,11 +325,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         onSuccess: () => {
           setSavingToVaultCharId(null)
           setSavedToVaultCharId(id)
+          toast.success(`Đã lưu nhân vật "${char.name || id}" vào kho Vault!`)
           setTimeout(() => setSavedToVaultCharId(null), 3000)
         },
         onError: (err: any) => {
           setSavingToVaultCharId(null)
-          alert(err?.message || 'Lỗi khi lưu vào Vault')
+          toast.error(err?.message || 'Lỗi khi lưu vào Vault')
         },
       }
     )
@@ -436,12 +439,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const handleRerollShot = (shotId: string) => {
     setRerollingShotId(shotId)
     rerollShotMutation.mutate(shotId, {
-      onSettled: () => {
+      onSuccess: () => {
         setRerollingShotId(null)
         setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
+        toast.success(`Đã tạo lại ảnh cho phân cảnh #${shotId}!`)
       },
       onError: (err: any) => {
-        alert(err.message || 'Lỗi khi tạo lại ảnh cho phân cảnh')
+        setRerollingShotId(null)
+        toast.error(err.message || 'Lỗi khi tạo lại ảnh cho phân cảnh')
       },
     })
   }
@@ -451,8 +456,11 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     approveShotMutation.mutate(
       { shotId, approved: !currentApproved },
       {
+        onSuccess: () => {
+          toast.success(!currentApproved ? `Đã duyệt cảnh #${shotId}!` : `Đã hủy duyệt cảnh #${shotId}`)
+        },
         onSettled: () => setApprovingShotId(null),
-        onError: (err: any) => alert(err?.message || 'Lỗi khi cập nhật trạng thái duyệt'),
+        onError: (err: any) => toast.error(err?.message || 'Lỗi khi cập nhật trạng thái duyệt'),
       }
     )
   }
@@ -460,11 +468,14 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const handleRenderAudio = (shotId: string) => {
     setRenderingAudioShotId(shotId)
     renderShotAudioMutation.mutate(shotId, {
+      onSuccess: () => {
+        toast.success(`Đã tạo giọng đọc cho phân cảnh #${shotId}!`)
+      },
       onSettled: () => {
         setRenderingAudioShotId(null)
         setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
       },
-      onError: (err: any) => alert(err?.message || 'Lỗi khi tạo giọng đọc phân cảnh'),
+      onError: (err: any) => toast.error(err?.message || 'Lỗi khi tạo giọng đọc phân cảnh'),
     })
   }
 
@@ -482,22 +493,28 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
       : shotId
 
     renderShotVideoMutation.mutate(params, {
+      onSuccess: () => {
+        toast.success(`Đã render video clip cho phân cảnh #${shotId}!`)
+      },
       onSettled: () => {
         setRenderingVideoShotId(null)
         setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
       },
-      onError: (err: any) => alert(err?.message || 'Lỗi khi render video clip phân cảnh'),
+      onError: (err: any) => toast.error(err?.message || 'Lỗi khi render video clip phân cảnh'),
     })
   }
 
   const handleRemuxVideo = (shotId: string) => {
     setRemuxingShotId(shotId)
     remuxShotVideoMutation.mutate(shotId, {
+      onSuccess: () => {
+        toast.success(`Đã ghép âm thanh vào video clip #${shotId}!`)
+      },
       onSettled: () => {
         setRemuxingShotId(null)
         setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
       },
-      onError: (err: any) => alert(err?.message || 'Lỗi khi ghép lại âm thanh vào video clip'),
+      onError: (err: any) => toast.error(err?.message || 'Lỗi khi ghép lại âm thanh vào video clip'),
     })
   }
 
@@ -537,10 +554,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
       },
       {
         onSuccess: (data) => {
-          alert(`🎉 Xuất bản video thành công! File: ${data.filename}`)
+          toast.success(`🎉 Xuất bản video thành công! File: ${data.filename}`)
           if (onContinue) onContinue()
         },
-        onError: (err: any) => alert(err?.message || 'Lỗi khi xuất bản video hoàn chỉnh'),
+        onError: (err: any) => toast.error(err?.message || 'Lỗi khi xuất bản video hoàn chỉnh'),
       }
     )
   }
@@ -555,12 +572,15 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
       uploadShotImageMutation.mutate(
         { shotId, imageBase64: base64 },
         {
+          onSuccess: () => {
+            toast.success(`Đã tải lên ảnh mới cho cảnh #${shotId}!`)
+          },
           onSettled: () => {
             setUploadingShotId(null)
             setCacheBuster((prev) => ({ ...prev, [shotId]: Date.now() }))
           },
           onError: (err: any) => {
-            alert(err.message || 'Lỗi khi tải ảnh lên')
+            toast.error(err.message || 'Lỗi khi tải ảnh lên')
           },
         }
       )
@@ -571,7 +591,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const handleDeleteShot = (shotId: string) => {
     if (!window.confirm(`Bạn có chắc muốn xóa phân cảnh ${shotId}?`)) return
     deleteShotMutation.mutate(shotId, {
-      onError: (err: any) => alert(err.message || 'Lỗi khi xóa phân cảnh')
+      onSuccess: () => {
+        toast.success(`Đã xóa phân cảnh #${shotId} thành công!`)
+      },
+      onError: (err: any) => toast.error(err.message || 'Lỗi khi xóa phân cảnh')
     })
   }
 
@@ -587,6 +610,27 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
   const handleCreateShot = (e: React.FormEvent) => {
     e.preventDefault()
+
+    const validation = addShotSchema.safeParse({
+      dialogue: newShotDialogue,
+      prompt: newShotPrompt,
+      character: newShotChar || 'Narrator',
+      motion: newShotMotion,
+      shot_size: newShotSize || 'medium',
+      camera_angle: newShotAngle || 'eye_level',
+      lighting: newShotLighting || 'cinematic',
+      mood: newShotMood || 'dramatic',
+      emotion: newShotEmotion || 'neutral',
+      voice_volume: newShotVoiceVolume,
+      sfx: newShotSfx,
+      sfx_volume: newShotSfxVolume,
+    })
+
+    if (!validation.success) {
+      toast.error(validation.error.issues[0]?.message || 'Dữ liệu phân cảnh không hợp lệ')
+      return
+    }
+
     addShotMutation.mutate(
       {
         dialogue: newShotDialogue,
@@ -607,6 +651,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         onSuccess: () => {
           setIsAddingShot(false)
           setInsertAfterShotId(null)
+          toast.success('Đã thêm phân cảnh mới thành công!')
           setNewShotDialogue('')
           setNewShotPrompt('')
           setNewShotSfx('')
@@ -619,7 +664,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
           setNewShotMood('epic')
           setNewShotEmotion('neutral')
         },
-        onError: (err: any) => alert(err.message || 'Lỗi khi thêm phân cảnh'),
+        onError: (err: any) => toast.error(err.message || 'Lỗi khi thêm phân cảnh'),
       }
     )
   }
@@ -699,11 +744,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         onSuccess: () => {
           setSavingCharId(null)
           setSavedCharId(charId)
+          toast.success('Đã cập nhật giọng đọc cho nhân vật thành công!')
           setTimeout(() => setSavedCharId((prev) => (prev === charId ? null : prev)), 2500)
         },
         onError: (err) => {
           setSavingCharId(null)
-          alert(err.message || 'Không thể cập nhật giọng cho nhân vật')
+          toast.error(err.message || 'Không thể cập nhật giọng cho nhân vật')
         },
       }
     )
@@ -748,6 +794,29 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const handleSaveShot = (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     if (!editingShot) return
+
+    const validation = shotStudioSchema.safeParse({
+      dialogue: editDialogue,
+      prompt: editPrompt,
+      character: editCharacterId || 'Narrator',
+      location_id: editLocationId || null,
+      voice: 'vi-VN-NamMinhNeural',
+      motion: editMotion,
+      shot_size: editShotSize || 'medium',
+      camera_angle: editCameraAngle || 'eye_level',
+      lighting: editLighting || 'natural',
+      mood: editMood || 'neutral',
+      emotion: editEmotion || 'calm',
+      voice_volume: editVoiceVolume,
+      sfx: editSfx,
+      sfx_volume: editSfxVolume,
+    })
+
+    if (!validation.success) {
+      toast.error(validation.error.issues[0]?.message || 'Dữ liệu phân cảnh không hợp lệ')
+      return
+    }
+
     updateShotMutation.mutate(
       {
         shot_id: editingShot.id,
@@ -767,11 +836,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
       },
       {
         onSuccess: () => {
+          toast.success(`Đã lưu thay đổi cho phân cảnh #${editingShot.id}!`)
           setEditingShot(null)
           setCacheBuster((prev) => ({ ...prev, [editingShot.id]: Date.now() }))
         },
         onError: (err: any) => {
-          alert(err?.message || 'Lỗi khi cập nhật phân cảnh')
+          toast.error(err?.message || 'Lỗi khi cập nhật phân cảnh')
         },
       }
     )

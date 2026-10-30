@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import {
   X,
   Users,
@@ -22,6 +25,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { VaultCharacterItem, SaveVaultCharacterPayload } from '../types'
+import { characterVaultSchema, CharacterVaultFormValues } from '../schemas/formSchemas'
 import {
   useVaultCharacters,
   useSaveVaultCharacter,
@@ -74,6 +78,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
   const handleCopyText = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
     setCopiedId(id)
+    toast.success('Đã sao chép prompt vào bộ nhớ tạm!')
     setTimeout(() => setCopiedId(null), 2000)
   }
 
@@ -87,12 +92,25 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
     }
   }, [isOpen, onClose])
 
-  // New character form state
-  const [newName, setNewName] = useState('')
-  const [newAnchor, setNewAnchor] = useState('')
-  const [newVoice, setNewVoice] = useState('vi-VN-NamMinhNeural')
-  const [newSeed, setNewSeed] = useState(42)
-  const [newTags, setNewTags] = useState('hero, protagonist')
+  // New character form state with React Hook Form & Zod
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<CharacterVaultFormValues>({
+    resolver: zodResolver(characterVaultSchema),
+    defaultValues: {
+      name: '',
+      visual_anchor: '',
+      voice: 'vi-VN-NamMinhNeural',
+      seed: 42,
+      tags: 'hero, protagonist',
+    },
+  })
+
   const [newAvatarBase64, setNewAvatarBase64] = useState<string | null>(null)
   const [newAvatarPreview, setNewAvatarPreview] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -138,37 +156,28 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
 
   const handleRandomSeed = () => {
     setIsRandomizingSeed(true)
-    setNewSeed(Math.floor(Math.random() * 999999))
+    setValue('seed', Math.floor(Math.random() * 999999), { shouldValidate: true })
     setTimeout(() => setIsRandomizingSeed(false), 300)
   }
 
   const handleAddTag = (tag: string) => {
-    const existing = newTags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)
+    const currentTags = watch('tags') || ''
+    const existing = currentTags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)
     if (!existing.includes(tag.toLowerCase())) {
-      setNewTags((prev) => (prev.trim() ? `${prev.trim()}, ${tag}` : tag))
+      setValue('tags', currentTags.trim() ? `${currentTags.trim()}, ${tag}` : tag, { shouldValidate: true })
     }
   }
 
   const handleApplyPreset = (preset: typeof DNA_PRESETS[0]) => {
-    setNewAnchor(preset.text)
-    if (!newTags.trim() || newTags === 'hero, protagonist') {
-      setNewTags(preset.tags)
+    setValue('visual_anchor', preset.text, { shouldValidate: true })
+    const currentTags = watch('tags') || ''
+    if (!currentTags.trim() || currentTags === 'hero, protagonist') {
+      setValue('tags', preset.tags, { shouldValidate: true })
     }
   }
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmitCharacter = async (data: CharacterVaultFormValues) => {
     setFormError(null)
-
-    if (!newName.trim()) {
-      setFormError('Vui lòng nhập tên nhân vật.')
-      return
-    }
-    if (!newAnchor.trim()) {
-      setFormError('Vui lòng nhập mô tả ngoại hình bất biến (Visual DNA Anchor).')
-      return
-    }
-
     setIsSubmitting(true)
 
     try {
@@ -185,26 +194,33 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
 
       const payload: SaveVaultCharacterPayload = {
         id: charId,
-        name: newName.trim(),
-        visual_anchor: newAnchor.trim(),
-        voice: newVoice,
-        seed: Number(newSeed) || 42,
+        name: data.name.trim(),
+        visual_anchor: data.visual_anchor.trim(),
+        voice: data.voice,
+        seed: Number(data.seed) || 42,
         headshot_url: headshotUrl,
-        tags: newTags
+        tags: data.tags
           .split(',')
           .map((t) => t.trim())
           .filter(Boolean),
       }
 
       await saveMutation.mutateAsync(payload)
+      toast.success(`Đã lưu nhân vật "${data.name}" vào kho Vault thành công!`)
       setIsCreatingNew(false)
-      setNewName('')
-      setNewAnchor('')
+      reset({
+        name: '',
+        visual_anchor: '',
+        voice: 'vi-VN-NamMinhNeural',
+        seed: Math.floor(Math.random() * 100000),
+        tags: 'hero, protagonist',
+      })
       setNewAvatarBase64(null)
       setNewAvatarPreview(null)
-      setNewSeed(Math.floor(Math.random() * 100000))
     } catch (err: any) {
-      setFormError(err?.message || 'Lỗi khi lưu nhân vật vào kho Vault.')
+      const msg = err?.message || 'Lỗi khi lưu nhân vật vào kho Vault.'
+      setFormError(msg)
+      toast.error(msg)
     } finally {
       setIsSubmitting(false)
     }
@@ -219,10 +235,14 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
       {
         onSuccess: () => {
           setImportedCharId(char.id)
+          toast.success(`Đã nhập nhân vật "${char.name}" vào kịch bản phim!`)
           if (onCharacterImported) {
             onCharacterImported(char)
           }
           setTimeout(() => setImportedCharId(null), 2500)
+        },
+        onError: (err: any) => {
+          toast.error(err?.message || 'Lỗi khi nhập nhân vật vào kịch bản')
         },
       }
     )
@@ -340,7 +360,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
-              onSubmit={handleCreateSubmit}
+              onSubmit={handleFormSubmit(onSubmitCharacter)}
               className="shrink-0 max-h-[62vh] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 border-b border-amber-500/20 bg-gradient-to-b from-amber-500/10 via-zinc-950/80 to-zinc-950 p-4 sm:p-5"
             >
               {/* Form Title */}
@@ -443,12 +463,15 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                     </label>
                     <input
                       type="text"
-                      required
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
+                      {...register('name')}
                       placeholder="VD: Maya Vance, Đại Úy Long..."
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 transition-colors"
+                      className={`w-full px-3 py-2 rounded-xl bg-zinc-900 border ${
+                        errors.name ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700 focus:border-amber-400'
+                      } text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-colors`}
                     />
+                    {errors.name && (
+                      <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.name.message}</p>
+                    )}
                   </div>
 
                   {/* Giọng đọc Voice */}
@@ -458,8 +481,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                     </label>
                     <div className="relative">
                       <select
-                        value={newVoice}
-                        onChange={(e) => setNewVoice(e.target.value)}
+                        {...register('voice')}
                         className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer pr-8"
                       >
                         <optgroup label="🇻🇳 Tiếng Việt">
@@ -483,6 +505,9 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                       </select>
                       <Volume2 className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
+                    {errors.voice && (
+                      <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.voice.message}</p>
+                    )}
                   </div>
 
                   {/* Seed Cố Định */}
@@ -496,9 +521,10 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                     <div className="flex gap-1.5">
                       <input
                         type="number"
-                        value={newSeed}
-                        onChange={(e) => setNewSeed(Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 font-mono focus:outline-none focus:border-amber-400 transition-colors"
+                        {...register('seed', { valueAsNumber: true })}
+                        className={`w-full px-3 py-2 rounded-xl bg-zinc-900 border ${
+                          errors.seed ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700 focus:border-amber-400'
+                        } text-xs text-zinc-100 font-mono focus:outline-none transition-colors`}
                       />
                       <button
                         type="button"
@@ -509,6 +535,9 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                         <RefreshCw className={`w-3.5 h-3.5 ${isRandomizingSeed ? 'animate-spin' : ''}`} />
                       </button>
                     </div>
+                    {errors.seed && (
+                      <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.seed.message}</p>
+                    )}
                   </div>
 
                   {/* Tags & Quick Tag Chips */}
@@ -518,11 +547,15 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={newTags}
-                      onChange={(e) => setNewTags(e.target.value)}
+                      {...register('tags')}
                       placeholder="hero, cyberpunk, detective..."
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 transition-colors"
+                      className={`w-full px-3 py-2 rounded-xl bg-zinc-900 border ${
+                        errors.tags ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700 focus:border-amber-400'
+                      } text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-colors`}
                     />
+                    {errors.tags && (
+                      <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.tags.message}</p>
+                    )}
                     <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                       <span className="text-[10px] text-zinc-500 font-medium">Gợi ý tag:</span>
                       {QUICK_TAGS.map((tag) => (
@@ -562,13 +595,16 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                   </div>
                 </div>
                 <textarea
-                  required
                   rows={3}
-                  value={newAnchor}
-                  onChange={(e) => setNewAnchor(e.target.value)}
+                  {...register('visual_anchor')}
                   placeholder="Mô tả chi tiết đặc điểm nhận diện: Độ tuổi, giới tính, đường nét khuôn mặt, kiểu & màu tóc, vết sẹo/hình xăm/thiết bị cấy ghép, trang phục đặc trưng bất biến..."
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 transition-colors leading-relaxed"
+                  className={`w-full px-3 py-2 rounded-xl bg-zinc-900 border ${
+                    errors.visual_anchor ? 'border-red-500/80 focus:border-red-400' : 'border-zinc-700 focus:border-amber-400'
+                  } text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none transition-colors leading-relaxed`}
                 />
+                {errors.visual_anchor && (
+                  <p className="text-red-400 text-[10px] mt-1 font-medium">{errors.visual_anchor.message}</p>
+                )}
               </div>
 
               {/* Footer actions */}
@@ -879,7 +915,14 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                           type="button"
                           onClick={() => {
                             if (confirm(`Bạn có chắc muốn xóa nhân vật "${char.name}" khỏi Vault?`)) {
-                              deleteMutation.mutate(char.id)
+                              deleteMutation.mutate(char.id, {
+                                onSuccess: () => {
+                                  toast.success(`Đã xóa nhân vật "${char.name}" khỏi Vault thành công!`)
+                                },
+                                onError: (err: any) => {
+                                  toast.error(err?.message || 'Lỗi khi xóa nhân vật khỏi Vault')
+                                },
+                              })
                             }
                           }}
                           title="Xóa khỏi Vault"

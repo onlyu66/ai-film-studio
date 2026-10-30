@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -72,9 +73,10 @@ export default function DubbingModal({
       {
         onSuccess: (data) => {
           setDubResult(data)
+          toast.success(`Đã lồng tiếng thành công sang ${targetLang.toUpperCase()}!`)
         },
         onError: (err: any) => {
-          alert(`Lỗi lồng tiếng: ${err?.message || 'Không thể xử lý'}`)
+          toast.error(`Lỗi lồng tiếng: ${err?.message || 'Không thể xử lý'}`)
         },
       }
     )

@@ -38,6 +38,8 @@ import {
   Sliders,
 } from 'lucide-react'
 import { CustomSelect } from './ui/select'
+import { toast } from 'sonner'
+import { productionFormSchema } from '../schemas/formSchemas'
 import {
   useTestWebhook,
   useFetchLlmModels,
@@ -588,6 +590,11 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
       {
         onSuccess: (data) => {
           setTestImageEngineStatus(data)
+          if (data.is_available) {
+            toast.success(`Đã kết nối thành công tới ${data.name}!`)
+          } else {
+            toast.warning(`Engine phản hồi: ${data.message || 'Chưa sẵn sàng'}`)
+          }
         },
         onError: (err: any) => {
           setTestImageEngineStatus({
@@ -598,6 +605,7 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
             url: imageApiUrl,
             message: err?.message || 'Lỗi kết nối tới engine',
           })
+          toast.error(err?.message || 'Lỗi kết nối tới engine sinh ảnh')
         },
       }
     )
@@ -630,10 +638,23 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   }
 
   const handleTestVideoToken = () => {
-    if (!videoApiToken.trim()) return
+    if (!videoApiToken.trim()) {
+      toast.warning('Vui lòng nhập API Token trước khi kiểm tra')
+      return
+    }
     testVideoTokenMutation.mutate(videoApiToken.trim(), {
-      onSuccess: (data) => setTestVideoTokenStatus(data),
-      onError: (err: any) => setTestVideoTokenStatus({ is_valid: false, message: err?.message || 'Lỗi kết nối' }),
+      onSuccess: (data) => {
+        setTestVideoTokenStatus(data)
+        if (data.is_valid) {
+          toast.success(`Token hợp lệ! Người dùng: ${data.username || 'Replicate User'}`)
+        } else {
+          toast.error(`Token không hợp lệ: ${data.message}`)
+        }
+      },
+      onError: (err: any) => {
+        setTestVideoTokenStatus({ is_valid: false, message: err?.message || 'Lỗi kết nối' })
+        toast.error(err?.message || 'Lỗi kết nối tới Replicate API')
+      },
     })
   }
 
@@ -758,9 +779,12 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
             if (res.id) {
               handleBgmPresetChange(res.id)
             }
+            toast.success(`Đã tải lên tệp nhạc nền "${file.name}" thành công!`)
           },
           onError: (err: any) => {
-            setUploadBgmError(err?.message || 'Tải nhạc thất bại')
+            const msg = err?.message || 'Tải nhạc thất bại'
+            setUploadBgmError(msg)
+            toast.error(msg)
           },
         }
       )
@@ -838,24 +862,73 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
   }
 
   const handleTestWebhook = () => {
-    if (!webhookUrl.trim()) return
+    if (!webhookUrl.trim()) {
+      toast.warning('Vui lòng nhập địa chỉ Webhook URL trước khi thử nghiệm')
+      return
+    }
     testWebhookMutation.mutate(webhookUrl.trim(), {
       onSuccess: () => {
         setTestWebhookSuccess(true)
+        toast.success('Gửi Webhook thử nghiệm thành công!')
         setTimeout(() => setTestWebhookSuccess(false), 3000)
       },
       onError: (err: any) => {
-        alert(`Lỗi Webhook: ${err?.message || 'Không thể gửi'}`)
+        toast.error(`Lỗi Webhook: ${err?.message || 'Không thể gửi'}`)
       },
     })
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!topic.trim()) return
+
     const finalModel = isCustomModel ? customModelText.trim() : selectedModel
+
+    // Zod Schema Validation
+    const validation = productionFormSchema.safeParse({
+      topic: topic.trim(),
+      lang,
+      duration: Number(duration),
+      style,
+      llm,
+      apiKey: apiKey.trim() || undefined,
+      selectedModel: selectedModel || undefined,
+      customModelText: customModelText.trim() || undefined,
+      isCustomModel,
+      motion,
+      lipSync,
+      aspectRatio: aspectRatio as '16:9' | '9:16',
+      hardsub,
+      pauseAfterScript,
+      seriesTitle: seriesTitle.trim() || undefined,
+      episode: Number(episode) || 1,
+      parentProjectId,
+      webhookUrl: webhookUrl.trim() || undefined,
+      hardwareProfile,
+      hardwareAccel,
+      imageEngine,
+      imageApiUrl: imageApiUrl.trim() || undefined,
+      videoApiToken: videoApiToken.trim() || undefined,
+      videoModel,
+      subtitleStyle,
+      subtitlePosition,
+      subtitleKaraoke,
+      bgmPreset,
+      bgmVolume: Number(bgmVolume),
+      duckingLevel,
+      colorLut,
+      transitionPreset,
+      transitionDuration: Number(transitionDuration),
+    })
+
+    if (!validation.success) {
+      const firstError = validation.error.issues[0]?.message || 'Dữ liệu biểu mẫu không hợp lệ'
+      toast.error(firstError)
+      return
+    }
+
+    toast.info('Bắt đầu khởi tạo quy trình sản xuất phim AI...')
     onSubmit({
-      topic,
+      topic: topic.trim(),
       lang,
       duration: Number(duration),
       style,
@@ -1001,6 +1074,13 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
               </button>
             )}
           </div>
+
+          {topic.trim().length > 0 && topic.trim().length < 5 && (
+            <p className="text-amber-400 text-[11px] font-medium flex items-center gap-1.5 animate-fadeIn">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>Ý tưởng kịch bản phải có ít nhất 5 ký tự để AI có đủ ngữ cảnh sinh phim.</span>
+            </p>
+          )}
 
           {/* Clean Quick Inspiration Chips Below Textarea */}
           <div className="flex flex-wrap items-center gap-1.5 pt-0.5">

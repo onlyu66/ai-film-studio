@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useQueryClient } from '@tanstack/react-query'
+import { Toaster, toast } from 'sonner'
 import Navbar from './components/Navbar'
 import ProductionForm from './components/ProductionForm'
 import ProgressStage from './components/ProgressStage'
@@ -148,10 +149,13 @@ export default function App() {
   const storyboard = storyboardData ?? null
   const displayLogs = liveLogs.length > 0 ? liveLogs : status.logs
 
-  // Trigger celebration confetti when project transitions from running to completed
+  // Trigger celebration confetti & toasts when project transitions
   const prevStatusRef = useRef(status.status)
   useEffect(() => {
     if (status.status === 'completed' && prevStatusRef.current === 'running') {
+      toast.success('Bộ phim đã được sản xuất hoàn tất 100%!', {
+        description: 'Tất cả 5 giai đoạn đã hoàn thành chuẩn điện ảnh.',
+      })
       import('canvas-confetti').then(({ default: confetti }) => {
         confetti({
           particleCount: 100,
@@ -159,22 +163,28 @@ export default function App() {
           origin: { y: 0.5 }
         })
       })
+    } else if (status.status === 'script_ready' && prevStatusRef.current === 'running') {
+      toast.info('Kịch bản phân cảnh đã sẵn sàng!', {
+        description: 'Hãy kiểm tra lời thoại, giọng đọc và góc máy trước khi bấm tiếp tục.',
+      })
     }
     prevStatusRef.current = status.status
   }, [status.status])
 
   const handleStartProduction = (formData: ProductionFormData) => {
+    toast.info('Bắt đầu khởi tạo kịch bản điện ảnh...')
     produceMutation.mutate(formData, {
       onError: (err) => {
-        alert(err.message || 'Không thể bắt đầu sản xuất')
+        toast.error(`Lỗi khởi tạo: ${err.message || 'Không thể bắt đầu sản xuất'}`)
       },
     })
   }
 
   const handleContinue = () => {
+    toast.info('Kích hoạt quy trình sản xuất (Stages 2 - 5)...')
     continueMutation.mutate(undefined, {
       onError: (err) => {
-        alert(err.message || 'Không thể tiếp tục sản xuất')
+        toast.error(`Lỗi tiếp tục sản xuất: ${err.message || 'Không thể tiếp tục'}`)
       },
     })
   }
@@ -182,8 +192,11 @@ export default function App() {
   const handleClean = () => {
     if (!window.confirm('Bạn có chắc muốn xóa sạch toàn bộ outputs để tạo phim mới từ đầu?')) return
     cleanMutation.mutate(undefined, {
+      onSuccess: () => {
+        toast.success('Đã dọn dẹp toàn bộ dữ liệu outputs!')
+      },
       onError: (err) => {
-        alert(err.message || 'Lỗi khi xóa outputs')
+        toast.error(`Lỗi khi dọn dẹp outputs: ${err.message || 'Không thể xóa'}`)
       },
     })
   }
@@ -465,6 +478,17 @@ export default function App() {
           }}
         />
       </Suspense>
+
+      {/* Global Toast Notification System (Sonner) */}
+      <Toaster
+        richColors
+        position="top-right"
+        theme="dark"
+        closeButton
+        toastOptions={{
+          className: 'border border-studio-border bg-studio-deck text-zinc-100 font-sans shadow-2xl',
+        }}
+      />
 
       {/* Minimal Studio Footer */}
       <footer className="border-t border-studio-border/60 py-5 text-center text-xs text-zinc-500 font-mono">
