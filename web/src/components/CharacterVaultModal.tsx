@@ -10,6 +10,7 @@ import {
   Search,
   Lock,
   Eye,
+  EyeOff,
   Loader2,
   Volume2,
   Camera,
@@ -56,6 +57,12 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
     three_quarter_url?: string
     profile_url?: string
   } | null>(null)
+  const [anglesCache, setAnglesCache] = useState<Record<string, {
+    prompts: { frontal: string; three_quarter: string; profile: string }
+    frontal_url?: string
+    three_quarter_url?: string
+    profile_url?: string
+  }>>({})
   const [importedCharId, setImportedCharId] = useState<string | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [lightboxImage, setLightboxImage] = useState<string | null>(null)
@@ -149,7 +156,21 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
   }
 
   const handleOpenAngles = (char: VaultCharacterItem) => {
+    // 1. If this character's 3 angles are already open, toggle it closed smoothly
+    if (selectedCharForAngles?.id === char.id) {
+      setSelectedCharForAngles(null)
+      return
+    }
+
     setSelectedCharForAngles(char)
+
+    // 2. If already generated in cache, show instantly without network call or spinner flash
+    if (anglesCache[char.id]) {
+      setAngleResults(anglesCache[char.id])
+      return
+    }
+
+    // 3. Otherwise fetch once and cache the result
     setAngleResults(null)
     generateAnglesMutation.mutate(
       {
@@ -160,6 +181,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
       {
         onSuccess: (data) => {
           setAngleResults(data)
+          setAnglesCache((prev) => ({ ...prev, [char.id]: data }))
         },
       }
     )
@@ -358,34 +380,44 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
         {/* Content Body: Character Grid or Angles Preview */}
         <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
           {/* Multi-angle Preview Section if active */}
-          {selectedCharForAngles && (
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-zinc-900 to-zinc-900 border border-amber-500/30 relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-amber-400" />
-                  <h4 className="text-sm font-bold text-zinc-100">
-                    Mô phỏng 3 Góc Mặt (Multi-Angle Headshot) — {selectedCharForAngles.name}
-                  </h4>
-                  <span className="text-[10px] font-mono text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                    Seed: {selectedCharForAngles.seed}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCharForAngles(null)}
-                  className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
+          <AnimatePresence>
+            {selectedCharForAngles && (
+              <motion.div
+                key={selectedCharForAngles.id}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-500/10 via-zinc-900 to-zinc-900 border border-amber-500/30 relative mb-2">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-amber-400" />
+                      <h4 className="text-sm font-bold text-zinc-100">
+                        Mô phỏng 3 Góc Mặt (Multi-Angle Headshot) — {selectedCharForAngles.name}
+                      </h4>
+                      <span className="text-[10px] font-mono text-amber-400/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                        Seed: {selectedCharForAngles.seed}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCharForAngles(null)}
+                      className="p-1 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs cursor-pointer"
+                      title="Đóng xem 3 góc mặt"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
 
-              {generateAnglesMutation.isPending ? (
-                <div className="py-12 flex flex-col items-center justify-center gap-2 text-zinc-400">
-                  <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-                  <span className="text-xs font-mono">Đang tổng hợp Visual DNA cho 3 góc quay...</span>
-                </div>
-              ) : angleResults ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {generateAnglesMutation.isPending && !angleResults ? (
+                    <div className="py-12 flex flex-col items-center justify-center gap-2 text-zinc-400">
+                      <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+                      <span className="text-xs font-mono">Đang tổng hợp Visual DNA cho 3 góc quay...</span>
+                    </div>
+                  ) : angleResults ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Frontal */}
                   <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 flex flex-col justify-between group/angle">
                     <div>
@@ -502,7 +534,9 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                 </div>
               ) : null}
             </div>
-          )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
           {/* Character Grid */}
           {isLoading ? (
@@ -659,10 +693,24 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenAngles(char)}
-                        className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-amber-300 hover:border-amber-500/30 border border-transparent text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                        className={`py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 border ${
+                          selectedCharForAngles?.id === char.id
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm shadow-amber-500/10'
+                            : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-amber-300 hover:border-amber-500/30 border-transparent'
+                        }`}
+                        title={selectedCharForAngles?.id === char.id ? 'Bấm để đóng xem 3 góc mặt' : 'Bấm để xem mô phỏng 3 góc mặt'}
                       >
-                        <Eye className="w-3.5 h-3.5 text-amber-400" />
-                        <span>3 Góc Mặt</span>
+                        {selectedCharForAngles?.id === char.id ? (
+                          <>
+                            <EyeOff className="w-3.5 h-3.5 text-amber-400" />
+                            <span>Đóng 3 Góc</span>
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-3.5 h-3.5 text-amber-400" />
+                            <span>3 Góc Mặt</span>
+                          </>
+                        )}
                       </button>
 
                       <button
