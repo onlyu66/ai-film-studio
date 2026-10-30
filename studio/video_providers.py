@@ -434,3 +434,153 @@ class KlingDirectVideoProvider(BaseVideoProvider):
             return False
 
         return False
+
+
+def check_luma_token(token: str) -> Dict[str, Any]:
+    """Validate a Luma Dream Machine API token via /dream-machine/v1/generations."""
+    if not token or not token.strip():
+        return {
+            "is_valid": False,
+            "message": "Token Luma Dream Machine không được để trống.",
+        }
+
+    clean_token = token.strip()
+    headers = {
+        "Authorization": f"Bearer {clean_token}",
+        "User-Agent": "AIFilmStudio/1.0",
+    }
+
+    try:
+        resp = requests.get("https://api.lumalabs.ai/dream-machine/v1/generations?limit=1", headers=headers, timeout=6)
+        if resp.status_code == 200:
+            return {
+                "is_valid": True,
+                "message": "Token Luma Dream Machine hợp lệ và sẵn sàng sinh video!",
+            }
+        elif resp.status_code in (401, 403):
+            return {
+                "is_valid": False,
+                "message": "Token Luma không hợp lệ hoặc không có quyền truy cập (401/403).",
+            }
+        else:
+            return {
+                "is_valid": False,
+                "message": f"Không thể xác thực token Luma (HTTP {resp.status_code}).",
+            }
+    except Exception as exc:
+        return {
+            "is_valid": False,
+            "message": f"Lỗi kết nối tới Luma Labs: {str(exc)}",
+        }
+
+
+class LumaDreamMachineProvider(BaseVideoProvider):
+    """Luma Dream Machine Ray-2 video provider."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "luma-dream-machine",
+        poll_interval: float = 3.0,
+        max_poll_seconds: float = 180.0,
+    ):
+        self.api_key = (api_key or os.environ.get("LUMA_API_KEY", "")).strip()
+        self.model = model or "luma-dream-machine"
+        self.poll_interval = poll_interval
+        self.max_poll_seconds = max_poll_seconds
+
+    def render_shot_video(
+        self,
+        image_path: Path,
+        output_path: Path,
+        prompt: str,
+        duration: float,
+        aspect_ratio: str = "16:9",
+        trajectory: Optional[Any] = None,
+    ) -> bool:
+        if not self.api_key:
+            return False
+
+        if not Path(image_path).exists():
+            return False
+
+        try:
+            with open(image_path, "rb") as f:
+                img_bytes = f.read()
+            img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+        except Exception:
+            return False
+
+        final_prompt = prompt or "cinematic camera movement, high production value 4k"
+        if trajectory:
+            from studio.camera_3d import compile_luma_camera_prompt
+            final_prompt = compile_luma_camera_prompt(trajectory, final_prompt)
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "User-Agent": "AIFilmStudio/1.0",
+        }
+
+        payload: Dict[str, Any] = {
+            "prompt": final_prompt,
+            "aspect_ratio": "16:9" if aspect_ratio == "16:9" else "9:16",
+            "loop": False,
+            "keyframes": {
+                "frame0": {
+                    "type": "image",
+                    "url": f"data:image/png;base64,{img_b64}",
+                }
+            },
+        }
+
+        try:
+            url = "https://api.lumalabs.ai/dream-machine/v1/generations"
+            resp = requests.post(url, headers=headers, json=payload, timeout=30)
+            if resp.status_code not in (200, 201):
+                return False
+
+            gen_data = resp.json()
+            gen_id = gen_data.get("id")
+            if not gen_id:
+                return False
+
+            state = gen_data.get("state")
+            start_time = time.time()
+            poll_url = f"https://api.lumalabs.ai/dream-machine/v1/generations/{gen_id}"
+            video_url = None
+
+            while time.time() - start_time < self.max_poll_seconds:
+                if state == "completed":
+                    video_url = gen_data.get("assets", {}).get("video")
+                    break
+                elif state in ("failed", "canceled"):
+                    return False
+
+                time.sleep(self.poll_interval)
+                poll_resp = requests.get(poll_url, headers=headers, timeout=10)
+                if poll_resp.status_code == 200:
+                    gen_data = poll_resp.json()
+                    state = gen_data.get("state")
+                else:
+                    break
+
+            if not video_url and state == "completed":
+                video_url = gen_data.get("assets", {}).get("video")
+
+            if not video_url:
+                return False
+
+            # Download video stream
+            vid_resp = requests.get(video_url, timeout=60)
+            if vid_resp.status_code == 200 and len(vid_resp.content) > 10:
+                output_path = Path(output_path)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, "wb") as f:
+                    f.write(vid_resp.content)
+                return True
+
+        except Exception:
+            return False
+
+        return False
