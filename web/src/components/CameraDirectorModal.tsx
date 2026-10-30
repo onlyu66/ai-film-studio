@@ -13,8 +13,10 @@ import {
   RefreshCw,
   AlertCircle,
   Eye,
+  Compass,
 } from 'lucide-react'
 import type { Shot } from '../types'
+import { Camera3DTrajectoryPanel } from './Camera3DTrajectoryPanel'
 import {
   useCameraPresets,
   useGenerateMultiAngle,
@@ -36,7 +38,7 @@ export default function CameraDirectorModal({
   shot,
   characters = {},
 }: CameraDirectorModalProps) {
-  const [activeTab, setActiveTab] = useState<'multi_angle' | 'visual_canvas'>('multi_angle')
+  const [activeTab, setActiveTab] = useState<'multi_angle' | 'visual_canvas' | 'trajectory_3d'>('multi_angle')
 
   // Visual Canvas States
   const [selectedAngle, setSelectedAngle] = useState<string>('medium')
@@ -233,6 +235,18 @@ export default function CameraDirectorModal({
           >
             <Sliders className="w-4 h-4" />
             <span>Visual Prompt Canvas (Ống Kính & Ánh Sáng)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('trajectory_3d')}
+            className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer ${
+              activeTab === 'trajectory_3d'
+                ? 'border-cyan-400 text-cyan-300'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Compass className="w-4 h-4 text-cyan-400" />
+            <span>Quỹ Đạo Camera 3D (3D Trajectory Pro)</span>
           </button>
         </div>
 
@@ -520,6 +534,20 @@ export default function CameraDirectorModal({
               </div>
             </div>
           )}
+
+          {/* TAB 3: 3D Camera Trajectory Controller */}
+          {activeTab === 'trajectory_3d' && (
+            <div className="animate-fadeIn">
+              <Camera3DTrajectoryPanel
+                shotId={shot.id}
+                initialPrompt={shot.image_prompt || ''}
+                duration={shot.duration || 5}
+                onSuccess={() => {
+                  setActionSuccessMsg(`Đã gửi lệnh render video 3D cho phân cảnh ${shot.id}!`)
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Footer Actions */}
@@ -560,7 +588,7 @@ export default function CameraDirectorModal({
               </>
             )}
 
-            {activeTab === 'multi_angle' && (
+            {(activeTab === 'multi_angle' || activeTab === 'trajectory_3d') && (
               <button
                 type="button"
                 onClick={onClose}

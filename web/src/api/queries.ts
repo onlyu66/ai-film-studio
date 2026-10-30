@@ -68,6 +68,10 @@ import {
   assignLocationToShot,
   generateLocationPreview,
   uploadLocationPreview,
+  fetchCamera3DPresets,
+  previewCamera3D,
+  renderShot3DVideo,
+  testProviderToken,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -82,6 +86,7 @@ export const QUERY_KEYS = {
   vault: ['characters', 'vault'] as const,
   locationsVault: ['locations', 'vault'] as const,
   enhancerPresets: ['system', 'enhancer-presets'] as const,
+  camera3DPresets: ['system', 'camera3d-presets'] as const,
 }
 
 export function useStudioStatus() {
@@ -758,6 +763,37 @@ export function useUploadLocationPreview() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.locationsVault })
     },
+  })
+}
+
+export function useCamera3DPresets() {
+  return useQuery({
+    queryKey: QUERY_KEYS.camera3DPresets,
+    queryFn: fetchCamera3DPresets,
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
+export function useCamera3DPreview() {
+  return useMutation({
+    mutationFn: previewCamera3D,
+  })
+}
+
+export function useRender3DShotVideo() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: renderShot3DVideo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useTestProviderToken() {
+  return useMutation({
+    mutationFn: ({ provider, token }: { provider: string; token: string }) =>
+      testProviderToken(provider, token),
   })
 }
 

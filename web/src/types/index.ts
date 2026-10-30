@@ -591,6 +591,52 @@ export interface EnhanceVideoResponse {
   preset: string
 }
 
+export interface Camera3DTrajectory {
+  trajectory_type: string
+  pan: number
+  tilt: number
+  roll: number
+  x: number
+  y: number
+  z: number
+  zoom: number
+  speed: number
+}
+
+export interface Camera3DPresetItem {
+  id: string
+  name: string
+  description: string
+  pan: number
+  tilt: number
+  roll: number
+  x: number
+  y: number
+  z: number
+  zoom: number
+  speed: number
+  luma_cue?: string
+}
+
+export interface Camera3DPreviewResponse {
+  trajectory: Camera3DTrajectory
+  kling_config: {
+    type: string
+    config: Record<string, number>
+  }
+  luma_prompt: string
+  ffmpeg_filter: string
+}
+
+export interface VideoModelItem {
+  id: string
+  name: string
+  owner: string
+  resolution: string
+  description: string
+  is_recommended: boolean
+}
+
 
 
 

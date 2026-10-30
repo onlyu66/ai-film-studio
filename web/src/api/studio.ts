@@ -613,6 +613,42 @@ export async function enhanceMasterVideo(
   return response.data
 }
 
+export async function fetchCamera3DPresets(): Promise<Record<string, import('../types').Camera3DPresetItem>> {
+  const response = await apiClient.get<Record<string, import('../types').Camera3DPresetItem>>('/api/video/camera-3d/presets')
+  return response.data
+}
+
+export async function previewCamera3D(
+  payload: Partial<import('../types').Camera3DTrajectory> & { base_prompt?: string; duration?: number }
+): Promise<import('../types').Camera3DPreviewResponse> {
+  const response = await apiClient.post<import('../types').Camera3DPreviewResponse>('/api/video/camera-3d/preview', payload)
+  return response.data
+}
+
+export async function renderShot3DVideo(
+  payload: {
+    shot_id: string
+    engine?: string
+    video_api_token?: string
+    video_model?: string
+    trajectory?: import('../types').Camera3DTrajectory
+  }
+): Promise<{ success: boolean; shot_id: string; video_url?: string }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; video_url?: string }>('/api/video/render-shot', payload)
+  return response.data
+}
+
+export async function testProviderToken(
+  provider: string,
+  token: string
+): Promise<{ is_valid: boolean; message: string; username?: string }> {
+  const response = await apiClient.post<{ is_valid: boolean; message: string; username?: string }>('/api/video/test-token', {
+    provider,
+    token,
+  })
+  return response.data
+}
+
 
 
 
