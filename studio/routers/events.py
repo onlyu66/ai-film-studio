@@ -44,3 +44,9 @@ async def events_progress(request: Request):
             "X-Accel-Buffering": "no",
         }
     )
+
+@router.get("/api/system/lipsync-status")
+def api_get_lipsync_status():
+    """Return health status and availability of local GPU and cloud lip-sync models."""
+    from studio.lipsync import check_lipsync_service_status
+    return check_lipsync_service_status()

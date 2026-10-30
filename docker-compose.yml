@@ -13,6 +13,7 @@ services:
       - POLLINATIONS_API_KEY
       - OLLAMA_HOST=http://ollama:11434
       - OLLAMA_MODEL=llama3.2
+      - LIPSYNC_API_URL=http://sadtalker:5000/api/lipsync
     depends_on:
       - ollama
     entrypoint: ["python"]
@@ -33,6 +34,7 @@ services:
       - POLLINATIONS_API_KEY
       - OLLAMA_HOST=http://ollama:11434
       - OLLAMA_MODEL=llama3.2
+      - LIPSYNC_API_URL=http://sadtalker:5000/api/lipsync
     depends_on:
       - ollama
     entrypoint: ["python", "-m", "uvicorn", "studio.server:app", "--host", "0.0.0.0", "--port", "8000"]
@@ -46,5 +48,25 @@ services:
     ports:
       - "11434:11434"
 
+  sadtalker:
+    image: vinthony/sadtalker:latest
+    container_name: studio_sadtalker
+    profiles: ["gpu", "sadtalker", "lipsync"]
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - sadtalker_checkpoints:/root/.cache
+
 volumes:
   ollama_models:
+  sadtalker_checkpoints:

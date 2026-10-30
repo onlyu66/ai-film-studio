@@ -259,7 +259,7 @@ def run_motion_stage(
             shot_duration = durations.get(shot.id, shot.duration or 5.0)
 
             lipsync_success = False
-            if config.lip_sync == "cloud" and shot.character_id and shot.dialogue.strip():
+            if config.lip_sync in ("cloud", "local", "sadtalker", "wav2lip") and shot.character_id and shot.dialogue.strip():
                 audio_file = audio_dir / f"{shot.id}.mp3"
                 res = apply_lipsync_for_shot(
                     image_path=img_file,
