@@ -33,6 +33,7 @@ import {
   BookmarkPlus,
   Eye,
   Award,
+  Copy,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -281,9 +282,18 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [isEnhancerModalOpen, setIsEnhancerModalOpen] = useState(false)
   const [enhancerTargetShot, setEnhancerTargetShot] = useState<any | null>(null)
   const [isEnhancerMaster, setIsEnhancerMaster] = useState(false)
+  const [copiedDnaCharId, setCopiedDnaCharId] = useState<string | null>(null)
   const batchSfxMutation = useBatchSuggestSfx()
   const splitShotMutation = useSplitShot()
   const saveVaultMutation = useSaveVaultCharacter()
+
+  const handleCopyDna = (text: string, charId: string) => {
+    if (!text) return
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopiedDnaCharId(charId)
+      setTimeout(() => setCopiedDnaCharId(null), 2000)
+    })
+  }
 
   const handleSaveToVault = (id: string, char: CharacterData) => {
     setSavingToVaultCharId(id)
@@ -914,10 +924,10 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     key={id}
                     whileHover={{ y: -4 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="p-4 sm:p-5 rounded-2xl bg-cinema-card border border-cinema-border hover:border-amber-500/40 shadow-xl hover:shadow-2xl hover:shadow-amber-500/5 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group min-w-0"
+                    className="p-4 sm:p-5 rounded-2xl bg-cinema-card border border-cinema-border hover:border-amber-500/40 shadow-xl hover:shadow-2xl hover:shadow-amber-500/5 transition-[border-color,box-shadow] duration-200 flex flex-col justify-between relative overflow-hidden group min-w-0"
                   >
                     {/* Subtle top accent gradient */}
-                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500/0 via-amber-400 to-amber-500/0 opacity-70 group-hover:opacity-100 group-hover:h-[3px] transition-all duration-300" />
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500/0 via-amber-400 to-amber-500/0 opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
 
                     <div>
                       {/* Header: Avatar, Name, ID, Seed */}
@@ -972,14 +982,41 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       </div>
 
                       {/* Visual DNA Anchor Box */}
-                      <div className="p-3.5 rounded-xl bg-cinema-canvas/80 hover:bg-black/50 border border-cinema-border hover:border-amber-500/40 mb-4 transition-all duration-200">
+                      <div className="p-3.5 rounded-xl bg-cinema-canvas/80 hover:bg-black/50 border border-cinema-border hover:border-amber-500/40 mb-4 transition-[border-color,background-color] duration-200 group/dna">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
                             <Sparkles className="w-3 h-3 text-amber-400" />
                             Visual DNA Anchor
                           </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              const text = typeof char.visual_anchor === 'string'
+                                ? char.visual_anchor
+                                : JSON.stringify(char.visual_anchor)
+                              handleCopyDna(text, id)
+                            }}
+                            className="opacity-0 group-hover/dna:opacity-100 transition-opacity p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-amber-300 flex items-center gap-1 text-[10px] font-mono cursor-pointer active:scale-95"
+                            title="Sao chép Visual DNA Prompt"
+                          >
+                            {copiedDnaCharId === id ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                <span className="text-emerald-400 font-semibold">Đã chép!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Sao chép</span>
+                              </>
+                            )}
+                          </button>
                         </div>
-                        <p className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-4 hover:line-clamp-none transition-all break-words">
+                        <p
+                          className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-3 break-words select-text"
+                          title={typeof char.visual_anchor === 'string' ? char.visual_anchor : JSON.stringify(char.visual_anchor)}
+                        >
                           {typeof char.visual_anchor === 'string'
                             ? char.visual_anchor
                             : JSON.stringify(char.visual_anchor)}
@@ -1197,7 +1234,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   key={shot.id}
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
-                  className={`group rounded-2xl bg-cinema-card border overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-black/60 transition-all duration-300 flex flex-col relative ${
+                  className={`group rounded-2xl bg-cinema-card border overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-black/60 transition-[border-color,box-shadow] duration-200 flex flex-col relative ${
                     shot.is_approved
                       ? 'border-cinema-border hover:border-emerald-500/50 hover:shadow-emerald-500/5'
                       : 'border-cinema-border hover:border-amber-500/50 hover:shadow-amber-500/5'
@@ -1205,7 +1242,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                 >
                   {/* Adaptive Top Glow Accent Line */}
                   <div
-                    className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-70 group-hover:opacity-100 group-hover:h-[3px] transition-all duration-300 z-10 ${
+                    className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-70 group-hover:opacity-100 transition-opacity duration-300 z-10 ${
                       shot.is_approved
                         ? 'from-emerald-500/0 via-emerald-400 to-emerald-500/0'
                         : 'from-amber-500/0 via-amber-400 to-amber-500/0'
@@ -1432,7 +1469,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       {/* Dialogue Section with amber accent quote line */}
                       <div
                         onClick={() => handleOpenEditShot(shot)}
-                        className="cursor-pointer bg-cinema-canvas/30 hover:bg-cinema-canvas/80 p-2.5 -mx-1 rounded-lg transition-all duration-200 border-l-2 border-amber-500/50 hover:border-l-amber-400 hover:translate-x-0.5 group/text"
+                        className="cursor-pointer bg-cinema-canvas/30 hover:bg-cinema-canvas/80 p-2.5 rounded-lg transition-colors duration-150 border-l-2 border-amber-500/50 hover:border-l-amber-400 group/text"
                         title="Bấm để mở Shot Studio và chỉnh sửa phân cảnh này"
                       >
                         <p className="text-xs text-zinc-100 group-hover/text:text-amber-200 font-normal leading-relaxed line-clamp-3">

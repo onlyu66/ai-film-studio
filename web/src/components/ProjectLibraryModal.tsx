@@ -155,7 +155,7 @@ export default function ProjectLibraryModal({
                       key={p.id}
                       whileHover={{ y: -4 }}
                       transition={{ duration: 0.2, ease: "easeOut" }}
-                      className="group rounded-xl bg-cinema-card border border-cinema-border overflow-hidden hover:border-amber-500/40 hover:shadow-2xl hover:shadow-black/60 transition-all duration-300 flex flex-col justify-between relative"
+                      className="group rounded-xl bg-cinema-card border border-cinema-border overflow-hidden hover:border-amber-500/40 hover:shadow-2xl hover:shadow-black/60 transition-[border-color,box-shadow] duration-200 flex flex-col justify-between relative"
                     >
                       {/* Top Accent Line */}
                       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500/0 via-amber-400 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />

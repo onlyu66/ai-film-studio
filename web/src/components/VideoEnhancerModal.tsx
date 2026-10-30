@@ -205,7 +205,7 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
                       whileTap={{ scale: 0.98 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
                       onClick={() => setSelectedPresetId(preset.id)}
-                      className={`group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
+                      className={`group p-4 rounded-2xl border transition-[border-color,box-shadow,background-color] duration-200 cursor-pointer flex flex-col justify-between relative overflow-hidden ${
                         isSelected
                           ? 'bg-amber-500/10 border-amber-500/60 shadow-xl shadow-amber-500/10 ring-1 ring-amber-500/40'
                           : 'bg-zinc-900/60 border-zinc-800 hover:border-amber-400/50 hover:bg-zinc-850 hover:shadow-xl hover:shadow-black/50'
@@ -215,7 +215,7 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
                       <div
                         className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r transition-all duration-300 ${
                           isSelected
-                            ? 'from-amber-500/0 via-amber-400 to-amber-500/0 opacity-100 h-[3px]'
+                            ? 'from-amber-500/0 via-amber-400 to-amber-500/0 opacity-100'
                             : 'from-amber-500/0 via-amber-400/70 to-amber-500/0 opacity-0 group-hover:opacity-100'
                         }`}
                       />

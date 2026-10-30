@@ -174,7 +174,7 @@ export default function StoryTemplateModal({
                       whileHover={{ y: -4 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
                       onClick={() => setActivePreviewId(tmpl.id)}
-                      className={`group relative p-4 rounded-xl border transition-all cursor-pointer text-left overflow-hidden ${
+                      className={`group relative p-4 rounded-xl border transition-[border-color,box-shadow,background-color] duration-200 cursor-pointer text-left overflow-hidden ${
                         isPreviewing
                           ? 'bg-zinc-850 border-cinema-amber shadow-xl ring-1 ring-cinema-amber/40 shadow-cinema-amber/10'
                           : 'bg-zinc-900/70 border-zinc-800 hover:border-amber-400/50 hover:bg-zinc-850/80 hover:shadow-xl hover:shadow-black/50'
@@ -184,7 +184,7 @@ export default function StoryTemplateModal({
                       <div
                         className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r transition-all duration-300 z-10 ${
                           isPreviewing
-                            ? 'from-amber-500/0 via-amber-400 to-amber-500/0 opacity-100 h-[3px]'
+                            ? 'from-amber-500/0 via-amber-400 to-amber-500/0 opacity-100'
                             : 'from-amber-500/0 via-amber-400/70 to-amber-500/0 opacity-0 group-hover:opacity-100'
                         }`}
                       />

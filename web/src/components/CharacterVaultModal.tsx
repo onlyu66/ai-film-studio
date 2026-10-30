@@ -528,7 +528,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                     key={char.id}
                     whileHover={{ y: -3 }}
                     transition={{ duration: 0.18 }}
-                    className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col justify-between transition-all group relative overflow-hidden shadow-lg min-w-0"
+                    className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col justify-between transition-[border-color,box-shadow] duration-200 group relative overflow-hidden shadow-lg min-w-0"
                   >
                     <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/0 via-amber-500/40 to-amber-500/0 opacity-50 group-hover:opacity-100 transition-opacity" />
 
@@ -634,7 +634,10 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                             )}
                           </button>
                         </div>
-                        <p className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-3 group-hover/dna:line-clamp-none transition-all break-words select-text">
+                        <p
+                          className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-3 break-words select-text"
+                          title={char.visual_anchor}
+                        >
                           {char.visual_anchor}
                         </p>
                       </div>
