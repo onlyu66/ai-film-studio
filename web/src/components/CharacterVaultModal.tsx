@@ -286,7 +286,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
     <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="p-4 sm:p-6 border-b border-zinc-800/80 bg-zinc-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shrink-0">
           <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10 shrink-0">
               <Users className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" />
@@ -341,10 +341,10 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: 'easeInOut' }}
               onSubmit={handleCreateSubmit}
-              className="border-b border-amber-500/20 bg-gradient-to-b from-amber-500/10 via-zinc-950/60 to-zinc-950 p-4 sm:p-5 overflow-hidden"
+              className="shrink-0 max-h-[72vh] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 border-b border-amber-500/20 bg-gradient-to-b from-amber-500/10 via-zinc-950/80 to-zinc-950 p-4 sm:p-5"
             >
               {/* Form Title */}
-              <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-zinc-800/80">
+              <div className="flex items-center justify-between gap-2 mb-3.5 pb-2.5 border-b border-zinc-800/80">
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                     <Sparkles className="w-3.5 h-3.5" />
@@ -358,6 +358,14 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                     </p>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingNew(false)}
+                  className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                  title="Đóng Form"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
               {/* Error Banner */}
@@ -378,13 +386,13 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
               )}
 
               {/* Avatar + Main Details */}
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 mb-4">
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 mb-3.5">
                 {/* Avatar Uploader */}
                 <div className="shrink-0 flex flex-col items-center">
                   <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5 self-start">
-                    Ảnh Chân Dung (Headshot)
+                    Ảnh Chân Dung
                   </label>
-                  <div className="relative group w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-2 border-dashed border-zinc-700 hover:border-amber-500/60 bg-zinc-900/60 transition-all flex flex-col items-center justify-center overflow-hidden cursor-pointer">
+                  <div className="relative group w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 border-dashed border-zinc-700 hover:border-amber-500/60 bg-zinc-900/60 transition-all flex flex-col items-center justify-center overflow-hidden cursor-pointer">
                     {newAvatarPreview ? (
                       <>
                         <img
@@ -410,10 +418,10 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                         </button>
                       </>
                     ) : (
-                      <div className="flex flex-col items-center justify-center p-2 text-center text-zinc-500 group-hover:text-amber-400 transition-colors">
-                        <Upload className="w-5 h-5 mb-1" />
-                        <span className="text-[10px] font-medium leading-tight">Tải ảnh lên</span>
-                        <span className="text-[9px] text-zinc-600 mt-0.5">PNG / JPG</span>
+                      <div className="flex flex-col items-center justify-center p-1.5 text-center text-zinc-500 group-hover:text-amber-400 transition-colors">
+                        <Upload className="w-4 h-4 mb-1" />
+                        <span className="text-[10px] font-medium leading-tight">Tải ảnh</span>
+                        <span className="text-[8px] text-zinc-600 mt-0.5">PNG / JPG</span>
                       </div>
                     )}
                     <input
@@ -423,7 +431,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
                   </div>
-                  <span className="text-[10px] text-zinc-500 mt-1 text-center">Tùy chọn (Optional)</span>
+                  <span className="text-[9px] text-zinc-500 mt-1 text-center">Tùy chọn</span>
                 </div>
 
                 {/* Form Fields Grid */}
@@ -533,7 +541,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
               </div>
 
               {/* Mô Tả Ngoại Hình Bất Biến (Visual DNA Anchor) */}
-              <div className="mb-4">
+              <div className="mb-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1.5">
                   <label className="block text-[11px] font-semibold text-zinc-300">
                     Mô Tả Ngoại Hình Bất Biến (Visual DNA Anchor) <span className="text-amber-400">*</span>
@@ -559,16 +567,16 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                   value={newAnchor}
                   onChange={(e) => setNewAnchor(e.target.value)}
                   placeholder="Mô tả chi tiết đặc điểm nhận diện: Độ tuổi, giới tính, đường nét khuôn mặt, kiểu & màu tóc, vết sẹo/hình xăm/thiết bị cấy ghép, trang phục đặc trưng bất biến..."
-                  className="w-full px-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 transition-colors leading-relaxed"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 transition-colors leading-relaxed"
                 />
               </div>
 
               {/* Footer actions */}
-              <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80">
-                <p className="text-[11px] text-zinc-500 hidden sm:block">
+              <div className="sticky bottom-0 bg-zinc-950/95 backdrop-blur-md pt-3 pb-1 border-t border-zinc-800/80 flex items-center justify-between gap-3 z-10">
+                <p className="text-[11px] text-zinc-500 hidden sm:block truncate">
                   <span className="text-amber-400 font-medium">*</span> Nhân vật sau khi lưu sẽ sẵn sàng áp dụng vào kịch bản & trích xuất 3 góc mặt.
                 </p>
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-2 ml-auto shrink-0">
                   <button
                     type="button"
                     onClick={() => {
@@ -598,7 +606,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
         </AnimatePresence>
 
         {/* Filter bar: Search & Tags */}
-        <div className="px-4 sm:px-5 py-3 border-b border-zinc-800/80 bg-zinc-900/30 flex flex-wrap items-center justify-between gap-3">
+        <div className="px-4 sm:px-5 py-3 border-b border-zinc-800/80 bg-zinc-900/30 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 overflow-x-auto py-1 flex-1 min-w-0 scrollbar-thin">
             <button
               type="button"
@@ -640,7 +648,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
         </div>
 
         {/* Content Body: Character Grid or Angles Preview */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-6">
           {/* Multi-angle Preview Section if active */}
           <AnimatePresence>
             {selectedCharForAngles && (
