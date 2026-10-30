@@ -19,6 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 
+from studio.events import progress_broadcaster
 from studio.config import StudioConfig
 from studio.storage import atomic_write_json, safe_read_json
 from studio.orchestrator import run_pipeline, PipelineCancelledException
@@ -37,6 +38,7 @@ async def lifespan(app: FastAPI):
     global server_event_loop
     try:
         server_event_loop = asyncio.get_running_loop()
+        progress_broadcaster.loop = server_event_loop
     except Exception:
         server_event_loop = None
     yield
@@ -739,12 +741,14 @@ from studio.routers.vault import router as vault_router
 from studio.routers.audio import router as audio_router
 from studio.routers.video import router as video_router
 from studio.routers.projects import router as projects_router
+from studio.routers.events import router as events_router
 
 app.include_router(storyboard_router)
 app.include_router(vault_router)
 app.include_router(audio_router)
 app.include_router(video_router)
 app.include_router(projects_router)
+app.include_router(events_router)
 
 # --- Re-export Request Models for backwards compatibility ---
 from studio.routers.storyboard import (

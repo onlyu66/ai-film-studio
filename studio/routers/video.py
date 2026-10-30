@@ -306,12 +306,22 @@ def assemble_master(req: AssembleMasterRequest):
                 durations[s.id] = s.duration or 5.0
 
         srv.log_message("[Assembly] Bắt đầu ghép nối các video clip và hòa âm master audio...")
+        def _assembly_progress_cb(st, msg, pct, lmsg):
+            srv.log_message(lmsg)
+            from studio.events import progress_broadcaster
+            progress_broadcaster.emit_progress(
+                task_id="assemble_master",
+                stage=str(st),
+                percent=pct,
+                detail=msg,
+            )
+
         final_video = run_assembly_stage(
             storyboard=sb,
             config=cfg,
             state=state,
             durations=durations,
-            progress_callback=lambda st, msg, pct, lmsg: srv.log_message(lmsg),
+            progress_callback=_assembly_progress_cb,
         )
 
         srv.pipeline_state["final_video"] = f"/api/outputs/final/{final_video.name}"

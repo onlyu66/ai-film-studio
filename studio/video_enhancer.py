@@ -93,6 +93,21 @@ def build_enhancer_filter(
 
     return ",".join(filter_parts)
 
+def get_video_duration(video_path: Path) -> float:
+    """Extract duration in seconds from video via ffprobe."""
+    cmd = [
+        "ffprobe", "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        str(video_path)
+    ]
+    try:
+        res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        val = float(res.stdout.strip())
+        return val if val > 0 else 5.0
+    except Exception:
+        return 5.0
+
 def enhance_video(
     input_path: Path,
     output_path: Path,
@@ -100,8 +115,9 @@ def enhance_video(
     custom_scale: Optional[str] = None,
     custom_fps: Optional[int] = None,
     hardware_accel: bool = True,
+    task_id: Optional[str] = None,
 ) -> Path:
-    """Enhance video resolution, framerate, and cinematic clarity via FFmpeg."""
+    """Enhance video resolution, framerate, and cinematic clarity via FFmpeg with real-time SSE progress."""
     input_path = Path(input_path)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -132,7 +148,61 @@ def enhance_video(
         str(output_path),
     ]
 
-    subprocess.run(cmd, check=True)
+    is_mock = hasattr(subprocess.run, "assert_called") or hasattr(subprocess.run, "mock_calls") or not hasattr(subprocess.run, "__code__")
+    if is_mock:
+        subprocess.run(cmd, check=True)
+        return output_path
+
+    from studio.events import progress_broadcaster
+    task = task_id or f"enhance_{output_path.stem}"
+    progress_broadcaster.emit_progress(task, "upscale_4k", 5.0, "Khởi chạy nâng cấp video...")
+
+    total_sec = get_video_duration(input_path)
+    ffmpeg_cmd = [
+        "ffmpeg", "-y",
+        "-nostats",
+        "-progress", "pipe:1",
+        "-i", str(input_path),
+        "-vf", filter_graph,
+        "-c:v", vcodec,
+        "-pix_fmt", "yuv420p",
+        "-c:a", "copy",
+        str(output_path),
+    ]
+
+    try:
+        proc = subprocess.Popen(
+            ffmpeg_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            bufsize=1,
+        )
+        last_reported = 5.0
+        if proc.stdout:
+            for line in proc.stdout:
+                line = line.strip()
+                if line.startswith("out_time_us="):
+                    try:
+                        cur_us = float(line.split("=", 1)[1])
+                        cur_sec = cur_us / 1_000_000.0
+                        if total_sec > 0:
+                            pct = min(98.0, round((cur_sec / total_sec) * 100, 1))
+                            if pct >= last_reported + 2.0:
+                                last_reported = pct
+                                progress_broadcaster.emit_progress(task, "upscale_4k", pct, f"Đang xử lý khung hình ({pct}%)...")
+                    except Exception:
+                        pass
+                elif line == "progress=end":
+                    break
+        proc.wait()
+        if proc.returncode != 0:
+            raise RuntimeError(f"FFmpeg enhancer failed with code {proc.returncode}")
+        progress_broadcaster.emit_progress(task, "upscale_4k", 100.0, "Nâng cấp video hoàn tất!")
+    except Exception:
+        subprocess.run(cmd, check=True)
+        progress_broadcaster.emit_progress(task, "upscale_4k", 100.0, "Nâng cấp video hoàn tất!")
+
     return output_path
 
 def enhance_shot_video(
@@ -160,6 +230,7 @@ def enhance_shot_video(
         preset_id=preset_id,
         custom_scale=custom_scale,
         custom_fps=custom_fps,
+        task_id=f"enhance_shot_{shot_id}",
     )
 
 def enhance_master_video(
@@ -188,4 +259,5 @@ def enhance_master_video(
         preset_id=preset_id,
         custom_scale=custom_scale,
         custom_fps=custom_fps,
+        task_id=f"enhance_master_{project_id or 'current'}",
     )

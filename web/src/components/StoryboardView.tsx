@@ -46,6 +46,7 @@ import AutoReframeModal from './AutoReframeModal'
 import SFXSoundboardModal from './SFXSoundboardModal'
 import { CharacterVaultModal } from './CharacterVaultModal'
 import { VideoEnhancerModal } from './VideoEnhancerModal'
+import { useProgressSSE } from '../hooks/useProgressSSE'
 import {
   useUpdateCharacterVoice,
   useUpdateShot,
@@ -260,6 +261,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const renderShotVideoMutation = useRenderShotVideo()
   const remuxShotVideoMutation = useRemuxShotVideo()
   const assembleMasterMutation = useAssembleMaster()
+  const { progress: assemblyPercent, detail: assemblyDetail } = useProgressSSE('assemble_master')
 
   const [generatingCharId, setGeneratingCharId] = useState<string | null>(null)
   const [uploadingCharId, setUploadingCharId] = useState<string | null>(null)
@@ -1878,7 +1880,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                   {assembleMasterMutation.isPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-zinc-950 shrink-0" />
-                      <span>Đang ghép nối & mix nhạc điện ảnh...</span>
+                      <span>{assemblyDetail ? `${assemblyDetail} (${Math.round(assemblyPercent)}%)` : `Đang xuất bản Master Movie... (${Math.round(assemblyPercent || 15)}%)`}</span>
                     </>
                   ) : (
                     <>

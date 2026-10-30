@@ -22,6 +22,7 @@ import {
   useEnhanceShotVideo,
   useEnhanceMasterVideo,
 } from '../api/queries'
+import { useProgressSSE } from '../hooks/useProgressSSE'
 
 interface VideoEnhancerModalProps {
   isOpen: boolean
@@ -51,6 +52,14 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [videoError, setVideoError] = useState<boolean>(false)
 
+  const currentTaskId = isMaster
+    ? `enhance_master_${projectId || 'current'}`
+    : shot
+    ? `enhance_shot_${shot.id}`
+    : undefined
+
+  const { progress: sseProgress, detail: sseDetail, resetProgress } = useProgressSSE(currentTaskId)
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -67,6 +76,7 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
 
   const handleStartEnhance = () => {
     setErrorMsg(null)
+    resetProgress()
 
     if (isMaster) {
       enhanceMasterMutation.mutate(
@@ -283,9 +293,22 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
               </div>
 
               {isProcessing && (
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-3 text-amber-300 text-xs font-mono">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-400 shrink-0" />
-                  <span>Đang xử lý scale 4K & nội suy chuyển động (có thể mất 15-30 giây)...</span>
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <div className="flex items-center gap-2 text-amber-300">
+                      <Loader2 className="w-4 h-4 animate-spin text-amber-400 shrink-0" />
+                      <span className="truncate max-w-[280px]">
+                        {sseDetail || 'Đang scale 4K & nội suy khung hình...'}
+                      </span>
+                    </div>
+                    <span className="font-bold text-amber-400">{Math.round(sseProgress || 5)}%</span>
+                  </div>
+                  <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-amber-500 to-emerald-400 h-2 rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${Math.max(5, Math.min(100, sseProgress))}%` }}
+                    />
+                  </div>
                 </div>
               )}
 
