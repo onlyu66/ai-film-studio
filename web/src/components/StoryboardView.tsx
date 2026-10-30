@@ -912,12 +912,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                 return (
                   <motion.div
                     key={id}
-                    whileHover={{ y: -2 }}
-                    transition={{ duration: 0.15 }}
-                    className="p-4 sm:p-5 rounded-2xl bg-cinema-card border border-cinema-border hover:border-cinema-border-hover shadow-xl transition-all flex flex-col justify-between relative overflow-hidden group min-w-0"
+                    whileHover={{ y: -4 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="p-4 sm:p-5 rounded-2xl bg-cinema-card border border-cinema-border hover:border-amber-500/40 shadow-xl hover:shadow-2xl hover:shadow-amber-500/5 transition-all duration-300 flex flex-col justify-between relative overflow-hidden group min-w-0"
                   >
                     {/* Subtle top accent gradient */}
-                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/0 via-amber-500/50 to-amber-500/0 opacity-60 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500/0 via-amber-400 to-amber-500/0 opacity-70 group-hover:opacity-100 group-hover:h-[3px] transition-all duration-300" />
 
                     <div>
                       {/* Header: Avatar, Name, ID, Seed */}
@@ -937,9 +937,9 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                                   alt={char.name}
                                   loading="lazy"
                                   decoding="async"
-                                  className="w-full h-full object-cover group-hover/avatar:scale-105 transition-transform duration-300"
+                                  className="w-full h-full object-cover group-hover/avatar:scale-108 transition-transform duration-500 ease-out"
                                 />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity duration-200">
                                   <Maximize2 className="w-4 h-4 text-white" />
                                 </div>
                               </>
@@ -951,7 +951,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           </div>
 
                           <div className="min-w-0">
-                            <h4 className="text-base font-bold text-zinc-100 leading-tight truncate">{char.name}</h4>
+                            <h4 className="text-base font-bold text-zinc-100 leading-tight truncate group-hover:text-amber-300/90 transition-colors">{char.name}</h4>
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-[10px] font-mono text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 truncate">
                                 ID: {id}
@@ -972,7 +972,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       </div>
 
                       {/* Visual DNA Anchor Box */}
-                      <div className="p-3.5 rounded-xl bg-cinema-canvas/80 border border-cinema-border mb-4">
+                      <div className="p-3.5 rounded-xl bg-cinema-canvas/80 hover:bg-black/50 border border-cinema-border hover:border-amber-500/40 mb-4 transition-all duration-200">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
                             <Sparkles className="w-3 h-3 text-amber-400" />
@@ -992,7 +992,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           type="button"
                           onClick={() => handleGenerateHeadshot(id, char)}
                           disabled={generatingCharId === id}
-                          className="flex-1 min-h-[38px] py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50 text-center"
+                          className="flex-1 min-h-[38px] py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 hover:scale-[1.02] disabled:opacity-50 text-center"
                         >
                           {generatingCharId === id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400 shrink-0" />
@@ -1002,7 +1002,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           <span>Tạo Headshot AI</span>
                         </button>
 
-                        <label className="flex-1 min-h-[38px] py-2 px-3 rounded-xl bg-cinema-deck hover:bg-cinema-surface text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-cinema-border active:scale-95 text-center">
+                        <label className="flex-1 min-h-[38px] py-2 px-3 rounded-xl bg-cinema-deck hover:bg-cinema-surface text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-cinema-border active:scale-95 hover:scale-[1.02] text-center">
                           {uploadingCharId === id ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 shrink-0" />
                           ) : (
@@ -1025,7 +1025,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           type="button"
                           onClick={() => handleSaveToVault(id, char)}
                           disabled={savingToVaultCharId === id}
-                          className="flex-1 min-h-[36px] py-1.5 px-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-zinc-700/50 text-center"
+                          className="flex-1 min-h-[36px] py-1.5 px-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-zinc-700/50 hover:border-zinc-500 active:scale-95 hover:scale-[1.02] text-center"
                           title="Lưu nhân vật này vào Kho Vault để dùng cho các phim khác"
                         >
                           {savingToVaultCharId === id ? (
@@ -1041,7 +1041,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         <button
                           type="button"
                           onClick={() => setIsVaultModalOpen(true)}
-                          className="flex-1 min-h-[36px] py-1.5 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-500/20 text-center"
+                          className="flex-1 min-h-[36px] py-1.5 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-500/20 hover:border-amber-400/40 active:scale-95 hover:scale-[1.02] text-center"
                           title="Mở kho nhân vật để duyệt 3 góc mặt và nhân vật mẫu"
                         >
                           <Eye className="w-3 h-3 text-amber-400 shrink-0" />
@@ -1195,10 +1195,22 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               return (
                 <motion.div
                   key={shot.id}
-                  whileHover={{ y: -3 }}
-                  transition={{ duration: 0.18 }}
-                  className="group rounded-2xl bg-cinema-card border border-cinema-border overflow-hidden hover:border-amber-500/30 shadow-lg hover:shadow-2xl hover:shadow-black/50 transition-all flex flex-col"
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className={`group rounded-2xl bg-cinema-card border overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-black/60 transition-all duration-300 flex flex-col relative ${
+                    shot.is_approved
+                      ? 'border-cinema-border hover:border-emerald-500/50 hover:shadow-emerald-500/5'
+                      : 'border-cinema-border hover:border-amber-500/50 hover:shadow-amber-500/5'
+                  }`}
                 >
+                  {/* Adaptive Top Glow Accent Line */}
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r opacity-70 group-hover:opacity-100 group-hover:h-[3px] transition-all duration-300 z-10 ${
+                      shot.is_approved
+                        ? 'from-emerald-500/0 via-emerald-400 to-emerald-500/0'
+                        : 'from-amber-500/0 via-amber-400 to-amber-500/0'
+                    }`}
+                  />
                   {/* Top Bar: Sequence Number, Act/Scene, Up/Down Reorder & Approval Toggle */}
                   <div className="px-3.5 py-2.5 flex items-center justify-between gap-2 border-b border-cinema-border/70 bg-cinema-deck/60">
                     {/* Left: Shot ID & Act/Scene */}
@@ -1304,7 +1316,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         loading="lazy"
                         decoding="async"
                         onError={(e) => { e.currentTarget.style.display = 'none' }}
-                        className="absolute inset-0 w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-500"
+                        className="absolute inset-0 w-full h-full object-cover group-hover:brightness-105 group-hover/thumb:scale-108 transition-all duration-500 ease-out"
                       />
                     )}
 
@@ -1420,7 +1432,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       {/* Dialogue Section with amber accent quote line */}
                       <div
                         onClick={() => handleOpenEditShot(shot)}
-                        className="cursor-pointer hover:bg-cinema-canvas/60 p-2.5 -mx-1 rounded-lg transition-colors border-l-2 border-amber-500/50 group/text"
+                        className="cursor-pointer bg-cinema-canvas/30 hover:bg-cinema-canvas/80 p-2.5 -mx-1 rounded-lg transition-all duration-200 border-l-2 border-amber-500/50 hover:border-l-amber-400 hover:translate-x-0.5 group/text"
                         title="Bấm để mở Shot Studio và chỉnh sửa phân cảnh này"
                       >
                         <p className="text-xs text-zinc-100 group-hover/text:text-amber-200 font-normal leading-relaxed line-clamp-3">
@@ -1436,7 +1448,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       {shot.image_prompt && (
                         <div
                           onClick={() => handleOpenEditShot(shot)}
-                          className="p-2 rounded-lg bg-cinema-canvas/80 hover:bg-cinema-canvas border border-cinema-border hover:border-amber-500/30 text-[10px] text-zinc-400 hover:text-zinc-300 font-mono line-clamp-2 leading-relaxed cursor-pointer transition-colors"
+                          className="p-2 rounded-lg bg-cinema-canvas/80 hover:bg-black/50 border border-cinema-border hover:border-amber-400/40 text-[10px] text-zinc-400 hover:text-zinc-200 font-mono line-clamp-2 leading-relaxed cursor-pointer transition-all duration-200"
                           title="Bấm để mở Shot Studio và chỉnh sửa Prompt"
                         >
                           <span className="text-zinc-500 font-semibold uppercase mr-1">PROMPT:</span>
@@ -1517,7 +1529,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           type="button"
                           onClick={() => handleRenderAudio(shot.id)}
                           disabled={renderingAudioShotId === shot.id}
-                          className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                          className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 hover:scale-110 ${
                             shot.has_audio
                               ? 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border-sky-500/40 shadow-sm'
                               : 'bg-cinema-canvas hover:bg-cinema-deck text-zinc-400 hover:text-sky-300 border-cinema-border'
@@ -1536,7 +1548,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           type="button"
                           onClick={() => handleRenderVideo(shot.id)}
                           disabled={renderingVideoShotId === shot.id}
-                          className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
+                          className={`w-7 h-7 rounded-lg border flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 hover:scale-110 ${
                             shot.has_video
                               ? 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border-emerald-500/40 shadow-sm'
                               : 'bg-cinema-canvas hover:bg-cinema-deck text-zinc-400 hover:text-emerald-300 border-cinema-border'
@@ -1559,7 +1571,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                               setEnhancerTargetShot(shot)
                               setIsEnhancerModalOpen(true)
                             }}
-                            className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-amber-300 hover:text-amber-200 border border-cinema-border hover:border-amber-400/50 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                            className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-amber-300 hover:text-amber-200 border border-cinema-border hover:border-amber-400/50 flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 hover:scale-110"
                             title="Nâng cấp phân cảnh này lên 4K UHD hoặc nội suy 60fps mượt mà"
                           >
                             <Award className="w-3.5 h-3.5 text-amber-400" />
@@ -1571,7 +1583,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           type="button"
                           onClick={() => handleRerollShot(shot.id)}
                           disabled={rerollingShotId === shot.id}
-                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-zinc-300 hover:text-amber-400 border border-cinema-border hover:border-amber-400/40 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-zinc-300 hover:text-amber-400 border border-cinema-border hover:border-amber-400/40 flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 hover:scale-110"
                           title="Tạo lại ảnh bằng AI (Reroll)"
                         >
                           {rerollingShotId === shot.id ? (
@@ -1583,7 +1595,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
                         {/* Custom Image Upload */}
                         <label
-                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-zinc-400 hover:text-zinc-200 border border-cinema-border hover:border-cinema-border-hover flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-cinema-deck text-zinc-400 hover:text-zinc-200 border border-cinema-border hover:border-cinema-border-hover flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 hover:scale-110"
                           title="Tải ảnh tùy chỉnh từ máy tính"
                         >
                           <Upload className="w-3.5 h-3.5" />
@@ -1600,7 +1612,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         <button
                           type="button"
                           onClick={() => setDirectorModalShot(shot as any)}
-                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-amber-500/20 text-zinc-300 hover:text-amber-400 border border-cinema-border hover:border-amber-400/50 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-amber-500/20 text-zinc-300 hover:text-amber-400 border border-cinema-border hover:border-amber-400/50 flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 hover:scale-110"
                           title="Đạo diễn góc máy & Visual Prompt Canvas (3 góc máy Wide/Medium/Close-up, ống kính & ánh sáng)"
                         >
                           <Camera className="w-3.5 h-3.5 text-amber-400" />
@@ -1610,7 +1622,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         <button
                           type="button"
                           onClick={() => setColorInspectorShot({ shot, index })}
-                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-rose-500/20 text-zinc-300 hover:text-rose-400 border border-cinema-border hover:border-rose-400/50 flex items-center justify-center transition-all cursor-pointer active:scale-95"
+                          className="w-7 h-7 rounded-lg bg-cinema-canvas hover:bg-rose-500/20 text-zinc-300 hover:text-rose-400 border border-cinema-border hover:border-rose-400/50 flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 hover:scale-110"
                           title="So màu A/B & Color Grading Inspector (Thanh trượt chia đôi 60 FPS)"
                         >
                           <Palette className="w-3.5 h-3.5 text-rose-400" />
@@ -1622,7 +1634,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         <button
                           type="button"
                           onClick={() => handleOpenEditShot(shot)}
-                          className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 via-amber-500/25 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-300 border border-amber-500/40 hover:border-amber-400 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
+                          className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-amber-500/20 via-amber-500/25 to-yellow-500/20 hover:from-amber-500/30 hover:to-yellow-500/30 text-amber-300 border border-amber-500/40 hover:border-amber-400 text-xs font-semibold flex items-center gap-1.5 transition-all duration-150 cursor-pointer shadow-sm hover:shadow-md hover:shadow-amber-500/20 hover:scale-[1.03] active:scale-95 whitespace-nowrap"
                           title="Mở Shot Studio để chỉnh sửa lời thoại, visual prompt, âm lượng, SFX..."
                         >
                           <Edit3 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -1632,7 +1644,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                         <button
                           type="button"
                           onClick={() => handleDeleteShot(shot.id)}
-                          className="w-7 h-7 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 flex items-center justify-center transition-colors cursor-pointer shrink-0 active:scale-95"
+                          className="w-7 h-7 rounded-lg text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 flex items-center justify-center transition-all duration-150 cursor-pointer shrink-0 active:scale-90 hover:scale-110"
                           title="Xóa phân cảnh này"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

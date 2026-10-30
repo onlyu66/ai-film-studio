@@ -169,18 +169,29 @@ export default function StoryTemplateModal({
                   const isPreviewing = activeTemplate?.id === tmpl.id
 
                   return (
-                    <div
+                    <motion.div
                       key={tmpl.id}
+                      whileHover={{ y: -4 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
                       onClick={() => setActivePreviewId(tmpl.id)}
-                      className={`group relative p-4 rounded-xl border transition-all cursor-pointer text-left ${
+                      className={`group relative p-4 rounded-xl border transition-all cursor-pointer text-left overflow-hidden ${
                         isPreviewing
-                          ? 'bg-zinc-800/90 border-cinema-amber shadow-md ring-1 ring-cinema-amber/40'
-                          : 'bg-zinc-900/70 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/50'
+                          ? 'bg-zinc-850 border-cinema-amber shadow-xl ring-1 ring-cinema-amber/40 shadow-cinema-amber/10'
+                          : 'bg-zinc-900/70 border-zinc-800 hover:border-amber-400/50 hover:bg-zinc-850/80 hover:shadow-xl hover:shadow-black/50'
                       }`}
                     >
+                      {/* Top Accent Line */}
+                      <div
+                        className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r transition-all duration-300 z-10 ${
+                          isPreviewing
+                            ? 'from-amber-500/0 via-amber-400 to-amber-500/0 opacity-100 h-[3px]'
+                            : 'from-amber-500/0 via-amber-400/70 to-amber-500/0 opacity-0 group-hover:opacity-100'
+                        }`}
+                      />
+
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3 min-w-0 flex-1">
-                          <span className="text-2xl p-2 rounded-xl bg-zinc-800 border border-zinc-700/80 shadow-sm shrink-0">
+                          <span className="text-2xl p-2 rounded-xl bg-zinc-800 border border-zinc-700/80 shadow-sm shrink-0 group-hover:scale-110 group-hover:border-amber-400/40 transition-all duration-300">
                             {tmpl.icon || '🎬'}
                           </span>
                           <div className="min-w-0 flex-1">
@@ -212,7 +223,7 @@ export default function StoryTemplateModal({
                       </div>
 
                       {/* Snippet */}
-                      <p className="text-xs text-zinc-300 mt-2.5 line-clamp-2 leading-relaxed bg-black/30 p-2.5 rounded-lg border border-zinc-800/60 font-sans">
+                      <p className="text-xs text-zinc-300 mt-2.5 line-clamp-2 leading-relaxed bg-black/40 group-hover:bg-black/60 p-2.5 rounded-lg border border-zinc-800/60 group-hover:border-amber-500/20 font-sans transition-colors">
                         {tmpl.default_topic}
                       </p>
 
@@ -235,13 +246,13 @@ export default function StoryTemplateModal({
                             e.stopPropagation()
                             handleApply(tmpl)
                           }}
-                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cinema-amber/15 hover:bg-cinema-amber text-cinema-amber hover:text-black border border-cinema-amber/30 transition-all flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cinema-amber/15 hover:bg-cinema-amber text-cinema-amber hover:text-black border border-cinema-amber/30 transition-all flex items-center gap-1 cursor-pointer hover:scale-105 active:scale-95 shadow-sm"
                         >
                           <span>Áp dụng</span>
                           <ArrowRight className="w-3 h-3" />
                         </button>
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })
               )}

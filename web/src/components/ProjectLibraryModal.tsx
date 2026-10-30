@@ -153,10 +153,13 @@ export default function ProjectLibraryModal({
                   return (
                     <motion.div
                       key={p.id}
-                      whileHover={{ y: -2 }}
-                      transition={{ duration: 0.15 }}
-                      className="group rounded-xl bg-cinema-card border border-cinema-border overflow-hidden hover:border-cinema-border-hover transition-all flex flex-col justify-between"
+                      whileHover={{ y: -4 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="group rounded-xl bg-cinema-card border border-cinema-border overflow-hidden hover:border-amber-500/40 hover:shadow-2xl hover:shadow-black/60 transition-all duration-300 flex flex-col justify-between relative"
                     >
+                      {/* Top Accent Line */}
+                      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-amber-500/0 via-amber-400 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
+
                       {/* Thumbnail */}
                       <div
                         onClick={() => p.video_url && onPlayMovie(p.video_url, p.srt_url)}
@@ -166,7 +169,7 @@ export default function ProjectLibraryModal({
                           <img
                             src={p.thumb_url}
                             alt={p.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-cover group-hover:scale-108 group-hover:brightness-105 transition-all duration-500 ease-out"
                           />
                         ) : (
                           <div className="flex flex-col items-center gap-2 text-zinc-600">
@@ -192,7 +195,7 @@ export default function ProjectLibraryModal({
                         )}
 
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 backdrop-blur-[1px]">
-                          <div className="w-10 h-10 rounded-full bg-cinema-amber text-zinc-950 flex items-center justify-center shadow-lg">
+                          <div className="w-10 h-10 rounded-full bg-cinema-amber text-zinc-950 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
                             <Play className="w-4 h-4 fill-current ml-0.5" />
                           </div>
                         </div>

@@ -201,15 +201,25 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
                   return (
                     <motion.div
                       key={preset.id}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.99 }}
+                      whileHover={{ y: -3, scale: 1.015 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ duration: 0.18, ease: "easeOut" }}
                       onClick={() => setSelectedPresetId(preset.id)}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
+                      className={`group p-4 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden ${
                         isSelected
-                          ? 'bg-amber-500/10 border-amber-500/50 shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/30'
-                          : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900'
+                          ? 'bg-amber-500/10 border-amber-500/60 shadow-xl shadow-amber-500/10 ring-1 ring-amber-500/40'
+                          : 'bg-zinc-900/60 border-zinc-800 hover:border-amber-400/50 hover:bg-zinc-850 hover:shadow-xl hover:shadow-black/50'
                       }`}
                     >
+                      {/* Top Accent Line */}
+                      <div
+                        className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r transition-all duration-300 ${
+                          isSelected
+                            ? 'from-amber-500/0 via-amber-400 to-amber-500/0 opacity-100 h-[3px]'
+                            : 'from-amber-500/0 via-amber-400/70 to-amber-500/0 opacity-0 group-hover:opacity-100'
+                        }`}
+                      />
+
                       {isSelected && (
                         <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center shadow-md">
                           <Check className="w-3 h-3 stroke-[3]" />
@@ -218,11 +228,11 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
 
                       <div>
                         <div className="flex items-center gap-2.5 mb-2 pr-6 min-w-0">
-                          <div className="p-2 rounded-xl bg-zinc-800/80 border border-zinc-700/60 shrink-0">
+                          <div className="p-2 rounded-xl bg-zinc-800/80 border border-zinc-700/60 group-hover:scale-105 group-hover:border-amber-400/40 transition-all duration-200 shrink-0">
                             {getPresetIcon(preset.id)}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <h4 className="text-xs font-bold text-zinc-100 leading-tight break-words">
+                            <h4 className="text-xs font-bold text-zinc-100 group-hover:text-amber-300/90 transition-colors leading-tight break-words">
                               {preset.name}
                             </h4>
                             <span className="text-[10px] font-mono text-amber-400/90 font-semibold block truncate">
