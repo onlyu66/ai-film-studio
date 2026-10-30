@@ -14,6 +14,8 @@ import {
   Volume2,
   Camera,
   RefreshCw,
+  Copy,
+  Maximize2,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { VaultCharacterItem, SaveVaultCharacterPayload } from '../types'
@@ -55,6 +57,14 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
     profile_url?: string
   } | null>(null)
   const [importedCharId, setImportedCharId] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+
+  const handleCopyText = (text: string, id: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -309,10 +319,10 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
             <button
               type="button"
               onClick={() => setSelectedTag('all')}
-              className={`px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
+              className={`px-3 py-1 rounded-lg text-xs font-medium cursor-pointer transition-all whitespace-nowrap shrink-0 active:scale-95 ${
                 selectedTag === 'all'
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                  : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold shadow-sm shadow-amber-500/10'
+                  : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white hover:border-zinc-700'
               }`}
             >
               Tất cả ({vaultCharacters.length})
@@ -322,10 +332,10 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                 key={tag}
                 type="button"
                 onClick={() => setSelectedTag(tag)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-mono cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono cursor-pointer transition-all whitespace-nowrap shrink-0 active:scale-95 ${
                   selectedTag === tag
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold'
-                    : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-semibold shadow-sm shadow-amber-500/10'
+                    : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white hover:border-zinc-700'
                 }`}
               >
                 #{tag}
@@ -377,47 +387,116 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
               ) : angleResults ? (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Frontal */}
-                  <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 flex flex-col">
-                    <span className="text-xs font-bold text-amber-300 mb-1">1. Chính Diện (Frontal)</span>
-                    <p className="text-[11px] text-zinc-400 italic line-clamp-3 mb-3">
-                      "{angleResults.prompts.frontal}"
-                    </p>
-                    <div className="w-full aspect-square rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center">
+                  <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 flex flex-col justify-between group/angle">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-amber-300">1. Chính Diện (Frontal)</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(angleResults.prompts.frontal, 'frontal')}
+                          className="text-[10px] text-zinc-500 hover:text-amber-300 p-1 rounded hover:bg-zinc-800 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Sao chép prompt góc chính diện"
+                        >
+                          {copiedId === 'frontal' ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                          <span>{copiedId === 'frontal' ? 'Đã chép' : 'Chép'}</span>
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-zinc-400 italic line-clamp-3 mb-3 break-words select-text">
+                        "{angleResults.prompts.frontal}"
+                      </p>
+                    </div>
+                    <div
+                      onClick={() => setLightboxImage(angleResults.frontal_url || selectedCharForAngles.headshot_url || '/api/outputs/characters/alex_headshot.png')}
+                      className="w-full aspect-square rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center relative cursor-pointer group/img"
+                    >
                       <img
                         src={angleResults.frontal_url || selectedCharForAngles.headshot_url || '/api/outputs/characters/alex_headshot.png'}
                         alt="Frontal Angle"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
                       />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                        <Maximize2 className="w-4 h-4 text-white" />
+                      </div>
                     </div>
                   </div>
 
                   {/* 3/4 Angle */}
-                  <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 flex flex-col">
-                    <span className="text-xs font-bold text-amber-300 mb-1">2. Góc 3/4 (Three-Quarter)</span>
-                    <p className="text-[11px] text-zinc-400 italic line-clamp-3 mb-3">
-                      "{angleResults.prompts.three_quarter}"
-                    </p>
-                    <div className="w-full aspect-square rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center">
+                  <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 flex flex-col justify-between group/angle">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-amber-300">2. Góc 3/4 (Three-Quarter)</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(angleResults.prompts.three_quarter, 'three_quarter')}
+                          className="text-[10px] text-zinc-500 hover:text-amber-300 p-1 rounded hover:bg-zinc-800 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Sao chép prompt góc 3/4"
+                        >
+                          {copiedId === 'three_quarter' ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                          <span>{copiedId === 'three_quarter' ? 'Đã chép' : 'Chép'}</span>
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-zinc-400 italic line-clamp-3 mb-3 break-words select-text">
+                        "{angleResults.prompts.three_quarter}"
+                      </p>
+                    </div>
+                    <div
+                      onClick={() => setLightboxImage(angleResults.three_quarter_url || selectedCharForAngles.headshot_url || '/api/outputs/characters/maya_headshot.png')}
+                      className="w-full aspect-square rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center relative cursor-pointer group/img"
+                    >
                       <img
                         src={angleResults.three_quarter_url || selectedCharForAngles.headshot_url || '/api/outputs/characters/maya_headshot.png'}
                         alt="Three-Quarter Angle"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
                       />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                        <Maximize2 className="w-4 h-4 text-white" />
+                      </div>
                     </div>
                   </div>
 
                   {/* Profile */}
-                  <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 flex flex-col">
-                    <span className="text-xs font-bold text-amber-300 mb-1">3. Nhìn Nghiêng (Profile)</span>
-                    <p className="text-[11px] text-zinc-400 italic line-clamp-3 mb-3">
-                      "{angleResults.prompts.profile}"
-                    </p>
-                    <div className="w-full aspect-square rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center">
+                  <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 flex flex-col justify-between group/angle">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-bold text-amber-300">3. Nhìn Nghiêng (Profile)</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyText(angleResults.prompts.profile, 'profile')}
+                          className="text-[10px] text-zinc-500 hover:text-amber-300 p-1 rounded hover:bg-zinc-800 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Sao chép prompt góc nghiêng"
+                        >
+                          {copiedId === 'profile' ? (
+                            <Check className="w-3 h-3 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3 h-3" />
+                          )}
+                          <span>{copiedId === 'profile' ? 'Đã chép' : 'Chép'}</span>
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-zinc-400 italic line-clamp-3 mb-3 break-words select-text">
+                        "{angleResults.prompts.profile}"
+                      </p>
+                    </div>
+                    <div
+                      onClick={() => setLightboxImage(angleResults.profile_url || selectedCharForAngles.headshot_url || '/api/outputs/characters/tran_headshot.png')}
+                      className="w-full aspect-square rounded-xl bg-zinc-900 border border-zinc-800 overflow-hidden flex items-center justify-center relative cursor-pointer group/img"
+                    >
                       <img
                         src={angleResults.profile_url || selectedCharForAngles.headshot_url || '/api/outputs/characters/tran_headshot.png'}
                         alt="Profile Angle"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-300"
                       />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center transition-opacity">
+                        <Maximize2 className="w-4 h-4 text-white" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -447,8 +526,9 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                 return (
                   <motion.div
                     key={char.id}
-                    whileHover={{ y: -2 }}
-                    className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-amber-500/30 flex flex-col justify-between transition-all group relative overflow-hidden shadow-lg"
+                    whileHover={{ y: -3 }}
+                    transition={{ duration: 0.18 }}
+                    className="p-5 rounded-2xl bg-zinc-900/60 border border-zinc-800 hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/10 flex flex-col justify-between transition-all group relative overflow-hidden shadow-lg min-w-0"
                   >
                     <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/0 via-amber-500/40 to-amber-500/0 opacity-50 group-hover:opacity-100 transition-opacity" />
 
@@ -456,16 +536,27 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                       {/* Top Bar: Avatar & Title */}
                       <div className="flex items-start justify-between gap-3 mb-3.5">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700/80 overflow-hidden flex items-center justify-center shrink-0">
+                          <div
+                            onClick={() => char.headshot_url && setLightboxImage(char.headshot_url)}
+                            className={`w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700/80 overflow-hidden flex items-center justify-center shrink-0 relative group/avatar ${
+                              char.headshot_url ? 'cursor-pointer hover:border-amber-400/60 hover:ring-2 hover:ring-amber-400/25 transition-all' : ''
+                            }`}
+                            title={char.headshot_url ? 'Bấm để phóng to ảnh chân dung' : undefined}
+                          >
                             {char.headshot_url ? (
-                              <img
-                                src={char.headshot_url}
-                                alt={char.name}
-                                onError={(e) => {
-                                  ;(e.target as HTMLElement).style.display = 'none'
-                                }}
-                                className="w-full h-full object-cover"
-                              />
+                              <>
+                                <img
+                                  src={char.headshot_url}
+                                  alt={char.name}
+                                  onError={(e) => {
+                                    ;(e.target as HTMLElement).style.display = 'none'
+                                  }}
+                                  className="w-full h-full object-cover group-hover/avatar:scale-110 transition-transform duration-300"
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
+                                  <Maximize2 className="w-3.5 h-3.5 text-white" />
+                                </div>
+                              </>
                             ) : (
                               <Camera className="w-6 h-6 text-zinc-500" />
                             )}
@@ -488,32 +579,62 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                             }
                           }}
                           title="Xóa khỏi Vault"
-                          className="p-1.5 rounded-lg hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-colors cursor-pointer shrink-0"
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/15 hover:scale-110 active:scale-90 transition-all cursor-pointer shrink-0"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
 
-                      {/* Tags */}
+                      {/* Tags (Interactive Click-to-filter) */}
                       {char.tags && char.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-3">
                           {char.tags.map((tag) => (
-                            <span
+                            <button
                               key={tag}
-                              className="text-[9px] font-mono text-zinc-400 bg-zinc-800/80 px-2 py-0.5 rounded-md border border-zinc-700/50"
+                              type="button"
+                              onClick={() => setSelectedTag(tag === selectedTag ? 'all' : tag)}
+                              className={`text-[9px] font-mono px-2 py-0.5 rounded-md border transition-all cursor-pointer active:scale-95 ${
+                                selectedTag === tag
+                                  ? 'bg-amber-500/25 text-amber-300 border-amber-500/50 shadow-sm'
+                                  : 'text-zinc-400 bg-zinc-800/80 hover:bg-zinc-700/80 hover:text-amber-300 border-zinc-700/50 hover:border-amber-500/30'
+                              }`}
+                              title={`Lọc nhanh theo tag #${tag}`}
                             >
                               #{tag}
-                            </span>
+                            </button>
                           ))}
                         </div>
                       )}
 
-                      {/* Visual Anchor Box */}
-                      <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 mb-4">
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1 mb-1">
-                          <Sparkles className="w-2.5 h-2.5" /> Visual DNA Anchor
-                        </span>
-                        <p className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-3 group-hover:line-clamp-none transition-all">
+                      {/* Visual Anchor Box with Hover Copy Button */}
+                      <div className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 hover:border-zinc-700/80 mb-4 relative group/dna transition-colors">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1">
+                            <Sparkles className="w-2.5 h-2.5 text-amber-400" /> Visual DNA Anchor
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleCopyText(char.visual_anchor, char.id)
+                            }}
+                            className="opacity-0 group-hover/dna:opacity-100 transition-all p-1 rounded hover:bg-zinc-800 text-zinc-400 hover:text-amber-300 flex items-center gap-1 text-[10px] font-mono cursor-pointer active:scale-95"
+                            title="Sao chép Visual DNA Prompt"
+                          >
+                            {copiedId === char.id ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-400" />
+                                <span className="text-emerald-400 font-semibold">Đã chép!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Sao chép</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-3 group-hover/dna:line-clamp-none transition-all break-words select-text">
                           {char.visual_anchor}
                         </p>
                       </div>
@@ -535,7 +656,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                       <button
                         type="button"
                         onClick={() => handleOpenAngles(char)}
-                        className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                        className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-amber-300 hover:border-amber-500/30 border border-transparent text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95"
                       >
                         <Eye className="w-3.5 h-3.5 text-amber-400" />
                         <span>3 Góc Mặt</span>
@@ -545,10 +666,10 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
                         type="button"
                         onClick={() => handleImport(char)}
                         disabled={importMutation.isPending}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
                           isImported
                             ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
-                            : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 shadow-md shadow-amber-500/20'
+                            : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 shadow-md shadow-amber-500/20 hover:scale-[1.02]'
                         }`}
                       >
                         {isImported ? (
@@ -580,12 +701,42 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold cursor-pointer shrink-0 text-center"
+            className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold cursor-pointer shrink-0 text-center active:scale-95 transition-all"
           >
             Đóng
           </button>
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-xl max-h-[85vh] rounded-3xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl cursor-default"
+            >
+              <img src={lightboxImage} alt="Headshot Full" className="w-full h-full object-contain" />
+              <button
+                type="button"
+                onClick={() => setLightboxImage(null)}
+                className="absolute top-3 right-3 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
