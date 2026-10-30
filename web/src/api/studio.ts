@@ -653,6 +653,23 @@ export async function testProviderToken(
   return response.data
 }
 
+export async function snapTimelineToBeat(params: {
+  project_id?: string
+  bgm_track?: string
+  min_shot_duration?: number
+  max_shot_duration?: number
+  save_to_storyboard?: boolean
+}): Promise<{
+  success: boolean
+  shots: Array<{ id: string; duration: number }>
+  total_duration: number
+  tempo_bpm: number
+}> {
+  const response = await apiClient.post('/api/audio/beat-sync/snap', params)
+  return response.data
+}
+
+
 
 
 
