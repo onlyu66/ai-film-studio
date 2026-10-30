@@ -34,6 +34,7 @@ class Shot:
     lighting: Optional[str] = None
     camera_lens: Optional[str] = None
     multi_angle_options: Optional[Dict[str, str]] = None
+    location_id: Optional[str] = None
     is_approved: bool = False
     voice_volume: float = 1.0
     sfx_volume: float = 1.0
@@ -43,12 +44,14 @@ class Storyboard:
     title: str
     language: str
     characters: Dict[str, Character] = field(default_factory=dict)
+    locations: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     shots: List[Shot] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
             "title": self.title,
             "language": self.language,
+            "locations": dict(self.locations),
             "characters": {
                 k: {
                     "name": v.name,
@@ -65,6 +68,7 @@ class Storyboard:
                     "id": s.id,
                     "chapter": s.chapter,
                     "character_id": s.character_id,
+                    "location_id": getattr(s, "location_id", None),
                     "dialogue": s.dialogue,
                     "image_prompt": s.image_prompt,
                     "motion": s.motion,
@@ -131,6 +135,9 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                 face_dna=char_data.get("face_dna"),
             )
 
+    raw_locations = data.get("locations", {})
+    locations: Dict[str, Dict[str, Any]] = raw_locations if isinstance(raw_locations, dict) else {}
+
     shots: List[Shot] = []
     for s in data.get("shots", []):
         if isinstance(s, dict):
@@ -169,6 +176,7 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                     lighting=str(s["lighting"]).strip().lower() if s.get("lighting") else None,
                     camera_lens=str(s["camera_lens"]).strip() if s.get("camera_lens") else None,
                     multi_angle_options=s.get("multi_angle_options") if isinstance(s.get("multi_angle_options"), dict) else None,
+                    location_id=str(s["location_id"]).strip() if s.get("location_id") else None,
                     is_approved=bool(s.get("is_approved", False)),
                     voice_volume=float(s.get("voice_volume", 1.0)) if s.get("voice_volume") is not None else 1.0,
                     sfx_volume=float(s.get("sfx_volume", 1.0)) if s.get("sfx_volume") is not None else 1.0,
@@ -179,6 +187,7 @@ def parse_storyboard_json(raw: str) -> Storyboard:
         title=title,
         language=language,
         characters=characters,
+        locations=locations,
         shots=shots,
     )
 

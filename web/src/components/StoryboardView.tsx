@@ -35,6 +35,7 @@ import {
   Award,
   Copy,
   GripVertical,
+  Building2,
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card'
 import { Badge } from './ui/badge'
@@ -47,6 +48,7 @@ import DubbingModal from './DubbingModal'
 import AutoReframeModal from './AutoReframeModal'
 import SFXSoundboardModal from './SFXSoundboardModal'
 import { CharacterVaultModal } from './CharacterVaultModal'
+import { LocationVaultModal } from './LocationVaultModal'
 import { VideoEnhancerModal } from './VideoEnhancerModal'
 import { useProgressSSE } from '../hooks/useProgressSSE'
 import {
@@ -201,7 +203,7 @@ const SFX_PRESETS = [
 ] as const
 
 export default function StoryboardView({ storyboard, isScriptReady, onContinue }: StoryboardViewProps) {
-  const [activeTab, setActiveTab] = useState<'shots' | 'characters'>('shots')
+  const [activeTab, setActiveTab] = useState<'shots' | 'characters' | 'locations'>('shots')
   const [searchQuery, setSearchQuery] = useState('')
   const [shotFilter, setShotFilter] = useState<'all' | 'approved' | 'pending' | 'has_video'>('all')
   const [actFilter, setActFilter] = useState<string>('all')
@@ -215,6 +217,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [editPrompt, setEditPrompt] = useState('')
   const [editMotion, setEditMotion] = useState('zoom_in')
   const [editCharacterId, setEditCharacterId] = useState('')
+  const [editLocationId, setEditLocationId] = useState('')
   const [editSfx, setEditSfx] = useState('')
   const [editVoiceVolume, setEditVoiceVolume] = useState<number>(1.0)
   const [editSfxVolume, setEditSfxVolume] = useState<number>(1.0)
@@ -283,6 +286,8 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   const [isReframeOpen, setIsReframeOpen] = useState(false)
   const [sfxModalShot, setSfxModalShot] = useState<any | null>(null)
   const [isVaultModalOpen, setIsVaultModalOpen] = useState(false)
+  const [isLocationVaultModalOpen, setIsLocationVaultModalOpen] = useState(false)
+  const [locationVaultShotTarget, setLocationVaultShotTarget] = useState<string | null>(null)
   const [savingToVaultCharId, setSavingToVaultCharId] = useState<string | null>(null)
   const [savedToVaultCharId, setSavedToVaultCharId] = useState<string | null>(null)
   const [isEnhancerModalOpen, setIsEnhancerModalOpen] = useState(false)
@@ -662,6 +667,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
   }
 
   const characters = rawCharacters
+  const locations = (storyboard?.locations || {}) as Record<string, any>
   const shots = rawShots
 
   const filteredShots = shots.filter((s) => {
@@ -712,12 +718,22 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
     })),
   ]
 
+  const locationOptions = [
+    { value: '', label: '🌐 Không cố định bối cảnh', subtext: 'Tự động tạo môi trường theo visual prompt' },
+    ...Object.entries(locations).map(([id, loc]: [string, any]) => ({
+      value: id,
+      label: `🏛️ ${loc.name || id}`,
+      subtext: `Seed: ${loc.seed || 42} • ${loc.lighting || ''}`,
+    })),
+  ]
+
   const handleOpenEditShot = (shot: ShotData) => {
     setEditingShot(shot)
     setEditDialogue(shot.dialogue || '')
     setEditPrompt(shot.image_prompt || '')
     setEditMotion(shot.motion || 'zoom_in')
     setEditCharacterId(shot.character_id || '')
+    setEditLocationId((shot.location_id as string) || '')
     setEditSfx(shot.sfx || '')
     setEditVoiceVolume(typeof shot.voice_volume === 'number' ? shot.voice_volume : 1.0)
     setEditSfxVolume(typeof shot.sfx_volume === 'number' ? shot.sfx_volume : 1.0)
@@ -739,6 +755,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         image_prompt: editPrompt,
         motion: editMotion,
         character_id: editCharacterId || undefined,
+        location_id: editLocationId || null,
         sfx: editSfx || undefined,
         voice_volume: editVoiceVolume,
         sfx_volume: editSfxVolume,
@@ -850,6 +867,21 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
               </button>
             )}
 
+            {activeTab === 'locations' && (
+              <button
+                type="button"
+                onClick={() => {
+                  setLocationVaultShotTarget(null)
+                  setIsLocationVaultModalOpen(true)
+                }}
+                className="px-3 py-1.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Mở Kho Bối Cảnh Bất Biến để duyệt và nhập địa điểm"
+              >
+                <Building2 className="w-3.5 h-3.5 text-cyan-400" />
+                <span>Kho Bối Cảnh (Vault)</span>
+              </button>
+            )}
+
             <div className="flex items-center p-1 bg-cinema-canvas rounded-lg border border-cinema-border">
               <button
                 type="button"
@@ -872,6 +904,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                 }`}
               >
                 Diễn viên ({Object.keys(characters).length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('locations')}
+                className={`px-3 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                  activeTab === 'locations'
+                    ? 'bg-cinema-amber text-zinc-950 font-bold'
+                    : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                Bối cảnh ({Object.keys(locations).length})
               </button>
             </div>
           </div>
@@ -1151,6 +1194,130 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           <Mic className="w-4 h-4" />
                         </button>
                       </div>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          )
+        )}
+
+        {/* Locations Tab */}
+        {activeTab === 'locations' && (
+          Object.keys(locations).length === 0 ? (
+            <div className="p-10 sm:p-12 text-center rounded-2xl bg-cinema-card border border-cinema-border/60 space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mx-auto shadow-inner">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-zinc-200">Chưa có bối cảnh cố định nào trong kịch bản hiện tại</h4>
+                <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto leading-relaxed">
+                  Cố định kiến trúc, bầu không khí và bảng màu bằng cách mở Kho Bối Cảnh (Location Vault) để duyệt mẫu hoặc tạo bối cảnh mới cho phim.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setLocationVaultShotTarget(null)
+                  setIsLocationVaultModalOpen(true)
+                }}
+                className="px-4 py-2.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <Building2 className="w-4 h-4 text-cyan-400" />
+                <span>Mở Kho Bối Cảnh (Location Vault)</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+              {Object.entries(locations).map(([id, loc]: [string, any]) => {
+                const usedInShots = shots.filter((s) => s.location_id === id)
+
+                return (
+                  <motion.div
+                    key={id}
+                    whileHover={{ y: -4 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="p-4 sm:p-5 rounded-2xl bg-cinema-card border border-cinema-border hover:border-cyan-500/40 shadow-xl hover:shadow-2xl hover:shadow-cyan-500/5 transition-[border-color,box-shadow] duration-200 flex flex-col justify-between relative overflow-hidden group min-w-0"
+                  >
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-cyan-500/0 via-cyan-400 to-cyan-500/0 opacity-70 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    <div>
+                      {/* Image 16:9 Thumbnail */}
+                      <div className="relative aspect-video rounded-xl bg-black overflow-hidden mb-3.5 border border-cinema-border/80 group/locimg">
+                        {loc.preview_url ? (
+                          <img
+                            src={loc.preview_url}
+                            alt={loc.name || id}
+                            className="w-full h-full object-cover group-hover/locimg:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 gap-1 bg-gradient-to-br from-zinc-900 to-black">
+                            <Building2 className="w-6 h-6 opacity-40" />
+                            <span className="text-[10px] text-zinc-500">Chưa có ảnh</span>
+                          </div>
+                        )}
+
+                        <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none">
+                          <span className="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[10px] text-cyan-300 font-mono border border-cyan-500/30">
+                            Seed: {loc.seed || 42}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[10px] text-amber-300 font-semibold border border-amber-500/30">
+                            {usedInShots.length} phân cảnh
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Title & ID */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                          {loc.name || id}
+                        </h4>
+                        <span className="text-[10px] font-mono text-zinc-500 shrink-0">
+                          #{id.slice(0, 8)}
+                        </span>
+                      </div>
+
+                      {/* Environment DNA (fixed line-clamp-3, zero layout shift) */}
+                      <div className="p-2.5 rounded-xl bg-cinema-canvas/60 border border-cinema-border/70 text-xs text-zinc-300 leading-relaxed line-clamp-3 mb-3">
+                        {loc.environment_dna || 'Chưa thiết lập mô tả kiến trúc.'}
+                      </div>
+
+                      {/* Lighting & Palette */}
+                      <div className="flex flex-wrap gap-1.5 mb-3 text-[10px]">
+                        {loc.lighting && (
+                          <span className="px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-300 truncate max-w-[150px]">
+                            {loc.lighting}
+                          </span>
+                        )}
+                        {loc.color_palette && (
+                          <span className="px-2 py-0.5 rounded bg-purple-500/10 border border-purple-500/20 text-purple-300 truncate max-w-[150px]">
+                            {loc.color_palette}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="pt-3 border-t border-cinema-border/70 flex items-center justify-between">
+                      <span className="text-[11px] text-zinc-400">
+                        {usedInShots.length > 0 ? (
+                          <span className="text-cyan-300 font-medium">Đang dùng ở cảnh {usedInShots.map(s => `#${s.id}`).slice(0, 3).join(', ')}{usedInShots.length > 3 ? '...' : ''}</span>
+                        ) : (
+                          <span className="text-zinc-500 italic">Chưa gán cho cảnh nào</span>
+                        )}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLocationVaultShotTarget(null)
+                          setIsLocationVaultModalOpen(true)
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-cyan-500 hover:text-zinc-950 text-zinc-300 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1"
+                      >
+                        <Building2 className="w-3 h-3" />
+                        <span>Kho Vault</span>
+                      </button>
                     </div>
                   </motion.div>
                 )
@@ -1533,16 +1700,36 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                             <User className="w-3 h-3" />
                           </div>
                           <span className="font-bold text-zinc-200 text-xs truncate">
-                            {shot.character_id ? (characters[shot.character_id]?.name || shot.character_id) : 'Cảnh quay chung / Thuyết minh'}
+                            {shot.character_id ? String(characters[shot.character_id]?.name || shot.character_id) : 'Cảnh quay chung / Thuyết minh'}
                           </span>
                         </div>
 
                         {shot.character_id && characters[shot.character_id]?.voice && (
                           <span className="text-[10px] font-mono text-zinc-400 shrink-0 bg-cinema-deck/80 px-2 py-0.5 rounded border border-cinema-border">
-                            🎙️ {characters[shot.character_id]?.voice?.split('-')[2]?.replace('Neural', '') || 'Voice'}
+                            🎙️ {String(characters[shot.character_id]?.voice)?.split('-')[2]?.replace('Neural', '') || 'Voice'}
                           </span>
                         )}
                       </div>
+
+                      {/* Location Badge (if assigned) */}
+                      {Boolean(shot.location_id) && (
+                        <div
+                          onClick={() => {
+                            setLocationVaultShotTarget(shot.id)
+                            setIsLocationVaultModalOpen(true)
+                          }}
+                          className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-cyan-950/40 border border-cyan-800/40 text-[10px] text-cyan-300 font-medium cursor-pointer hover:border-cyan-500/50 hover:bg-cyan-950/60 transition-all group/locbadge"
+                          title="Bối cảnh được khóa bất biến (Bấm để đổi)"
+                        >
+                          <Building2 className="w-3 h-3 text-cyan-400 shrink-0 group-hover/locbadge:scale-110 transition-transform" />
+                          <span className="truncate max-w-[200px]">
+                            {locations[String(shot.location_id)]?.name || String(shot.location_id)}
+                          </span>
+                          <span className="ml-auto text-[9px] text-cyan-400/70 font-mono">
+                            DNA Khóa
+                          </span>
+                        </div>
+                      )}
 
                       {/* Dialogue Section with amber accent quote line */}
                       <div
@@ -1741,6 +1928,27 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                           title="So màu A/B & Color Grading Inspector (Thanh trượt chia đôi 60 FPS)"
                         >
                           <Palette className="w-3.5 h-3.5 text-rose-400" />
+                        </button>
+
+                        {/* Location Vault Quick Assign */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLocationVaultShotTarget(shot.id)
+                            setIsLocationVaultModalOpen(true)
+                          }}
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 cursor-pointer active:scale-90 hover:scale-110 ${
+                            shot.location_id
+                              ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/30'
+                              : 'bg-cinema-canvas hover:bg-cyan-500/20 text-zinc-300 hover:text-cyan-400 border border-cinema-border hover:border-cyan-400/50'
+                          }`}
+                          title={
+                            shot.location_id
+                              ? `Bối cảnh: ${locations[String(shot.location_id)]?.name || String(shot.location_id)} (bấm để đổi)`
+                              : 'Gán Bối Cảnh từ Kho Vault (Location Vault Pro)'
+                          }
+                        >
+                          <Building2 className="w-3.5 h-3.5 text-cyan-400" />
                         </button>
                       </div>
 
@@ -2711,8 +2919,8 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     />
                   </div>
 
-                  {/* Character & Motion */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Character, Location & Motion */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
                         Nhân vật phát ngôn:
@@ -2725,8 +2933,20 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                     </div>
 
                     <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-wider text-cyan-400 mb-1 flex items-center gap-1">
+                        <Building2 className="w-3 h-3" />
+                        <span>Bối cảnh (Location):</span>
+                      </label>
+                      <CustomSelect
+                        value={editLocationId}
+                        onChange={setEditLocationId}
+                        options={locationOptions}
+                      />
+                    </div>
+
+                    <div>
                       <label className="block text-[11px] font-semibold uppercase tracking-wider text-zinc-300 mb-1">
-                        Chuyển động Camera (Ease-In-Out):
+                        Chuyển động Camera:
                       </label>
                       <CustomSelect
                         value={editMotion}
@@ -3204,6 +3424,17 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
       <CharacterVaultModal
         isOpen={isVaultModalOpen}
         onClose={() => setIsVaultModalOpen(false)}
+        currentProjectId="current"
+      />
+
+      {/* Location & Scene Vault World-Building Engine Pro Modal */}
+      <LocationVaultModal
+        isOpen={isLocationVaultModalOpen}
+        onClose={() => {
+          setIsLocationVaultModalOpen(false)
+          setLocationVaultShotTarget(null)
+        }}
+        assigningShotId={locationVaultShotTarget}
         currentProjectId="current"
       />
 

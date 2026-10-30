@@ -18,8 +18,13 @@ STYLE_DNA = {
     "documentary": "national geographic documentary still, natural ambient lighting, hyperrealistic, authentic, 8k resolution",
 }
 
-def build_full_prompt(shot: Shot, characters: Dict[str, Character], style: str = "cinematic") -> str:
-    """Compose the complete generation prompt incorporating character visual DNA, cinematography framing, and style DNA."""
+def build_full_prompt(
+    shot: Shot,
+    characters: Dict[str, Character],
+    style: str = "cinematic",
+    locations: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Compose the complete generation prompt incorporating character visual DNA, location environment DNA, cinematography framing, and style DNA."""
     parts = []
 
     # 1. Subject & Character Visual DNA Anchor
@@ -27,6 +32,26 @@ def build_full_prompt(shot: Shot, characters: Dict[str, Character], style: str =
         char = characters[shot.character_id]
         if char.visual_anchor:
             parts.append(f"Subject: {char.name}, {char.visual_anchor}")
+
+    # 2. Location & World-Building Environment DNA Anchor
+    loc_id = getattr(shot, "location_id", None)
+    if loc_id and locations and loc_id in locations:
+        loc = locations[loc_id]
+        loc_name = loc.name if hasattr(loc, "name") else loc.get("name", "")
+        loc_dna = loc.environment_dna if hasattr(loc, "environment_dna") else loc.get("environment_dna", "")
+        loc_lighting = loc.lighting if hasattr(loc, "lighting") else loc.get("lighting", "")
+        loc_palette = loc.color_palette if hasattr(loc, "color_palette") else loc.get("color_palette", "")
+        loc_desc = []
+        if loc_name:
+            loc_desc.append(loc_name)
+        if loc_dna:
+            loc_desc.append(loc_dna)
+        if loc_lighting:
+            loc_desc.append(loc_lighting)
+        if loc_palette:
+            loc_desc.append(f"palette: {loc_palette}")
+        if loc_desc:
+            parts.append(f"Location Setting: {', '.join(loc_desc)}")
 
     # 2. Cinematography Framing, Angle & Lighting
     cine_cues = []
@@ -87,20 +112,25 @@ def generate_image_for_shot(
     engine: Optional[str] = None,
     prompt_override: Optional[str] = None,
     api_url: Optional[str] = None,
+    locations: Optional[Dict[str, Any]] = None,
 ) -> Optional[Path]:
     """Generate image via local AI engine (SD WebUI / ComfyUI) or Pollinations API with robust fallback. Returns file path or None."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     out_file = output_dir / f"{shot.id}.png"
 
-    raw_prompt = prompt_override or build_full_prompt(shot, characters, style)
+    raw_prompt = prompt_override or build_full_prompt(shot, characters, style, locations=locations)
     # Sanitize prompt and limit length to avoid URI Too Long (414)
     clean_prompt = " ".join(raw_prompt.split())[:600]
     encoded_prompt = urllib.parse.quote(clean_prompt)
 
     seed = seed_override or 42
-    if seed_override is None and shot.character_id and shot.character_id in characters:
-        seed = characters[shot.character_id].seed
+    if seed_override is None:
+        if shot.character_id and shot.character_id in characters:
+            seed = characters[shot.character_id].seed
+        elif getattr(shot, "location_id", None) and locations and shot.location_id in locations:
+            loc = locations[shot.location_id]
+            seed = int(loc.seed if hasattr(loc, "seed") else loc.get("seed", 42))
 
     if aspect_ratio == "9:16":
         w, h = 720, 1280
@@ -216,6 +246,7 @@ def run_image_stage(
                 aspect_ratio=aspect_ratio,
                 engine=getattr(config, "image_engine", "pollinations"),
                 api_url=getattr(config, "image_api_url", None),
+                locations=getattr(storyboard, "locations", None),
             )
             if result and result.exists() and result.stat().st_size > 5000:
                 return shot.id, result

@@ -51,6 +51,7 @@ export interface UpdateShotParams {
   lighting?: string
   camera_lens?: string
   camera_motion?: string
+  location_id?: string | null
   voice_volume?: number
   sfx_volume?: number
   sfx_offset_ms?: number
@@ -111,6 +112,7 @@ export interface AddShotParams {
   lighting?: string
   camera_lens?: string
   camera_motion?: string
+  location_id?: string | null
   voice_volume?: number
   sfx_volume?: number
   sfx_offset_ms?: number
@@ -515,6 +517,71 @@ export async function generateCharacterAngles(
 ): Promise<import('../types').GenerateAnglesResponse> {
   const response = await apiClient.post<import('../types').GenerateAnglesResponse>(
     '/api/characters/generate-angles',
+    payload
+  )
+  return response.data
+}
+
+// --- Location Vault API ---
+export async function fetchVaultLocations(): Promise<import('../types').VaultLocationItem[]> {
+  const response = await apiClient.get<import('../types').VaultLocationItem[]>('/api/locations/vault')
+  return response.data
+}
+
+export async function saveLocationToVault(
+  payload: import('../types').SaveVaultLocationPayload
+): Promise<{ success: boolean; location: import('../types').VaultLocationItem }> {
+  const response = await apiClient.post<{ success: boolean; location: import('../types').VaultLocationItem }>(
+    '/api/locations/vault/save',
+    payload
+  )
+  return response.data
+}
+
+export async function deleteVaultLocation(
+  locId: string
+): Promise<{ success: boolean; deleted_id: string }> {
+  const response = await apiClient.delete<{ success: boolean; deleted_id: string }>(
+    `/api/locations/vault/${encodeURIComponent(locId)}`
+  )
+  return response.data
+}
+
+export async function importVaultLocation(
+  payload: import('../types').ImportVaultLocationPayload
+): Promise<{ success: boolean; location: import('../types').VaultLocationItem }> {
+  const response = await apiClient.post<{ success: boolean; location: import('../types').VaultLocationItem }>(
+    '/api/locations/vault/import',
+    payload
+  )
+  return response.data
+}
+
+export async function assignLocationToShot(
+  payload: import('../types').AssignLocationToShotPayload
+): Promise<{ success: boolean; shot_id: string; location_id?: string | null }> {
+  const response = await apiClient.post<{ success: boolean; shot_id: string; location_id?: string | null }>(
+    '/api/locations/assign-to-shot',
+    payload
+  )
+  return response.data
+}
+
+export async function generateLocationPreview(
+  payload: import('../types').GenerateLocationPreviewPayload
+): Promise<{ success: boolean; location_id: string; preview_url: string }> {
+  const response = await apiClient.post<{ success: boolean; location_id: string; preview_url: string }>(
+    '/api/locations/generate-preview',
+    payload
+  )
+  return response.data
+}
+
+export async function uploadLocationPreview(
+  payload: { location_id: string; image_base64: string }
+): Promise<{ success: boolean; location_id: string; preview_url: string }> {
+  const response = await apiClient.post<{ success: boolean; location_id: string; preview_url: string }>(
+    '/api/locations/upload-preview',
     payload
   )
   return response.data

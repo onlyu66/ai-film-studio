@@ -118,6 +118,7 @@ export interface Shot {
   id: string
   character?: string
   character_id?: string
+  location_id?: string | null
   dialogue?: string
   visual_description?: string
   image_prompt?: string
@@ -152,6 +153,7 @@ export interface StoryboardData {
   language?: string
   theme?: string
   characters?: Record<string, Character>
+  locations?: Record<string, VaultLocationItem>
   shots?: Shot[]
   [key: string]: unknown
 }
@@ -510,6 +512,49 @@ export interface GenerateAnglesResponse {
   frontal_url?: string
   three_quarter_url?: string
   profile_url?: string
+}
+
+// --- Location Vault Types ---
+export interface VaultLocationItem {
+  id: string
+  name: string
+  environment_dna: string
+  lighting?: string
+  color_palette?: string
+  seed?: number
+  preview_url?: string
+  tags?: string[]
+  created_at?: string | number
+}
+
+export interface SaveVaultLocationPayload {
+  id?: string
+  name: string
+  environment_dna: string
+  lighting?: string
+  color_palette?: string
+  seed?: number
+  preview_url?: string
+  tags?: string[]
+}
+
+export interface ImportVaultLocationPayload {
+  project_id?: string
+  vault_loc_id: string
+}
+
+export interface AssignLocationToShotPayload {
+  project_id?: string
+  shot_id: string
+  location_id?: string | null
+}
+
+export interface GenerateLocationPreviewPayload {
+  location_id: string
+  environment_dna: string
+  lighting?: string
+  color_palette?: string
+  seed?: number
 }
 
 // --- Video Enhancer Types ---

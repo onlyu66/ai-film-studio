@@ -738,6 +738,7 @@ def serve_output_file(file_path: str):
 # --- Include Domain Routers ---
 from studio.routers.storyboard import router as storyboard_router
 from studio.routers.vault import router as vault_router
+from studio.routers.locations import router as locations_router
 from studio.routers.audio import router as audio_router
 from studio.routers.video import router as video_router
 from studio.routers.projects import router as projects_router
@@ -745,6 +746,7 @@ from studio.routers.events import router as events_router
 
 app.include_router(storyboard_router)
 app.include_router(vault_router)
+app.include_router(locations_router)
 app.include_router(audio_router)
 app.include_router(video_router)
 app.include_router(projects_router)
@@ -760,6 +762,10 @@ from studio.routers.storyboard import (
 from studio.routers.vault import (
     GenerateHeadshotRequest, SaveVaultCharacterRequest,
     ImportVaultCharacterRequest, GenerateAnglesRequest, UploadHeadshotRequest
+)
+from studio.routers.locations import (
+    GenerateLocationPreviewRequest, SaveVaultLocationRequest,
+    ImportVaultLocationRequest, AssignLocationToShotRequest, UploadLocationPreviewRequest
 )
 from studio.routers.audio import (
     SfxSuggestRequest, BatchSfxSuggestRequest, UploadBgmRequest,

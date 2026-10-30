@@ -61,6 +61,13 @@ import {
   fetchEnhancerPresets,
   enhanceShotVideo,
   enhanceMasterVideo,
+  fetchVaultLocations,
+  saveLocationToVault,
+  deleteVaultLocation,
+  importVaultLocation,
+  assignLocationToShot,
+  generateLocationPreview,
+  uploadLocationPreview,
   type RenderShotVideoParams,
   type UpdateShotParams,
   type AddShotParams,
@@ -73,6 +80,7 @@ export const QUERY_KEYS = {
   storyboard: ['studio', 'storyboard'] as const,
   projects: ['studio', 'projects'] as const,
   vault: ['characters', 'vault'] as const,
+  locationsVault: ['locations', 'vault'] as const,
   enhancerPresets: ['system', 'enhancer-presets'] as const,
 }
 
@@ -680,6 +688,75 @@ export function useEnhanceMasterVideo() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.status })
+    },
+  })
+}
+
+// --- Location Vault Queries & Mutations ---
+export function useVaultLocations() {
+  return useQuery({
+    queryKey: QUERY_KEYS.locationsVault,
+    queryFn: fetchVaultLocations,
+    staleTime: 60_000,
+  })
+}
+
+export function useSaveVaultLocation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: saveLocationToVault,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.locationsVault })
+    },
+  })
+}
+
+export function useDeleteVaultLocation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteVaultLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.locationsVault })
+    },
+  })
+}
+
+export function useImportVaultLocation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: importVaultLocation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useAssignLocationToShot() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: assignLocationToShot,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+    },
+  })
+}
+
+export function useGenerateLocationPreview() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: generateLocationPreview,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.locationsVault })
+    },
+  })
+}
+
+export function useUploadLocationPreview() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: uploadLocationPreview,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.locationsVault })
     },
   })
 }
