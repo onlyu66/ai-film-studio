@@ -884,209 +884,231 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
 
         {/* Characters Tab */}
         {activeTab === 'characters' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {Object.entries(characters).map(([id, char]) => {
-              const currentVoice = char.voice || currentVoiceOptions[0]?.value || 'vi-VN-NamMinhNeural'
+          Object.keys(characters).length === 0 ? (
+            <div className="p-10 sm:p-12 text-center rounded-2xl bg-cinema-card border border-cinema-border/60 space-y-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mx-auto shadow-inner">
+                <User className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-zinc-200">Chưa có nhân vật nào trong kịch bản hiện tại</h4>
+                <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto leading-relaxed">
+                  Hồ sơ nhân vật sẽ tự động được trích xuất khi tạo kịch bản, hoặc bạn có thể mở Kho Nhân Vật (Vault) để chọn và áp dụng diễn viên mẫu.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsVaultModalOpen(true)}
+                className="px-4 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-semibold inline-flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <BookmarkPlus className="w-4 h-4 text-amber-400" />
+                <span>Mở Kho Nhân Vật (Character Vault)</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+              {Object.entries(characters).map(([id, char]) => {
+                const currentVoice = char.voice || currentVoiceOptions[0]?.value || 'vi-VN-NamMinhNeural'
 
-              return (
-                <motion.div
-                  key={id}
-                  whileHover={{ y: -2 }}
-                  transition={{ duration: 0.15 }}
-                  className="p-5 rounded-2xl bg-cinema-card border border-cinema-border hover:border-cinema-border-hover shadow-xl transition-all flex flex-col justify-between relative overflow-hidden group"
-                >
-                  {/* Subtle top accent gradient */}
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/0 via-amber-500/50 to-amber-500/0 opacity-60 group-hover:opacity-100 transition-opacity" />
+                return (
+                  <motion.div
+                    key={id}
+                    whileHover={{ y: -2 }}
+                    transition={{ duration: 0.15 }}
+                    className="p-4 sm:p-5 rounded-2xl bg-cinema-card border border-cinema-border hover:border-cinema-border-hover shadow-xl transition-all flex flex-col justify-between relative overflow-hidden group min-w-0"
+                  >
+                    {/* Subtle top accent gradient */}
+                    <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-500/0 via-amber-500/50 to-amber-500/0 opacity-60 group-hover:opacity-100 transition-opacity" />
 
-                  <div>
-                    {/* Header: Avatar, Name, ID, Seed */}
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3.5">
-                        <div
-                          onClick={() => char.headshot_url && setLightboxImage(char.headshot_url)}
-                          className={`w-14 h-14 rounded-2xl bg-cinema-deck border border-cinema-border ring-1 ring-amber-500/20 flex items-center justify-center overflow-hidden relative group/avatar shrink-0 ${
-                            char.headshot_url ? 'cursor-pointer hover:ring-amber-400/50 transition-all' : ''
-                          }`}
-                          title={char.headshot_url ? 'Bấm để phóng to ảnh chân dung' : 'Chưa có ảnh chân dung'}
-                        >
-                          {char.headshot_url ? (
-                            <>
-                              <img
-                                src={char.headshot_url}
-                                alt={char.name}
-                                loading="lazy"
-                                decoding="async"
-                                className="w-full h-full object-cover group-hover/avatar:scale-105 transition-transform duration-300"
-                              />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
-                                <Maximize2 className="w-4 h-4 text-white" />
+                    <div>
+                      {/* Header: Avatar, Name, ID, Seed */}
+                      <div className="flex items-center justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3.5 min-w-0">
+                          <div
+                            onClick={() => char.headshot_url && setLightboxImage(char.headshot_url)}
+                            className={`w-14 h-14 rounded-2xl bg-cinema-deck border border-cinema-border ring-1 ring-amber-500/20 flex items-center justify-center overflow-hidden relative group/avatar shrink-0 ${
+                              char.headshot_url ? 'cursor-pointer hover:ring-amber-400/50 transition-all' : ''
+                            }`}
+                            title={char.headshot_url ? 'Bấm để phóng to ảnh chân dung' : 'Chưa có ảnh chân dung'}
+                          >
+                            {char.headshot_url ? (
+                              <>
+                                <img
+                                  src={char.headshot_url}
+                                  alt={char.name}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="w-full h-full object-cover group-hover/avatar:scale-105 transition-transform duration-300"
+                                />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity">
+                                  <Maximize2 className="w-4 h-4 text-white" />
+                                </div>
+                              </>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-500/10 to-transparent">
+                                <User className="w-7 h-7 text-zinc-500 stroke-[1.5]" />
                               </div>
-                            </>
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-500/10 to-transparent">
-                              <User className="w-7 h-7 text-zinc-500 stroke-[1.5]" />
-                            </div>
-                          )}
-                        </div>
+                            )}
+                          </div>
 
-                        <div>
-                          <h4 className="text-base font-bold text-zinc-100 leading-tight">{char.name}</h4>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] font-mono text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
-                              ID: {id}
-                            </span>
+                          <div className="min-w-0">
+                            <h4 className="text-base font-bold text-zinc-100 leading-tight truncate">{char.name}</h4>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] font-mono text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 truncate">
+                                ID: {id}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="text-right flex flex-col items-end gap-1">
-                        <div>
-                          <span className="font-mono text-zinc-500 text-[10px] block">SEED</span>
-                          <span className="font-mono text-zinc-300 text-xs font-semibold">{String(char.seed ?? 'Auto')}</span>
+                        <div className="text-right flex flex-col items-end gap-1 shrink-0">
+                          <div>
+                            <span className="font-mono text-zinc-500 text-[10px] block">SEED</span>
+                            <span className="font-mono text-zinc-300 text-xs font-semibold">{String(char.seed ?? 'Auto')}</span>
+                          </div>
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <Lock className="w-2.5 h-2.5" /> 3-Lock
+                          </span>
                         </div>
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <Lock className="w-2.5 h-2.5" /> 3-Lock
-                        </span>
+                      </div>
+
+                      {/* Visual DNA Anchor Box */}
+                      <div className="p-3.5 rounded-xl bg-cinema-canvas/80 border border-cinema-border mb-4">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
+                            <Sparkles className="w-3 h-3 text-amber-400" />
+                            Visual DNA Anchor
+                          </span>
+                        </div>
+                        <p className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-4 hover:line-clamp-none transition-all break-words">
+                          {typeof char.visual_anchor === 'string'
+                            ? char.visual_anchor
+                            : JSON.stringify(char.visual_anchor)}
+                        </p>
+                      </div>
+
+                      {/* Character Face Headshot Action Buttons */}
+                      <div className="flex items-stretch gap-2 mb-2.5">
+                        <button
+                          type="button"
+                          onClick={() => handleGenerateHeadshot(id, char)}
+                          disabled={generatingCharId === id}
+                          className="flex-1 min-h-[38px] py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50 text-center"
+                        >
+                          {generatingCharId === id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400 shrink-0" />
+                          ) : (
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          )}
+                          <span>Tạo Headshot AI</span>
+                        </button>
+
+                        <label className="flex-1 min-h-[38px] py-2 px-3 rounded-xl bg-cinema-deck hover:bg-cinema-surface text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-cinema-border active:scale-95 text-center">
+                          {uploadingCharId === id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400 shrink-0" />
+                          ) : (
+                            <Camera className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                          )}
+                          <span>Tải Chân Dung</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleUploadHeadshot(id, e)}
+                            disabled={uploadingCharId === id}
+                          />
+                        </label>
+                      </div>
+
+                      {/* Vault Actions: Save to Vault & Browse Vault */}
+                      <div className="flex items-stretch gap-2 mb-4">
+                        <button
+                          type="button"
+                          onClick={() => handleSaveToVault(id, char)}
+                          disabled={savingToVaultCharId === id}
+                          className="flex-1 min-h-[36px] py-1.5 px-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-zinc-700/50 text-center"
+                          title="Lưu nhân vật này vào Kho Vault để dùng cho các phim khác"
+                        >
+                          {savingToVaultCharId === id ? (
+                            <Loader2 className="w-3 h-3 animate-spin text-amber-400 shrink-0" />
+                          ) : savedToVaultCharId === id ? (
+                            <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                          ) : (
+                            <BookmarkPlus className="w-3 h-3 text-amber-400 shrink-0" />
+                          )}
+                          <span>{savedToVaultCharId === id ? 'Đã lưu Vault!' : 'Lưu vào Vault'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsVaultModalOpen(true)}
+                          className="flex-1 min-h-[36px] py-1.5 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-500/20 text-center"
+                          title="Mở kho nhân vật để duyệt 3 góc mặt và nhân vật mẫu"
+                        >
+                          <Eye className="w-3 h-3 text-amber-400 shrink-0" />
+                          <span>Kho Vault / Góc Mặt</span>
+                        </button>
                       </div>
                     </div>
 
-                    {/* Visual DNA Anchor Box */}
-                    <div className="p-3.5 rounded-xl bg-cinema-canvas/80 border border-cinema-border mb-4">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
-                          <Sparkles className="w-3 h-3 text-amber-400" />
-                          Visual DNA Anchor
-                        </span>
+                    {/* Interactive Voice Customization */}
+                    <div className="pt-3.5 border-t border-cinema-border space-y-2">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                          <Volume2 className="w-3.5 h-3.5 text-amber-400/80 shrink-0" />
+                          <span>Giọng lồng tiếng (Voice)</span>
+                        </label>
+                        {savingCharId === id ? (
+                          <span className="text-[10px] text-amber-400 flex items-center gap-1 font-mono font-medium">
+                            <Loader2 className="w-3 h-3 animate-spin shrink-0" /> Đang lưu...
+                          </span>
+                        ) : savedCharId === id ? (
+                          <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono font-medium">
+                            <Check className="w-3 h-3 shrink-0" /> Đã lưu
+                          </span>
+                        ) : null}
                       </div>
-                      <p className="text-xs text-zinc-300 leading-relaxed font-normal line-clamp-4 hover:line-clamp-none transition-all">
-                        {typeof char.visual_anchor === 'string'
-                          ? char.visual_anchor
-                          : JSON.stringify(char.visual_anchor)}
-                      </p>
-                    </div>
 
-                    {/* Character Face Headshot Action Buttons */}
-                    <div className="flex items-center gap-2 mb-2.5">
-                      <button
-                        type="button"
-                        onClick={() => handleGenerateHeadshot(id, char)}
-                        disabled={generatingCharId === id}
-                        className="flex-1 py-2 px-3 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-95 disabled:opacity-50"
-                      >
-                        {generatingCharId === id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
-                        ) : (
-                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                        )}
-                        <span>Tạo Headshot AI</span>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 min-w-0">
+                          <CustomSelect
+                            value={currentVoice}
+                            onChange={(newVoice) => handleVoiceChange(id, newVoice)}
+                            options={currentVoiceOptions}
+                            disabled={savingCharId === id}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handlePlayVoice(currentVoice)}
+                          disabled={playingVoice === currentVoice || previewVoiceMutation.isPending}
+                          className="p-2 sm:p-2.5 rounded-xl bg-cinema-deck hover:bg-amber-500/15 text-zinc-300 hover:text-amber-300 border border-cinema-border hover:border-amber-500/30 text-xs font-medium transition-all flex items-center justify-center cursor-pointer shrink-0 active:scale-95"
+                          title="Nghe thử giọng này"
+                        >
+                          {playingVoice === currentVoice ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                          ) : (
+                            <Play className="w-4 h-4" />
+                          )}
+                        </button>
 
-                      <label className="flex-1 py-2 px-3 rounded-xl bg-cinema-deck hover:bg-cinema-surface text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-cinema-border active:scale-95">
-                        {uploadingCharId === id ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin text-zinc-400" />
-                        ) : (
-                          <Camera className="w-3.5 h-3.5 text-zinc-400" />
-                        )}
-                        <span>Tải Chân Dung</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleUploadHeadshot(id, e)}
-                          disabled={uploadingCharId === id}
-                        />
-                      </label>
-                    </div>
-
-                    {/* Vault Actions: Save to Vault & Browse Vault */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <button
-                        type="button"
-                        onClick={() => handleSaveToVault(id, char)}
-                        disabled={savingToVaultCharId === id}
-                        className="flex-1 py-1.5 px-2.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-zinc-700/50"
-                        title="Lưu nhân vật này vào Kho Vault để dùng cho các phim khác"
-                      >
-                        {savingToVaultCharId === id ? (
-                          <Loader2 className="w-3 h-3 animate-spin text-amber-400" />
-                        ) : savedToVaultCharId === id ? (
-                          <Check className="w-3 h-3 text-emerald-400" />
-                        ) : (
-                          <BookmarkPlus className="w-3 h-3 text-amber-400" />
-                        )}
-                        <span>{savedToVaultCharId === id ? 'Đã lưu Vault!' : 'Lưu vào Vault'}</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setIsVaultModalOpen(true)}
-                        className="flex-1 py-1.5 px-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-amber-500/20"
-                        title="Mở kho nhân vật để duyệt 3 góc mặt và nhân vật mẫu"
-                      >
-                        <Eye className="w-3 h-3 text-amber-400" />
-                        <span>Kho Vault / Góc Mặt</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Interactive Voice Customization */}
-                  <div className="pt-3.5 border-t border-cinema-border space-y-2">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <label className="text-[10px] font-mono font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
-                        <Volume2 className="w-3.5 h-3.5 text-amber-400/80" />
-                        <span>Giọng lồng tiếng (Voice)</span>
-                      </label>
-                      {savingCharId === id ? (
-                        <span className="text-[10px] text-amber-400 flex items-center gap-1 font-mono font-medium">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Đang lưu...
-                        </span>
-                      ) : savedCharId === id ? (
-                        <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono font-medium">
-                          <Check className="w-3 h-3" /> Đã lưu
-                        </span>
-                      ) : null}
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <CustomSelect
-                          value={currentVoice}
-                          onChange={(newVoice) => handleVoiceChange(id, newVoice)}
-                          options={currentVoiceOptions}
-                          disabled={savingCharId === id}
-                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedCharForVoice({ id, name: char.name || id })
+                            setIsVoiceCloneOpen(true)
+                          }}
+                          className="p-2 sm:p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-medium transition-all flex items-center justify-center cursor-pointer shrink-0 active:scale-95"
+                          title="Nhân bản giọng AI (Tải audio hoặc thu âm mic trực tiếp)"
+                        >
+                          <Mic className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handlePlayVoice(currentVoice)}
-                        disabled={playingVoice === currentVoice || previewVoiceMutation.isPending}
-                        className="p-2.5 rounded-xl bg-cinema-deck hover:bg-amber-500/15 text-zinc-300 hover:text-amber-300 border border-cinema-border hover:border-amber-500/30 text-xs font-medium transition-all flex items-center justify-center cursor-pointer shrink-0 active:scale-95"
-                        title="Nghe thử giọng này"
-                      >
-                        {playingVoice === currentVoice ? (
-                          <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                        ) : (
-                          <Play className="w-4 h-4" />
-                        )}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedCharForVoice({ id, name: char.name || id })
-                          setIsVoiceCloneOpen(true)
-                        }}
-                        className="p-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-medium transition-all flex items-center justify-center cursor-pointer shrink-0 active:scale-95"
-                        title="Nhân bản giọng AI (Tải audio hoặc thu âm mic trực tiếp)"
-                      >
-                        <Mic className="w-4 h-4" />
-                      </button>
                     </div>
-                  </div>
-                </motion.div>
-              )
-            })}
-          </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+          )
         )}
 
         {/* Shots Tab */}
