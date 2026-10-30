@@ -4,6 +4,9 @@ from typing import Dict, Any, List, Optional
 import os
 import time
 import base64
+import json
+import hmac
+import hashlib
 import requests
 
 AI_VIDEO_MODELS: List[Dict[str, Any]] = [
@@ -33,10 +36,26 @@ AI_VIDEO_MODELS: List[Dict[str, Any]] = [
     },
     {
         "id": "kwaivgi/kling-v1.6-standard",
-        "name": "Kling 1.6 Standard",
+        "name": "Kling 1.6 Standard (Replicate)",
         "owner": "kwaivgi",
         "resolution": "1080p",
         "description": "Chuyển động nhân vật sống động, tối ưu ánh sáng cinematic",
+        "is_recommended": False,
+    },
+    {
+        "id": "kling-v1-6",
+        "name": "Kling 1.6 OpenAPI (Trực Tiếp)",
+        "owner": "klingai",
+        "resolution": "1080p Full HD",
+        "description": "API trực tiếp Kling AI với bộ điều khiển Camera 3D Trajectory",
+        "is_recommended": True,
+    },
+    {
+        "id": "luma-dream-machine",
+        "name": "Luma Dream Machine Ray-2",
+        "owner": "lumalabs",
+        "resolution": "1080p / 720p",
+        "description": "Luma Dream Machine API, góc máy 3D và camera dolly tự nhiên",
         "is_recommended": False,
     },
     {
@@ -107,6 +126,7 @@ class BaseVideoProvider(ABC):
         prompt: str,
         duration: float,
         aspect_ratio: str = "16:9",
+        trajectory: Optional[Any] = None,
     ) -> bool:
         pass
 
@@ -133,6 +153,7 @@ class ReplicateVideoProvider(BaseVideoProvider):
         prompt: str,
         duration: float,
         aspect_ratio: str = "16:9",
+        trajectory: Optional[Any] = None,
     ) -> bool:
         if not self.api_token:
             return False
@@ -230,5 +251,186 @@ class ReplicateVideoProvider(BaseVideoProvider):
                 return True
         except Exception:
             pass
+
+        return False
+
+
+def generate_kling_jwt(ak: str, sk: str) -> str:
+    """Generate HS256 JWT Bearer token from Kling AccessKey and SecretKey."""
+    headers = {"alg": "HS256", "typ": "JWT"}
+    now = int(time.time())
+    payload = {
+        "iss": ak,
+        "exp": now + 1800,
+        "nbf": now - 5,
+    }
+
+    def b64url(data: bytes) -> str:
+        return base64.urlsafe_b64encode(data).rstrip(b"=").decode("utf-8")
+
+    header_b64 = b64url(json.dumps(headers, separators=(",", ":")).encode("utf-8"))
+    payload_b64 = b64url(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
+    signing_input = f"{header_b64}.{payload_b64}".encode("utf-8")
+    sig = hmac.new(sk.encode("utf-8"), signing_input, hashlib.sha256).digest()
+    sig_b64 = b64url(sig)
+    return f"{header_b64}.{payload_b64}.{sig_b64}"
+
+
+def get_kling_auth_header(token: str) -> Dict[str, str]:
+    """Return headers with Bearer token, automatically signing AK:SK if provided."""
+    clean_token = token.strip()
+    if ":" in clean_token:
+        parts = clean_token.split(":", 1)
+        jwt_token = generate_kling_jwt(parts[0], parts[1])
+        return {"Authorization": f"Bearer {jwt_token}"}
+    return {"Authorization": f"Bearer {clean_token}"}
+
+
+def check_kling_token(token: str) -> Dict[str, Any]:
+    """Validate a Kling API token / JWT via Kling account endpoint."""
+    if not token or not token.strip():
+        return {
+            "is_valid": False,
+            "message": "Token Kling không được để trống.",
+        }
+
+    headers = get_kling_auth_header(token.strip())
+    headers["User-Agent"] = "AIFilmStudio/1.0"
+
+    try:
+        resp = requests.get("https://api.klingai.com/v1/user/balance", headers=headers, timeout=6)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("code") == 0:
+                return {
+                    "is_valid": True,
+                    "message": "Token Kling hợp lệ và sẵn sàng sinh video!",
+                }
+            else:
+                return {
+                    "is_valid": False,
+                    "message": f"Kling phản hồi: {data.get('message', 'Mã lỗi không xác định')}",
+                }
+        elif resp.status_code == 401:
+            return {
+                "is_valid": False,
+                "message": "Token Kling không hợp lệ hoặc đã hết hạn (401 Unauthorized).",
+            }
+        else:
+            return {
+                "is_valid": False,
+                "message": f"Không thể xác thực token Kling (HTTP {resp.status_code}).",
+            }
+    except Exception as exc:
+        return {
+            "is_valid": False,
+            "message": f"Lỗi kết nối tới Kling AI: {str(exc)}",
+        }
+
+
+class KlingDirectVideoProvider(BaseVideoProvider):
+    """Direct Kling AI OpenAPI provider with 3D Camera Control."""
+
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "kling-v1-6",
+        poll_interval: float = 3.0,
+        max_poll_seconds: float = 180.0,
+    ):
+        self.api_key = (api_key or os.environ.get("KLING_API_KEY", "")).strip()
+        self.model = model or "kling-v1-6"
+        self.poll_interval = poll_interval
+        self.max_poll_seconds = max_poll_seconds
+
+    def render_shot_video(
+        self,
+        image_path: Path,
+        output_path: Path,
+        prompt: str,
+        duration: float,
+        aspect_ratio: str = "16:9",
+        trajectory: Optional[Any] = None,
+    ) -> bool:
+        if not self.api_key:
+            return False
+
+        if not Path(image_path).exists():
+            return False
+
+        try:
+            with open(image_path, "rb") as f:
+                img_bytes = f.read()
+            img_b64 = base64.b64encode(img_bytes).decode("utf-8")
+        except Exception:
+            return False
+
+        headers = get_kling_auth_header(self.api_key)
+        headers["Content-Type"] = "application/json"
+        headers["User-Agent"] = "AIFilmStudio/1.0"
+
+        payload: Dict[str, Any] = {
+            "model_name": self.model,
+            "image": img_b64,
+            "prompt": prompt or "cinematic motion, ultra-detailed 4k masterpiece",
+            "mode": "std",
+            "duration": "10" if duration > 6.0 else "5",
+            "aspect_ratio": "16:9" if aspect_ratio == "16:9" else "9:16",
+        }
+
+        if trajectory:
+            from studio.camera_3d import compile_kling_camera_control
+            payload["camera_control"] = compile_kling_camera_control(trajectory)
+
+        try:
+            url = "https://api.klingai.com/v1/videos/image2video"
+            resp = requests.post(url, headers=headers, json=payload, timeout=30)
+            if resp.status_code != 200:
+                return False
+
+            resp_json = resp.json()
+            if resp_json.get("code") != 0:
+                return False
+
+            task_id = resp_json.get("data", {}).get("task_id")
+            if not task_id:
+                return False
+
+            start_time = time.time()
+            poll_url = f"https://api.klingai.com/v1/videos/image2video/{task_id}"
+
+            video_url = None
+            while time.time() - start_time < self.max_poll_seconds:
+                time.sleep(self.poll_interval)
+                poll_resp = requests.get(poll_url, headers=headers, timeout=10)
+                if poll_resp.status_code == 200:
+                    poll_data = poll_resp.json()
+                    task_data = poll_data.get("data", {})
+                    task_status = task_data.get("task_status")
+
+                    if task_status == "succeed":
+                        videos = task_data.get("task_result", {}).get("videos", [])
+                        if videos and "url" in videos[0]:
+                            video_url = videos[0]["url"]
+                        break
+                    elif task_status in ("failed", "canceled"):
+                        return False
+                else:
+                    break
+
+            if not video_url:
+                return False
+
+            # Download video stream
+            vid_resp = requests.get(video_url, timeout=60)
+            if vid_resp.status_code == 200 and len(vid_resp.content) > 10:
+                output_path = Path(output_path)
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, "wb") as f:
+                    f.write(vid_resp.content)
+                return True
+
+        except Exception:
+            return False
 
         return False
