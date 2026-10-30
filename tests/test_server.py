@@ -1152,3 +1152,34 @@ def test_video_enhancer_endpoints(monkeypatch, tmp_path):
             dummy_master_file.unlink()
         if Path("outputs/master_movie_enhanced.mp4").exists():
             Path("outputs/master_movie_enhanced.mp4").unlink()
+
+
+def test_api_sfx_waveform_endpoint():
+    resp = client.get("/api/audio/waveform?sfx_key=thunder")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert "peaks" in data
+    assert len(data["peaks"]) > 0
+    assert data["duration"] > 0
+    assert data.get("sfx_key") == "thunder"
+
+def test_update_shot_fade_controls(tmp_path, monkeypatch):
+    import json
+    from pathlib import Path
+    sb_file = tmp_path / "storyboard.json"
+    sb_file.write_text(json.dumps({
+        "title": "Fade Test",
+        "characters": {},
+        "shots": [{"id": "s1", "dialogue": "Line", "fade_in": 0.0, "fade_out": 0.0}]
+    }), encoding="utf-8")
+    monkeypatch.setattr("studio.server.Path", lambda arg, *rest: sb_file if str(arg) == "outputs/storyboard.json" else Path(arg, *rest))
+    resp = client.post("/api/storyboard/update-shot", json={
+        "shot_id": "s1",
+        "fade_in": 0.5,
+        "fade_out": 0.8
+    })
+    assert resp.status_code == 200
+    updated = json.loads(sb_file.read_text(encoding="utf-8"))
+    assert updated["shots"][0]["fade_in"] == 0.5
+    assert updated["shots"][0]["fade_out"] == 0.8

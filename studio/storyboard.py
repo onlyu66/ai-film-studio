@@ -38,6 +38,8 @@ class Shot:
     is_approved: bool = False
     voice_volume: float = 1.0
     sfx_volume: float = 1.0
+    fade_in: float = 0.0
+    fade_out: float = 0.0
     camera_3d_trajectory: Optional[Dict[str, Any]] = None
 
 @dataclass
@@ -86,6 +88,8 @@ class Storyboard:
                     "is_approved": s.is_approved,
                     "voice_volume": getattr(s, "voice_volume", 1.0),
                     "sfx_volume": getattr(s, "sfx_volume", 1.0),
+                    "fade_in": getattr(s, "fade_in", 0.0),
+                    "fade_out": getattr(s, "fade_out", 0.0),
                     "camera_3d_trajectory": getattr(s, "camera_3d_trajectory", None),
                 }
                 for s in self.shots
@@ -182,6 +186,8 @@ def parse_storyboard_json(raw: str) -> Storyboard:
                     is_approved=bool(s.get("is_approved", False)),
                     voice_volume=float(s.get("voice_volume", 1.0)) if s.get("voice_volume") is not None else 1.0,
                     sfx_volume=float(s.get("sfx_volume", 1.0)) if s.get("sfx_volume") is not None else 1.0,
+                    fade_in=float(s.get("fade_in", 0.0)) if s.get("fade_in") is not None else 0.0,
+                    fade_out=float(s.get("fade_out", 0.0)) if s.get("fade_out") is not None else 0.0,
                     camera_3d_trajectory=s.get("camera_3d_trajectory") if isinstance(s.get("camera_3d_trajectory"), dict) else None,
                 )
             )

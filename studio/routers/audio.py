@@ -596,11 +596,25 @@ def api_create_dubbing(req: CreateDubbingRequest):
 
 
 @router.get("/api/audio/waveform")
-def api_get_audio_waveform(track: Optional[str] = "cinematic", shot_id: Optional[str] = None):
+def api_get_audio_waveform(
+    track: Optional[str] = "cinematic",
+    shot_id: Optional[str] = None,
+    sfx_key: Optional[str] = None,
+):
     from studio.audio_beat_detector import detect_beats
     audio_path = None
 
-    if shot_id:
+    if sfx_key:
+        clean_sfx = Path(sfx_key).stem.lower().strip().replace(" ", "_")
+        sfx_cand = srv.Path("assets/sfx") / f"{clean_sfx}.mp3"
+        if sfx_cand.exists():
+            audio_path = sfx_cand
+        else:
+            sfx_wav = srv.Path("assets/sfx") / f"{clean_sfx}.wav"
+            if sfx_wav.exists():
+                audio_path = sfx_wav
+
+    if not audio_path and shot_id:
         shot_cand = srv.Path("outputs/audio") / f"{shot_id}.mp3"
         if shot_cand.exists():
             audio_path = shot_cand
@@ -623,8 +637,9 @@ def api_get_audio_waveform(track: Optional[str] = "cinematic", shot_id: Optional
         result = detect_beats(audio_path)
         return {
             "success": True,
-            "track": track,
+            "track": track if not sfx_key else None,
             "shot_id": shot_id,
+            "sfx_key": sfx_key,
             "duration": result["duration"],
             "tempo_bpm": result["tempo_bpm"],
             "beat_times": result["beat_times"],
@@ -638,8 +653,9 @@ def api_get_audio_waveform(track: Optional[str] = "cinematic", shot_id: Optional
     dummy_beats = [round(i * 0.5, 2) for i in range(1, int(dummy_duration / 0.5))]
     return {
         "success": True,
-        "track": track,
+        "track": track if not sfx_key else None,
         "shot_id": shot_id,
+        "sfx_key": sfx_key,
         "duration": dummy_duration,
         "tempo_bpm": 120,
         "beat_times": dummy_beats,

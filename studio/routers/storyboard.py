@@ -42,6 +42,8 @@ class UpdateShotRequest(BaseModel):
     sfx_volume: Optional[float] = None
     sfx_offset_ms: Optional[int] = None
     duration: Optional[float] = None
+    fade_in: Optional[float] = None
+    fade_out: Optional[float] = None
 
 class AddShotRequest(BaseModel):
     after_shot_id: Optional[str] = None
@@ -325,6 +327,18 @@ def update_shot(req: UpdateShotRequest):
             new_dur = round(max(1.0, min(30.0, float(req.duration))), 2)
             if new_dur != target_shot.get("duration"):
                 target_shot["duration"] = new_dur
+                audio_setting_changed = True
+
+        if req.fade_in is not None:
+            f_in = round(max(0.0, min(5.0, float(req.fade_in))), 2)
+            if f_in != target_shot.get("fade_in"):
+                target_shot["fade_in"] = f_in
+                audio_setting_changed = True
+
+        if req.fade_out is not None:
+            f_out = round(max(0.0, min(5.0, float(req.fade_out))), 2)
+            if f_out != target_shot.get("fade_out"):
+                target_shot["fade_out"] = f_out
                 audio_setting_changed = True
 
         if req.image_prompt is not None and req.image_prompt != target_shot.get("image_prompt"):
