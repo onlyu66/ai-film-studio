@@ -129,7 +129,14 @@ Hệ thống đã được đóng gói toàn bộ backend, frontend và FFmpeg t
    UI_PORT=3000 ./run.sh ui
    ```
 
-5. **Dừng hệ thống:**
+5. **Khởi chạy kèm Card đồ họa NVIDIA cho AI Lip-Sync (SadTalker / Wav2Lip):**
+   Nếu máy tính có card đồ họa NVIDIA và đã cài đặt [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html), bạn có thể bật profile GPU để chạy mô hình cử động môi hoàn toàn offline:
+   ```bash
+   docker compose --profile gpu up -d
+   ```
+   *Kiểm tra trạng thái lip-sync tại endpoint: `GET /api/system/lipsync-status`.*
+
+6. **Dừng hệ thống:**
    ```bash
    docker compose down
    ```
