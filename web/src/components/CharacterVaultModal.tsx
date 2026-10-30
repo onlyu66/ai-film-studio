@@ -17,6 +17,8 @@ import {
   RefreshCw,
   Copy,
   Maximize2,
+  Upload,
+  AlertCircle,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { VaultCharacterItem, SaveVaultCharacterPayload } from '../types'
@@ -26,6 +28,7 @@ import {
   useDeleteVaultCharacter,
   useImportVaultCharacter,
   useGenerateCharacterAngles,
+  useUploadHeadshot,
 } from '../api/queries'
 
 interface CharacterVaultModalProps {
@@ -46,6 +49,7 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
   const deleteMutation = useDeleteVaultCharacter()
   const importMutation = useImportVaultCharacter()
   const generateAnglesMutation = useGenerateCharacterAngles()
+  const uploadHeadshotMutation = useUploadHeadshot()
 
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string>('all')
@@ -89,52 +93,121 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
   const [newVoice, setNewVoice] = useState('vi-VN-NamMinhNeural')
   const [newSeed, setNewSeed] = useState(42)
   const [newTags, setNewTags] = useState('hero, protagonist')
+  const [newAvatarBase64, setNewAvatarBase64] = useState<string | null>(null)
+  const [newAvatarPreview, setNewAvatarPreview] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isRandomizingSeed, setIsRandomizingSeed] = useState(false)
 
-  if (!isOpen) return null
+  const DNA_PRESETS = [
+    {
+      label: '⚡ Cyberpunk',
+      text: '30-year-old Vietnamese cyberpunk mercenary, short textured chrome-silver undercut hair, cybernetic glowing neon-cyan ocular implant on left eye, jawline stubble, wearing high-collar distressed techwear jacket with carbon-fiber shoulder pads',
+      tags: 'cyberpunk, mercenary, male, hero',
+    },
+    {
+      label: '🗡️ Cổ trang',
+      text: '32-year-old heroic Vietnamese warrior commander, rugged determined handsome face, battle scar over right cheekbone, topknot hairstyle tied with crimson silk ribbon, intense dark brown eyes, wearing ornate bronze dragon-scale lamellar armor',
+      tags: 'historical, commander, male, warrior',
+    },
+    {
+      label: '🚀 Sci-Fi',
+      text: '27-year-old female rogue AI coder, sleek asymmetrical jet-black bob haircut with neon magenta tips, piercing amber eyes, subtle holographic biometric tattoos on temples, wearing matte-black insulated tactical coat',
+      tags: 'cyberpunk, hacker, female, tech',
+    },
+    {
+      label: '🕵️ Trinh thám',
+      text: '38-year-old seasoned detective in distressed trenchcoat, sharp intense gaze, weathered jawline stubble, wet neon rain reflections, dramatic noir chiaroscuro shadows',
+      tags: 'detective, noir, thriller, male',
+    },
+  ]
 
-  // Extract all unique tags
-  const allTags = Array.from(
-    new Set(
-      vaultCharacters.flatMap((c) => c.tags || [])
-    )
-  )
+  const QUICK_TAGS = ['cyberpunk', 'hero', 'villain', 'female', 'male', 'sci-fi', 'warrior', 'detective', 'tech', 'historical']
 
-  // Filter characters
-  const filtered = vaultCharacters.filter((char) => {
-    const matchesSearch =
-      char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      char.visual_anchor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (char.tags && char.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())))
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const b64 = reader.result as string
+      setNewAvatarBase64(b64)
+      setNewAvatarPreview(b64)
+    }
+    reader.readAsDataURL(file)
+  }
 
-    const matchesTag =
-      selectedTag === 'all' || (char.tags && char.tags.includes(selectedTag))
+  const handleRandomSeed = () => {
+    setIsRandomizingSeed(true)
+    setNewSeed(Math.floor(Math.random() * 999999))
+    setTimeout(() => setIsRandomizingSeed(false), 300)
+  }
 
-    return matchesSearch && matchesTag
-  })
+  const handleAddTag = (tag: string) => {
+    const existing = newTags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)
+    if (!existing.includes(tag.toLowerCase())) {
+      setNewTags((prev) => (prev.trim() ? `${prev.trim()}, ${tag}` : tag))
+    }
+  }
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  const handleApplyPreset = (preset: typeof DNA_PRESETS[0]) => {
+    setNewAnchor(preset.text)
+    if (!newTags.trim() || newTags === 'hero, protagonist') {
+      setNewTags(preset.tags)
+    }
+  }
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newName.trim() || !newAnchor.trim()) return
+    setFormError(null)
 
-    const payload: SaveVaultCharacterPayload = {
-      name: newName.trim(),
-      visual_anchor: newAnchor.trim(),
-      voice: newVoice,
-      seed: Number(newSeed) || 42,
-      tags: newTags
-        .split(',')
-        .map((t) => t.trim())
-        .filter(Boolean),
+    if (!newName.trim()) {
+      setFormError('Vui lòng nhập tên nhân vật.')
+      return
+    }
+    if (!newAnchor.trim()) {
+      setFormError('Vui lòng nhập mô tả ngoại hình bất biến (Visual DNA Anchor).')
+      return
     }
 
-    saveMutation.mutate(payload, {
-      onSuccess: () => {
-        setIsCreatingNew(false)
-        setNewName('')
-        setNewAnchor('')
-        setNewSeed(Math.floor(Math.random() * 100000))
-      },
-    })
+    setIsSubmitting(true)
+
+    try {
+      const charId = `char_${Date.now()}`
+      let headshotUrl: string | undefined = undefined
+
+      if (newAvatarBase64) {
+        const uploadRes = await uploadHeadshotMutation.mutateAsync({
+          characterId: charId,
+          imageBase64: newAvatarBase64,
+        })
+        headshotUrl = uploadRes.headshot_url
+      }
+
+      const payload: SaveVaultCharacterPayload = {
+        id: charId,
+        name: newName.trim(),
+        visual_anchor: newAnchor.trim(),
+        voice: newVoice,
+        seed: Number(newSeed) || 42,
+        headshot_url: headshotUrl,
+        tags: newTags
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean),
+      }
+
+      await saveMutation.mutateAsync(payload)
+      setIsCreatingNew(false)
+      setNewName('')
+      setNewAnchor('')
+      setNewAvatarBase64(null)
+      setNewAvatarPreview(null)
+      setNewSeed(Math.floor(Math.random() * 100000))
+    } catch (err: any) {
+      setFormError(err?.message || 'Lỗi khi lưu nhân vật vào kho Vault.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleImport = (char: VaultCharacterItem) => {
@@ -187,6 +260,28 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
     )
   }
 
+  if (!isOpen) return null
+
+  // Extract all unique tags
+  const allTags = Array.from(
+    new Set(
+      vaultCharacters.flatMap((c) => c.tags || [])
+    )
+  )
+
+  // Filter characters
+  const filtered = vaultCharacters.filter((char) => {
+    const matchesSearch =
+      char.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      char.visual_anchor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (char.tags && char.tags.some((t: string) => t.toLowerCase().includes(searchQuery.toLowerCase())))
+
+    const matchesTag =
+      selectedTag === 'all' || (char.tags && char.tags.includes(selectedTag))
+
+    return matchesSearch && matchesTag
+  })
+
   return (
     <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-md">
       <div onClick={(e) => e.stopPropagation()} className="relative w-full max-w-5xl max-h-[92vh] flex flex-col bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden">
@@ -212,10 +307,17 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
           <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => setIsCreatingNew(!isCreatingNew)}
-              className="flex-1 sm:flex-initial px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-amber-500/20 cursor-pointer active:scale-95 whitespace-nowrap"
+              onClick={() => {
+                setIsCreatingNew(!isCreatingNew)
+                setFormError(null)
+              }}
+              className={`flex-1 sm:flex-initial px-3.5 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-95 whitespace-nowrap ${
+                isCreatingNew
+                  ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700'
+                  : 'bg-amber-500 hover:bg-amber-400 text-zinc-950 shadow-amber-500/20'
+              }`}
             >
-              <Plus className="w-4 h-4" />
+              {isCreatingNew ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
               <span>{isCreatingNew ? 'Đóng Form' : 'Tạo Nhân Vật Mới'}</span>
             </button>
             <button
@@ -237,99 +339,259 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
               onSubmit={handleCreateSubmit}
-              className="border-b border-amber-500/20 bg-amber-500/5 p-5 overflow-hidden"
+              className="border-b border-amber-500/20 bg-gradient-to-b from-amber-500/10 via-zinc-950/60 to-zinc-950 p-4 sm:p-5 overflow-hidden"
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Tên Nhân Vật *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newName}
-                    onChange={(e) => setNewName(e.target.value)}
-                    placeholder="VD: Maya Vance"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Giọng Đọc (Voice)</label>
-                  <input
-                    type="text"
-                    value={newVoice}
-                    onChange={(e) => setNewVoice(e.target.value)}
-                    placeholder="vi-VN-NamMinhNeural hoặc vi-VN-HoaiMyNeural"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Seed Cố Định</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      value={newSeed}
-                      onChange={(e) => setNewSeed(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 font-mono focus:outline-none focus:border-amber-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setNewSeed(Math.floor(Math.random() * 999999))}
-                      title="Random Seed"
-                      className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs cursor-pointer"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                    </button>
+              {/* Form Title */}
+              <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-zinc-800/80">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                    <Sparkles className="w-3.5 h-3.5" />
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1">Tags (Phân loại)</label>
-                  <input
-                    type="text"
-                    value={newTags}
-                    onChange={(e) => setNewTags(e.target.value)}
-                    placeholder="hero, sci-fi, hacker"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 focus:outline-none focus:border-amber-400"
-                  />
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-bold text-zinc-100">
+                      Tạo & Định Danh Nhân Vật Mới
+                    </h4>
+                    <p className="text-[11px] text-zinc-400">
+                      Thiết lập 3-Lock Consistency (Ảnh đại diện, DNA ngoại hình & Giọng nói) cho kho Vault
+                    </p>
+                  </div>
                 </div>
               </div>
 
+              {/* Error Banner */}
+              {formError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-300 text-xs flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                    <span className="truncate">{formError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormError(null)}
+                    className="p-1 hover:text-white transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              {/* Avatar + Main Details */}
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 mb-4">
+                {/* Avatar Uploader */}
+                <div className="shrink-0 flex flex-col items-center">
+                  <label className="block text-[11px] font-semibold text-zinc-300 mb-1.5 self-start">
+                    Ảnh Chân Dung (Headshot)
+                  </label>
+                  <div className="relative group w-24 h-24 sm:w-28 sm:h-28 rounded-2xl border-2 border-dashed border-zinc-700 hover:border-amber-500/60 bg-zinc-900/60 transition-all flex flex-col items-center justify-center overflow-hidden cursor-pointer">
+                    {newAvatarPreview ? (
+                      <>
+                        <img
+                          src={newAvatarPreview}
+                          alt="Avatar preview"
+                          className="w-full h-full object-cover object-top"
+                        />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-white text-[10px]">
+                          <Camera className="w-4 h-4" />
+                          <span>Đổi ảnh</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setNewAvatarBase64(null)
+                            setNewAvatarPreview(null)
+                          }}
+                          title="Xóa ảnh"
+                          className="absolute top-1 right-1 p-1 rounded-full bg-black/70 hover:bg-red-600 text-zinc-300 hover:text-white transition-colors z-10"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-2 text-center text-zinc-500 group-hover:text-amber-400 transition-colors">
+                        <Upload className="w-5 h-5 mb-1" />
+                        <span className="text-[10px] font-medium leading-tight">Tải ảnh lên</span>
+                        <span className="text-[9px] text-zinc-600 mt-0.5">PNG / JPG</span>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </div>
+                  <span className="text-[10px] text-zinc-500 mt-1 text-center">Tùy chọn (Optional)</span>
+                </div>
+
+                {/* Form Fields Grid */}
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {/* Tên nhân vật */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
+                      Tên Nhân Vật <span className="text-amber-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      placeholder="VD: Maya Vance, Đại Úy Long..."
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 transition-colors"
+                    />
+                  </div>
+
+                  {/* Giọng đọc Voice */}
+                  <div>
+                    <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
+                      Giọng Đọc (Voice Model)
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={newVoice}
+                        onChange={(e) => setNewVoice(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 focus:outline-none focus:border-amber-400 appearance-none cursor-pointer pr-8"
+                      >
+                        <optgroup label="🇻🇳 Tiếng Việt">
+                          <option value="vi-VN-NamMinhNeural">Nam Minh (Nam - Trầm ấm, điện ảnh)</option>
+                          <option value="vi-VN-HoaiMyNeural">Hoài My (Nữ - Ngọt ngào, truyền cảm)</option>
+                        </optgroup>
+                        <optgroup label="🇺🇸 English">
+                          <option value="en-US-GuyNeural">Guy (Nam - Cinematic Narrator)</option>
+                          <option value="en-US-ChristopherNeural">Christopher (Nam - Authoritative)</option>
+                          <option value="en-US-JennyNeural">Jenny (Nữ - Natural, Warm)</option>
+                          <option value="en-US-AriaNeural">Aria (Nữ - Dramatic, Vivid)</option>
+                        </optgroup>
+                        <optgroup label="🇯🇵 Japanese">
+                          <option value="ja-JP-KeitaNeural">Keita (Nam - Anime Hero)</option>
+                          <option value="ja-JP-NanamiNeural">Nanami (Nữ - Anime Expressive)</option>
+                        </optgroup>
+                        <optgroup label="🇫🇷 French">
+                          <option value="fr-FR-HenriNeural">Henri (Nam - French Cinema)</option>
+                          <option value="fr-FR-DeniseNeural">Denise (Nữ - Poetic Female)</option>
+                        </optgroup>
+                      </select>
+                      <Volume2 className="w-3.5 h-3.5 text-zinc-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                  </div>
+
+                  {/* Seed Cố Định */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[11px] font-semibold text-zinc-300">
+                        Seed Cố Định (AI Lock)
+                      </label>
+                      <span className="text-[10px] text-zinc-500 font-mono">#ID</span>
+                    </div>
+                    <div className="flex gap-1.5">
+                      <input
+                        type="number"
+                        value={newSeed}
+                        onChange={(e) => setNewSeed(Number(e.target.value))}
+                        className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 font-mono focus:outline-none focus:border-amber-400 transition-colors"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleRandomSeed}
+                        title="Ngẫu nhiên Seed"
+                        className="px-2.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white text-xs cursor-pointer transition-all active:scale-95 shrink-0"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isRandomizingSeed ? 'animate-spin' : ''}`} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Tags & Quick Tag Chips */}
+                  <div className="sm:col-span-2 lg:col-span-3">
+                    <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
+                      Tags Phân Loại (Cách nhau bằng dấu phẩy)
+                    </label>
+                    <input
+                      type="text"
+                      value={newTags}
+                      onChange={(e) => setNewTags(e.target.value)}
+                      placeholder="hero, cyberpunk, detective..."
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 transition-colors"
+                    />
+                    <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                      <span className="text-[10px] text-zinc-500 font-medium">Gợi ý tag:</span>
+                      {QUICK_TAGS.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleAddTag(tag)}
+                          className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-amber-300 border border-zinc-700/60 transition-colors cursor-pointer active:scale-95"
+                        >
+                          +{tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mô Tả Ngoại Hình Bất Biến (Visual DNA Anchor) */}
               <div className="mb-4">
-                <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-                  Mô Tả Ngoại Hình Bất Biến (Visual DNA Anchor) *
-                </label>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1.5">
+                  <label className="block text-[11px] font-semibold text-zinc-300">
+                    Mô Tả Ngoại Hình Bất Biến (Visual DNA Anchor) <span className="text-amber-400">*</span>
+                  </label>
+                  {/* Preset Buttons */}
+                  <div className="flex items-center gap-1 flex-wrap">
+                    <span className="text-[10px] text-zinc-500 font-medium">Mẫu nhanh:</span>
+                    {DNA_PRESETS.map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => handleApplyPreset(preset)}
+                        className="px-2 py-0.5 rounded-lg text-[10px] bg-zinc-800/90 hover:bg-amber-500/20 hover:text-amber-300 border border-zinc-700 hover:border-amber-500/40 text-zinc-300 transition-all cursor-pointer active:scale-95"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <textarea
                   required
-                  rows={2}
+                  rows={3}
                   value={newAnchor}
                   onChange={(e) => setNewAnchor(e.target.value)}
-                  placeholder="VD: Young female cyber specialist, sharp angular jawline, emerald green braided ponytail, matte obsidian combat jacket, subtle glowing neural optic implant."
-                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 focus:outline-none focus:border-amber-400"
+                  placeholder="Mô tả chi tiết đặc điểm nhận diện: Độ tuổi, giới tính, đường nét khuôn mặt, kiểu & màu tóc, vết sẹo/hình xăm/thiết bị cấy ghép, trang phục đặc trưng bất biến..."
+                  className="w-full px-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-amber-400 transition-colors leading-relaxed"
                 />
               </div>
 
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreatingNew(false)}
-                  className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saveMutation.isPending}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {saveMutation.isPending ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <Sparkles className="w-3.5 h-3.5" />
-                  )}
-                  <span>Lưu Vào Kho Vault</span>
-                </button>
+              {/* Footer actions */}
+              <div className="flex items-center justify-between pt-3 border-t border-zinc-800/80">
+                <p className="text-[11px] text-zinc-500 hidden sm:block">
+                  <span className="text-amber-400 font-medium">*</span> Nhân vật sau khi lưu sẽ sẵn sàng áp dụng vào kịch bản & trích xuất 3 góc mặt.
+                </p>
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCreatingNew(false)
+                      setFormError(null)
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold cursor-pointer transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || saveMutation.isPending}
+                    className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all shadow-md shadow-amber-500/20 active:scale-95"
+                  >
+                    {isSubmitting || saveMutation.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isSubmitting ? 'Đang Lưu...' : 'Lưu Vào Kho Vault'}</span>
+                  </button>
+                </div>
               </div>
             </motion.form>
           )}
