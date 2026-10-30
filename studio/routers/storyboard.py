@@ -37,6 +37,7 @@ class UpdateShotRequest(BaseModel):
     lighting: Optional[str] = None
     camera_lens: Optional[str] = None
     camera_motion: Optional[str] = None
+    location_id: Optional[str] = None
     voice_volume: Optional[float] = None
     sfx_volume: Optional[float] = None
     sfx_offset_ms: Optional[int] = None
@@ -365,6 +366,9 @@ def update_shot(req: UpdateShotRequest):
             target_shot["camera_motion"] = req.camera_motion if req.camera_motion else None
             if not req.motion:
                 target_shot["motion"] = req.camera_motion
+
+        if req.location_id is not None:
+            target_shot["location_id"] = req.location_id if req.location_id else None
 
         target_shot["is_approved"] = False
 
