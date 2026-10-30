@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, X, Search, Check, Users, Ratio, Music, Film, BookOpen, ArrowRight, Loader2 } from 'lucide-react'
 import { useStoryTemplates } from '../api/queries'
@@ -21,6 +21,16 @@ export default function StoryTemplateModal({
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [activePreviewId, setActivePreviewId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
 
   const categories = useMemo(() => {
     const set = new Set<string>()

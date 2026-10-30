@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   X,
   Sparkles,
@@ -49,6 +49,17 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
   const [selectedPresetId, setSelectedPresetId] = useState<string>('ultra_master_4k_60fps')
   const [enhancedVideoUrl, setEnhancedVideoUrl] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [videoError, setVideoError] = useState<boolean>(false)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -229,16 +240,20 @@ export const VideoEnhancerModal: React.FC<VideoEnhancerModalProps> = ({
           {/* Video Preview Section */}
           <div className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800 flex flex-col sm:flex-row items-center gap-5">
             <div className="w-full sm:w-1/2 aspect-video rounded-xl bg-zinc-950 border border-zinc-800 overflow-hidden relative flex items-center justify-center">
-              {currentPreviewUrl ? (
+              {currentPreviewUrl && !videoError ? (
                 <video
                   src={currentPreviewUrl}
                   controls
+                  onError={() => setVideoError(true)}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="flex flex-col items-center gap-2 text-zinc-600 text-xs">
-                  <Play className="w-8 h-8 opacity-30" />
-                  <span>Chưa có video để phát</span>
+                <div className="flex flex-col items-center gap-2 text-zinc-500 text-xs text-center p-4">
+                  <Play className="w-8 h-8 opacity-30 text-amber-400" />
+                  <span className="font-semibold text-zinc-400">Chưa có video xem trước</span>
+                  <span className="text-[10px] text-zinc-600 max-w-[200px]">
+                    Hãy tạo clip phân cảnh hoặc xuất bản Master Movie trước khi nâng cấp 4K
+                  </span>
                 </div>
               )}
               {enhancedVideoUrl && (

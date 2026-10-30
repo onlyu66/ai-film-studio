@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -57,8 +57,19 @@ export default function AutoReframeModal({
   const [selectedMode, setSelectedMode] = useState<string>('blur_padding')
   const [burnSubtitles, setBurnSubtitles] = useState<boolean>(true)
   const [reframeResult, setReframeResult] = useState<ReframeResultResponse | null>(null)
+  const [videoError, setVideoError] = useState<boolean>(false)
 
   const reframeMutation = useCreateAutoReframe()
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -248,7 +259,7 @@ export default function AutoReframeModal({
                       playsInline
                       className="w-full h-full object-cover"
                     />
-                  ) : sourceVideoUrl ? (
+                  ) : sourceVideoUrl && !videoError ? (
                     <div className="relative w-full h-full flex items-center justify-center bg-black">
                       {selectedMode === 'blur_padding' && (
                         <>
@@ -257,6 +268,7 @@ export default function AutoReframeModal({
                             muted
                             autoPlay
                             loop
+                            onError={() => setVideoError(true)}
                             className="absolute inset-0 w-full h-full object-cover blur-md scale-125 opacity-60"
                           />
                           <video
@@ -264,6 +276,7 @@ export default function AutoReframeModal({
                             muted
                             autoPlay
                             loop
+                            onError={() => setVideoError(true)}
                             className="relative z-10 w-full object-contain"
                           />
                         </>
@@ -275,6 +288,7 @@ export default function AutoReframeModal({
                           muted
                           autoPlay
                           loop
+                          onError={() => setVideoError(true)}
                           className="w-full h-full object-cover scale-110"
                         />
                       )}
@@ -285,6 +299,7 @@ export default function AutoReframeModal({
                           muted
                           autoPlay
                           loop
+                          onError={() => setVideoError(true)}
                           className="w-full object-contain"
                         />
                       )}
@@ -309,8 +324,11 @@ export default function AutoReframeModal({
                     </div>
                   ) : (
                     <div className="p-4 text-center text-zinc-500 text-xs flex flex-col items-center">
-                      <Smartphone className="w-8 h-8 mb-2 text-zinc-600" />
-                      <span>Chưa có video 16:9 để mô phỏng</span>
+                      <Smartphone className="w-8 h-8 mb-2 text-zinc-600 animate-pulse" />
+                      <span className="font-medium text-zinc-400">Chưa có video 16:9 để mô phỏng</span>
+                      <span className="text-[10px] text-zinc-500 mt-1 max-w-[170px]">
+                        Hãy tạo các clip phân cảnh hoặc xuất bản Master Movie để kích hoạt xem trước
+                      </span>
                     </div>
                   )}
                 </div>

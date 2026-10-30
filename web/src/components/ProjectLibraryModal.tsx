@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Film, X, Trash2, Download, Play, Calendar, Clock, MonitorPlay, Loader2, Share2, Clapperboard, Globe } from 'lucide-react'
 import { useProjects, useDeleteProject, useDubProject } from '../api/queries'
@@ -35,6 +35,16 @@ export default function ProjectLibraryModal({
   const [dubbingProject, setDubbingProject] = useState<ProjectItem | null>(null)
   const [dubTargetLang, setDubTargetLang] = useState('en')
   const [dubHardsub, setDubHardsub] = useState(false)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
 
   const handleStartDub = () => {
     if (!dubbingProject) return
@@ -104,6 +114,8 @@ export default function ProjectLibraryModal({
             <button
               type="button"
               onClick={onClose}
+              title="Đóng cửa sổ"
+              aria-label="Đóng"
               className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />

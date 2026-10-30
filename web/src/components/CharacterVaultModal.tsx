@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   X,
   Users,
@@ -55,6 +55,16 @@ export const CharacterVaultModal: React.FC<CharacterVaultModalProps> = ({
     profile_url?: string
   } | null>(null)
   const [importedCharId, setImportedCharId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
 
   // New character form state
   const [newName, setNewName] = useState('')

@@ -3017,7 +3017,11 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         isOpen={isReframeOpen}
         onClose={() => setIsReframeOpen(false)}
         projectId="current"
-        sourceVideoUrl="/api/outputs/master_movie.mp4"
+        sourceVideoUrl={
+          readyClips > 0
+            ? `/api/outputs/videos/${shots.find((s) => s.has_video)?.id}.mp4`
+            : undefined
+        }
       />
 
       {/* AI Foley & SFX Soundboard Modal */}
@@ -3046,7 +3050,11 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
         }}
         shot={enhancerTargetShot}
         isMaster={isEnhancerMaster}
-        sourceVideoUrl="/api/outputs/master_movie.mp4"
+        sourceVideoUrl={
+          readyClips > 0
+            ? `/api/outputs/videos/${shots.find((s) => s.has_video)?.id}.mp4`
+            : undefined
+        }
         projectId="current"
       />
     </Card>

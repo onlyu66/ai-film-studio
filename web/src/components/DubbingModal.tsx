@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   X,
@@ -42,6 +42,16 @@ export default function DubbingModal({
   const [dubResult, setDubResult] = useState<DubbingResultResponse | null>(null)
   const [playingAudioUrl, setPlayingAudioUrl] = useState<string | null>(null)
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
 
   const { data: voices = [] } = useVoiceList()
   const dubbingMutation = useCreateDubbing()
@@ -100,12 +110,13 @@ export default function DubbingModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md animate-fadeIn">
+      <div onClick={onClose} className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/90 backdrop-blur-md animate-fadeIn cursor-pointer">
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
-          className="relative w-full max-w-2xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]"
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-2xl bg-cinema-deck border border-cinema-border rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] cursor-default"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 bg-cinema-card border-b border-cinema-border shrink-0">
@@ -126,6 +137,8 @@ export default function DubbingModal({
             <button
               type="button"
               onClick={onClose}
+              title="Đóng cửa sổ"
+              aria-label="Đóng"
               className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
