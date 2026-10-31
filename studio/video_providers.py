@@ -685,12 +685,27 @@ class ComfyUIVideoProvider(BaseVideoProvider):
             )
 
             shot_id = output_path.stem
+
+            def _on_video_sampling_progress(s_id: str, step: int, total_steps: int):
+                try:
+                    from studio.server import broadcast_ws
+                    broadcast_ws("comfyui_progress", {
+                        "shot_id": s_id,
+                        "step": step,
+                        "total_steps": total_steps,
+                        "percent": round((step / max(1, total_steps)) * 100, 1),
+                        "engine": "video",
+                    })
+                except Exception:
+                    pass
+
             outputs = _run_coroutine_sync(
                 client.queue_and_wait(
                     mutated_wf,
                     shot_id=shot_id,
                     output_dir=output_path.parent,
                     timeout_sec=self.max_poll_seconds,
+                    on_progress=_on_video_sampling_progress,
                 )
             )
 

@@ -23,7 +23,7 @@ import {
   useProjects,
   QUERY_KEYS,
 } from './api/queries'
-import type { StudioStatus, ProductionFormData, ProjectItem } from './types'
+import type { StudioStatus, ProductionFormData, ProjectItem, ComfyUISamplingProgress } from './types'
 
 export default function App() {
   const queryClient = useQueryClient()
@@ -36,6 +36,7 @@ export default function App() {
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null)
   const [activeSrtUrl, setActiveSrtUrl] = useState<string | null>(null)
   const [liveLogs, setLiveLogs] = useState<string[]>([])
+  const [samplingProgress, setSamplingProgress] = useState<Record<string, ComfyUISamplingProgress>>({})
 
   // TanStack Query hooks for real-time status & storyboard
   const { data: statusData } = useStudioStatus()
@@ -68,6 +69,7 @@ export default function App() {
     if (statusData?.status === 'script_ready' || statusData?.status === 'completed') {
       refetchStoryboard()
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.storyboard })
+                setSamplingProgress({})
     }
 
     // Auto-scroll to Storyboard review area when script is ready
@@ -113,6 +115,14 @@ export default function App() {
                 const next = [...prev, payload.data]
                 return next.length > 200 ? next.slice(-200) : next
               })
+            } else if (payload.type === 'comfyui_progress') {
+              const data = payload.data as ComfyUISamplingProgress
+              if (data?.shot_id) {
+                setSamplingProgress((prev) => ({
+                  ...prev,
+                  [data.shot_id]: data,
+                }))
+              }
             }
           } catch {
             // Ignore parse errors
@@ -416,6 +426,7 @@ export default function App() {
           storyboard={storyboard}
           isScriptReady={status.status === 'script_ready'}
           onContinue={handleContinue}
+          samplingProgress={samplingProgress}
         />
       </main>
 

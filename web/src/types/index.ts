@@ -698,3 +698,11 @@ export interface ComfyUIStatusResponse {
 export interface ComfyUIWorkflowsResponse {
   workflows: ComfyUIWorkflowItem[]
 }
+
+export interface ComfyUISamplingProgress {
+  shot_id: string
+  step: number
+  total_steps: number
+  percent: number
+  engine?: 'image' | 'video'
+}

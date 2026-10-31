@@ -250,8 +250,27 @@ class ComfyUIProvider(BaseImageProvider):
 
             client = ComfyUIClient(api_url=self.api_url)
             shot_id = output_path.stem
+
+            def _on_sampling_progress(s_id: str, step: int, total_steps: int):
+                try:
+                    from studio.server import broadcast_ws
+                    broadcast_ws("comfyui_progress", {
+                        "shot_id": s_id,
+                        "step": step,
+                        "total_steps": total_steps,
+                        "percent": round((step / max(1, total_steps)) * 100, 1),
+                        "engine": "image",
+                    })
+                except Exception:
+                    pass
+
             outputs = _run_coroutine_sync(
-                client.queue_and_wait(mutated_wf, shot_id=shot_id, output_dir=output_path.parent)
+                client.queue_and_wait(
+                    mutated_wf,
+                    shot_id=shot_id,
+                    output_dir=output_path.parent,
+                    on_progress=_on_sampling_progress,
+                )
             )
 
             if outputs and len(outputs) > 0:

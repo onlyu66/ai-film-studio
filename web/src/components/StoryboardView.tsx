@@ -115,6 +115,7 @@ export interface StoryboardViewProps {
   storyboard: StoryboardData | null
   isScriptReady?: boolean
   onContinue?: () => void
+  samplingProgress?: Record<string, import('../types').ComfyUISamplingProgress>
 }
 
 const MOTION_OPTIONS: SelectOption[] = [
@@ -206,7 +207,7 @@ const SFX_PRESETS = [
   { key: 'cyberpunk', label: '🚀 Sci-Fi / Cyber' },
 ] as const
 
-export default function StoryboardView({ storyboard, isScriptReady, onContinue }: StoryboardViewProps) {
+export default function StoryboardView({ storyboard, isScriptReady, onContinue, samplingProgress = {} }: StoryboardViewProps) {
   const [activeTab, setActiveTab] = useState<'shots' | 'characters' | 'locations'>('shots')
   const [searchQuery, setSearchQuery] = useState('')
   const [shotFilter, setShotFilter] = useState<'all' | 'approved' | 'pending' | 'has_video'>('all')
@@ -1497,6 +1498,7 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
             {filteredShots.map((shot, index) => {
               const hasImage = Boolean(shot.has_image || cacheBuster[shot.id])
+              const sampling = samplingProgress?.[shot.id]
               const imgSrc = `/api/outputs/images/${shot.id}.png?t=${cacheBuster[shot.id] || ''}`
 
               return (
@@ -1545,6 +1547,8 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       ? 'opacity-40 scale-[0.98] border-dashed border-amber-500/60 ring-2 ring-amber-500/20'
                       : dragOverShotId === shot.id
                       ? 'border-amber-400 ring-2 ring-amber-400/80 shadow-2xl shadow-amber-500/20 -translate-y-1'
+                      : sampling
+                      ? 'border-purple-500/80 ring-2 ring-purple-500/50 shadow-2xl shadow-purple-500/20 -translate-y-0.5'
                       : shot.is_approved
                       ? 'border-cinema-border hover:border-emerald-500/50 hover:shadow-emerald-500/5'
                       : 'border-cinema-border hover:border-amber-500/50 hover:shadow-amber-500/5'
@@ -1581,6 +1585,12 @@ export default function StoryboardView({ storyboard, isScriptReady, onContinue }
                       <span className="font-mono font-bold text-xs text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-md shadow-sm shrink-0">
                         #{String(index + 1).padStart(2, '0')}
                       </span>
+                      {sampling && (
+                        <span className="flex items-center gap-1 font-mono font-bold text-[10px] text-purple-300 bg-purple-500/20 border border-purple-500/40 px-2 py-0.5 rounded-md shadow-sm shrink-0 animate-pulse">
+                          <Zap className="w-3 h-3 text-purple-400" />
+                          <span>{sampling.engine === 'video' ? '🎬' : '⚡'} {sampling.step}/{sampling.total_steps}</span>
+                        </span>
+                      )}
                       <span className="text-[11px] font-mono text-zinc-400 truncate">
                         {shot.act ? `Hồi ${shot.act}` : ''} {shot.chapter ? `• Cảnh ${shot.chapter}` : ''}
                       </span>
