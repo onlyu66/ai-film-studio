@@ -38,7 +38,13 @@
   - **Foley & Ambient SFX:** Tự động nhận diện cảnh quay để chèn âm thanh môi trường (tiếng mưa, bước chân, sấm sét, gió rít, tiếng vũ khí va chạm,...).
 - **Global Auto-Dubbing (Lồng tiếng Quốc tế 1-Click):** Dịch và xuất bản toàn bộ phim sang 8 ngôn ngữ phổ biến (Tiếng Việt, Anh, Nhật, Hàn, Pháp, Đức, Tây Ban Nha, Trung Quốc) kèm hiệu chỉnh đồng bộ thời gian.
 
-### 4. Hiệu ứng Hình ảnh & Dựng phim (VFX & Post-Production)
+### 4. Động cơ Kép ComfyUI Dual Engine (Image & Video)
+- **Image Engine:** Tích hợp Flux.1 Schnell (4-step cinematic) và SDXL Cinematic 35mm photograph, quét checkpoint tự động, LoRA nhân vật, Seed, Steps, CFG.
+- **Video Engine:** Tích hợp Wan 2.1 Video và AnimateDiff v3 Image-to-Video với VHS_VideoCombine kết xuất MP4 trực tiếp từ ảnh tĩnh.
+- **In-Place Node Mutation & Fallback:** Tự động tiêm tham số vào JSON workflow API ComfyUI; tự động fallback 100% sang Pollinations / Ken Burns khi máy trạm hoặc GPU offline.
+- **GPU Safety Serialization:** Tự động tuần tự hóa (`concurrency = 1`) cho các tiến trình ComfyUI nhằm triệt tiêu nguy cơ CUDA Out-of-Memory (OOM).
+
+### 5. Hiệu ứng Hình ảnh & Dựng phim (VFX & Post-Production)
 - **Hiệu ứng Ken Burns 2.5D:** Biến ảnh tĩnh thành cảnh quay sống động với camera chuyển động mượt mà (Zoom In, Zoom Out, Pan Left, Pan Right, Static).
 - **Hardsub Burn-in Engine:** Tự động tạo phụ đề ASS/SRT chuẩn điện ảnh, viền đổ bóng vàng/trắng hoặc karaoke, tự động gắn cố định vào khung hình video.
 - **Timeline Scrubber tương tác:** Bảng điều khiển dòng thời gian đa tầng (Video Preview, Shot Blocks, Voice Audio Wave, SFX/BGM Track) cho phép nhảy trực tiếp đến từng giây/shot trong phim.
@@ -259,7 +265,7 @@ WEBHOOK_URL=https://discord.com/api/webhooks/...  # URL Discord/Telegram/Custom 
 
 ## 🧪 Kiểm thử & Đảm bảo chất lượng
 
-Dự án áp dụng quy trình kiểm thử tự động toàn diện với **38/38 Test Cases đạt chuẩn 100%**:
+Dự án áp dụng quy trình kiểm thử tự động toàn diện với **237/237 Test Cases đạt chuẩn 100%**:
 
 ```bash
 # Chạy toàn bộ test suite bằng Docker
