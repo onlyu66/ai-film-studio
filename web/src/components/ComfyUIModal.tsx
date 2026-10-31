@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   X, Zap, CheckCircle2, AlertCircle, Loader2, Upload,
   Monitor, Image as ImageIcon, Video, RefreshCw,
-  Cpu, HardDrive, AlertTriangle, FileJson, Check
+  Cpu, HardDrive, AlertTriangle, FileJson, Check,
+  ExternalLink, Download, Cloud
 } from 'lucide-react'
 import { Button } from './ui/button'
 import type {
@@ -345,6 +346,54 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
                 >
                   Docker Net
                 </button>
+                <a
+                  href="https://colab.research.google.com/github/onlyu66/ai-film-studio/blob/main/notebooks/comfyui_colab.ipynb"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] font-mono px-2.5 py-1 rounded-lg border bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 border-purple-500/40 hover:from-purple-500/30 hover:to-pink-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                  title="Mở Google Colab để chạy ComfyUI trên GPU Tesla T4 15GB VRAM hoàn toàn miễn phí"
+                >
+                  <ExternalLink className="w-3 h-3 text-purple-400" />
+                  <span>Colab (Free T4)</span>
+                </a>
+              </div>
+            </div>
+
+            {/* Google Colab Cloud GPU Free Card */}
+            <div className="p-3 rounded-xl bg-gradient-to-r from-purple-950/30 via-purple-900/15 to-cinema-card border border-purple-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-emerald-400" /> Miễn Phí 100%
+                  </span>
+                  <span className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
+                    <Cloud className="w-3.5 h-3.5 text-purple-400" />
+                    Google Colab Cloud GPU (Tesla T4 15GB VRAM)
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                  Không cần card GPU mạnh trên máy! Bấm mở Colab, chọn <strong>Run all</strong>, rồi sao chép đường link <code className="text-purple-300 font-mono">https://xxxx.trycloudflare.com</code> dán vào ô Server URL ở trên.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <a
+                  href="https://colab.research.google.com/github/onlyu66/ai-film-studio/blob/main/notebooks/comfyui_colab.ipynb"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30 transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Mở Colab 1-Click</span>
+                </a>
+                <a
+                  href="/api/comfyui/colab-notebook"
+                  download="ai_film_studio_comfyui_colab.ipynb"
+                  className="px-2.5 py-1.5 rounded-xl text-xs font-medium bg-cinema-card hover:bg-cinema-deck text-zinc-300 border border-cinema-border transition-all flex items-center gap-1 cursor-pointer shrink-0"
+                  title="Tải file notebook .ipynb về máy để tải lên Colab thủ công"
+                >
+                  <Download className="w-3.5 h-3.5 text-zinc-400" />
+                  <span>Tải .ipynb</span>
+                </a>
               </div>
             </div>
 

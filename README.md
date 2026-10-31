@@ -243,9 +243,15 @@ Studio cung cấp công cụ chẩn đoán phần cứng tự động tại endp
 | 🟢 **Tối Ưu (Optimal)** | `>= 12 GB` (RTX 3060 12GB, 4070, 4080, 4090) | **Flux Schnell, SDXL, Wan 2.1 Video, AnimateDiff** | `--highvram`. Tốc độ cực nhanh, hỗ trợ đầy đủ video AI và LoRA. |
 | 🔵 **Tương Thích (Compatible)** | `6 GB - 11 GB` (RTX 2060, 3060 6GB, 3070, 4060) | **Flux Schnell (FP8/NF4), SDXL Turbo, AnimateDiff (512x512)** | `--lowvram --fp8_e4m3fn-text-enc`. Dùng model lượng tử hóa FP8 để tiết kiệm VRAM. |
 | 🟡 **Tối Thiểu (Minimal)** | `4 GB - 5.9 GB` (GTX 1650, 1050Ti) | **Stable Diffusion 1.5, SDXL Turbo nhỏ** | `--lowvram`. Model Flux rất dễ gặp lỗi tràn bộ nhớ (CUDA Out of Memory). |
-| 🔴 **VRAM Thấp / CPU** | `< 4 GB` (GTX 950M 2GB, Intel HD Graphics) | **Chỉ chạy được SD 1.5 với cờ --lowvram** | Không nên chạy Flux/Wan 2.1 cục bộ. **Khuyến nghị sử dụng Cloud Pollinations**. |
+| 🔴 **VRAM Thấp / CPU** | `< 4 GB` (GTX 950M 2GB, Intel HD Graphics) | **Chỉ chạy được SD 1.5 với cờ --lowvram** | Không nên chạy Flux/Wan 2.1 cục bộ. **Khuyến nghị sử dụng Cloud Pollinations hoặc Google Colab**. |
 
-### 5. Cơ chế Fail-Safe tuyệt đối (Cloud Pollinations)
+### 5.3. Giải pháp ComfyUI Cloud Miễn Phí (Google Colab GPU Tesla T4 15GB VRAM)
+Nếu máy trạm của bạn có VRAM hạn chế, bạn có thể chạy ComfyUI trên Cloud của Google hoàn toàn miễn phí:
+* **Mở 1-Click trên Google Colab:** [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/onlyu66/ai-film-studio/blob/main/notebooks/comfyui_colab.ipynb)
+* **Cách thực hiện:** Chọn menu **Runtime** ➔ **Run all** (hoặc nhấn `Ctrl + F9`). Sau ~2 phút, sao chép đường link `https://xxxx.trycloudflare.com` và dán vào ô **Server URL** trong modal ComfyUI trên AI Film Studio.
+* Chi tiết xem thêm tại [notebooks/README.md](file:///C:/Documents/ai-film-studio/notebooks/README.md).
+
+### 5.4. Cơ chế Fail-Safe tuyệt đối (Cloud Pollinations)
 Hệ thống AI Film Studio được xây dựng theo triết lý **Không bao giờ làm gián đoạn sáng tạo**:
 - Nếu máy tính của bạn không có GPU rời, ComfyUI bị tắt, hoặc GPU gặp sự cố tràn bộ nhớ (OOM), Studio sẽ **tự động chuyển hướng (Auto-fallback 100%)** sang:
   - **Cloud Pollinations (Flux Schnell):** Sinh ảnh 4K hoàn toàn miễn phí trên máy chủ Cloud, tốc độ 3-5 giây/ảnh, không tốn VRAM máy trạm.

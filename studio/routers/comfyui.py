@@ -2,8 +2,10 @@
 
 import json
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from studio.comfyui.client import ComfyUIClient, ComfyUIHealthStatus
@@ -250,3 +252,16 @@ async def test_comfyui_connection(url: Optional[str] = Query(None)):
         "vram_free_gb": status.vram_free_gb,
         "message": f"Kết nối ComfyUI thành công! Thiết bị: {status.device_name} ({status.vram_free_gb} GB VRAM trống).",
     }
+
+
+@router.get("/colab-notebook")
+async def get_colab_notebook():
+    """Provides direct download for the official Google Colab Jupyter Notebook."""
+    nb_path = Path("notebooks/comfyui_colab.ipynb")
+    if not nb_path.exists():
+        raise HTTPException(status_code=404, detail="Colab notebook not found")
+    return FileResponse(
+        str(nb_path),
+        media_type="application/x-ipynb+json",
+        filename="ai_film_studio_comfyui_colab.ipynb",
+    )

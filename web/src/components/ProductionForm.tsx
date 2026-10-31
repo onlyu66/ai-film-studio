@@ -37,6 +37,7 @@ import {
   Pause,
   Upload,
   Sliders,
+  ExternalLink,
 } from 'lucide-react'
 import { CustomSelect } from './ui/select'
 import { toast } from 'sonner'
@@ -2058,6 +2059,16 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                         >
                           Docker Net
                         </button>
+                        <a
+                          href="https://colab.research.google.com/github/onlyu66/ai-film-studio/blob/main/notebooks/comfyui_colab.ipynb"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-mono px-2.5 py-1 rounded-lg border bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-200 border-purple-500/40 hover:from-purple-500/30 hover:to-pink-500/30 transition-all flex items-center gap-1 cursor-pointer"
+                          title="Mở Google Colab để chạy ComfyUI trên GPU Tesla T4 15GB VRAM miễn phí"
+                        >
+                          <ExternalLink className="w-3 h-3 text-purple-400" />
+                          <span>Colab (Free T4)</span>
+                        </a>
                       </div>
                     )}
 

@@ -32,6 +32,17 @@ class ComfyUIClient:
     def __init__(self, api_url: Optional[str] = None):
         self.api_url = (api_url or os.environ.get("COMFYUI_URL", "http://127.0.0.1:8188")).rstrip("/")
 
+    def _create_http_client(self, timeout: float = 10.0) -> httpx.AsyncClient:
+        """Create httpx.AsyncClient pre-configured for local and remote cloud tunnels (Colab, RunPod, Cloudflare, ngrok)."""
+        return httpx.AsyncClient(
+            timeout=timeout,
+            headers={
+                "User-Agent": "AIFilmStudio/1.0",
+                "ngrok-skip-browser-warning": "true",
+            },
+            follow_redirects=True,
+        )
+
     @property
     def ws_url(self) -> str:
         parsed = urlparse(self.api_url)
@@ -47,8 +58,9 @@ class ComfyUIClient:
 
         for url in candidates:
             endpoint = f"{url}/system_stats"
+            timeout = 4.0 if url.startswith("https") else 1.5
             try:
-                async with httpx.AsyncClient(timeout=2.0) as client:
+                async with self._create_http_client(timeout=timeout) as client:
                     resp = await client.get(endpoint)
                     if resp.status_code == 200:
                         self.api_url = url
@@ -97,7 +109,7 @@ class ComfyUIClient:
             "vaes": [],
         }
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            async with self._create_http_client(timeout=8.0) as client:
                 resp = await client.get(endpoint)
                 if resp.status_code == 200:
                     data = resp.json()
@@ -140,7 +152,7 @@ class ComfyUIClient:
         """Returns the list of all registered node class_types in ComfyUI."""
         endpoint = f"{self.api_url}/object_info"
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            async with self._create_http_client(timeout=8.0) as client:
                 resp = await client.get(endpoint)
                 if resp.status_code == 200:
                     return list(resp.json().keys())
@@ -159,7 +171,7 @@ class ComfyUIClient:
             with open(image_path, "rb") as f:
                 files = {"image": (image_path.name, f.read(), "image/png")}
                 data = {"subfolder": subfolder, "overwrite": "true"}
-                async with httpx.AsyncClient(timeout=30.0) as client:
+                async with self._create_http_client(timeout=45.0) as client:
                     resp = await client.post(endpoint, files=files, data=data)
                     if resp.status_code == 200:
                         res_data = resp.json()
@@ -173,7 +185,7 @@ class ComfyUIClient:
         """Sends workflow to ComfyUI /prompt endpoint and returns prompt_id."""
         endpoint = f"{self.api_url}/prompt"
         payload = {"prompt": workflow, "client_id": client_id}
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with self._create_http_client(timeout=15.0) as client:
             resp = await client.post(endpoint, json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"ComfyUI prompt submission failed: {resp.status_code} - {resp.text}")
@@ -193,7 +205,7 @@ class ComfyUIClient:
         output_dir.mkdir(parents=True, exist_ok=True)
         start_time = asyncio.get_event_loop().time()
 
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with self._create_http_client(timeout=20.0) as client:
             while (asyncio.get_event_loop().time() - start_time) < timeout_sec:
                 try:
                     resp = await client.get(f"{self.api_url}/history/{prompt_id}")

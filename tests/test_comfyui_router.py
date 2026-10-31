@@ -65,3 +65,8 @@ def test_api_comfyui_models():
         assert resp.status_code == 200
         data = resp.json()
         assert "model1.safetensors" in data["models"]["checkpoints"]
+
+def test_api_comfyui_colab_notebook():
+    resp = client.get("/api/comfyui/colab-notebook")
+    assert resp.status_code == 200
+    assert "ipynb" in resp.headers.get("content-type", "")
