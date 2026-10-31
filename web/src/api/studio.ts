@@ -735,3 +735,27 @@ export async function testComfyUIGeneration(url?: string): Promise<{ success: bo
   )
   return response.data
 }
+
+export function getWebGLGpuHint(): string | undefined {
+  try {
+    const canvas = document.createElement('canvas')
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+    if (!gl) return undefined
+    const debugInfo = (gl as any).getExtension('WEBGL_debug_renderer_info')
+    if (!debugInfo) return undefined
+    return (gl as any).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || undefined
+  } catch {
+    return undefined
+  }
+}
+
+export async function getComfyUIHardwareCheck(clientGpu?: string): Promise<{
+  success: boolean
+  hardware: import('../types').ComfyUIHardwareReport
+  detected_gpus: Array<{ name: string; vram_gb: number; driver?: string }>
+}> {
+  const hint = clientGpu || getWebGLGpuHint()
+  const params = hint ? { client_gpu: hint } : {}
+  const response = await apiClient.get('/api/comfyui/hardware-check', { params })
+  return response.data
+}

@@ -73,6 +73,61 @@ async def get_comfyui_status(url: Optional[str] = Query(None)):
     }
 
 
+@router.get("/hardware-check")
+async def get_comfyui_hardware_check(client_gpu: Optional[str] = Query(None)):
+    """
+    Evaluates host GPU and system capability to run local or Docker ComfyUI.
+    Can accept client_gpu hint from browser WebGL if running inside Docker.
+    """
+    from studio.hardware import detect_hardware, detect_gpu_details, check_docker_gpu_support, assess_comfyui_compatibility
+
+    hw = detect_hardware()
+    gpus = detect_gpu_details()
+
+    # Check if ComfyUI is online and reporting GPU
+    client = get_client()
+    status = await client.check_health()
+
+    gpu_name = "Unknown GPU"
+    vram_gb = 0.0
+
+    if status.connected and status.device_name not in ("CPU", "Unknown"):
+        gpu_name = status.device_name
+        vram_gb = status.vram_total_gb
+    elif gpus:
+        gpu_name = gpus[0].get("name", "Unknown GPU")
+        vram_gb = float(gpus[0].get("vram_gb", 0.0))
+    elif client_gpu:
+        gpu_name = client_gpu
+        lower_hint = client_gpu.lower()
+        if "950m" in lower_hint or "960m" in lower_hint:
+            vram_gb = 2.0
+        elif "1050" in lower_hint or "1650" in lower_hint:
+            vram_gb = 4.0
+        elif "2060" in lower_hint or "3060" in lower_hint:
+            vram_gb = 6.0
+        elif "3070" in lower_hint or "4070" in lower_hint:
+            vram_gb = 8.0
+        else:
+            vram_gb = 0.0
+
+    docker_status = check_docker_gpu_support()
+
+    report = assess_comfyui_compatibility(
+        gpu_name=gpu_name,
+        vram_gb=vram_gb,
+        ram_gb=hw.get("ram_total_gb", 8.0),
+        cpu_cores=hw.get("cpu_cores", 4),
+        docker_gpu_supported=docker_status.get("supported", False),
+    )
+
+    return {
+        "success": True,
+        "hardware": report,
+        "detected_gpus": gpus,
+    }
+
+
 @router.get("/models")
 async def get_comfyui_models(url: Optional[str] = Query(None)):
     """Scans and lists installed checkpoints, LoRAs, and VAEs."""

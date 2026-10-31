@@ -6,11 +6,12 @@ import {
 } from 'lucide-react'
 import { Button } from './ui/button'
 import type {
-  ComfyUIHealthStatus, ComfyUIConfig, ComfyUIWorkflowItem, ComfyUIModels
+  ComfyUIHealthStatus, ComfyUIConfig, ComfyUIWorkflowItem, ComfyUIModels, ComfyUIHardwareReport
 } from '../types'
 import {
   getComfyUIStatus, getComfyUIModels, getComfyUIWorkflows,
-  getComfyUIConfig, saveComfyUIConfig, uploadComfyUIWorkflow, testComfyUIGeneration
+  getComfyUIConfig, saveComfyUIConfig, uploadComfyUIWorkflow, testComfyUIGeneration,
+  getComfyUIHardwareCheck
 } from '../api/studio'
 
 interface ComfyUIModalProps {
@@ -51,10 +52,28 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
   const [saveAsGlobal, setSaveAsGlobal] = useState(true)
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null)
   const [uploadStatus, setUploadStatus] = useState<string | null>(null)
+  const [hwReport, setHwReport] = useState<ComfyUIHardwareReport | null>(null)
+  const [isCheckingHw, setIsCheckingHw] = useState(false)
+  const [showHwDetails, setShowHwDetails] = useState(false)
   const dropRef = useRef<HTMLDivElement>(null)
+
+  const fetchHwReport = useCallback(async () => {
+    setIsCheckingHw(true)
+    try {
+      const res = await getComfyUIHardwareCheck()
+      if (res?.success && res.hardware) {
+        setHwReport(res.hardware)
+      }
+    } catch (err) {
+      console.debug('[ComfyUIModal] Hardware check failed:', err)
+    } finally {
+      setIsCheckingHw(false)
+    }
+  }, [])
 
   const fetchAll = useCallback(async (overrideUrl?: string) => {
     setIsChecking(true)
+    fetchHwReport()
     const targetUrl = overrideUrl || customUrlRef.current
     try {
       const [statusRes, modelsRes, wfRes, cfgRes] = await Promise.allSettled([
@@ -374,6 +393,157 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
                   <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
                 )}
                 <span>{testResult.message}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Hardware Diagnostics & Readiness Banner */}
+          <div className="rounded-2xl border border-cinema-border bg-cinema-surface p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold ${
+                  hwReport?.tier === 'optimal'
+                    ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'
+                    : hwReport?.tier === 'compatible'
+                    ? 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-400'
+                    : hwReport?.tier === 'minimal'
+                    ? 'bg-amber-500/15 border border-amber-500/30 text-amber-400'
+                    : 'bg-rose-500/15 border border-rose-500/30 text-rose-400'
+                }`}>
+                  <Cpu className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-zinc-200">
+                      {hwReport?.gpu_name || 'Đang quét phần cứng máy trạm...'}
+                    </span>
+                    {hwReport && (
+                      <span className={`text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-md border ${
+                        hwReport.tier === 'optimal'
+                          ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
+                          : hwReport.tier === 'compatible'
+                          ? 'bg-cyan-500/15 border-cyan-500/30 text-cyan-300'
+                          : hwReport.tier === 'minimal'
+                          ? 'bg-amber-500/15 border-amber-500/30 text-amber-300'
+                          : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+                      }`}>
+                        {hwReport.tier === 'optimal'
+                          ? 'Tối Ưu (12GB+)'
+                          : hwReport.tier === 'compatible'
+                          ? 'Tương Thích (6-11GB)'
+                          : hwReport.tier === 'minimal'
+                          ? 'Tối Thiểu (4GB)'
+                          : 'VRAM Thấp (<4GB)'}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-zinc-400 font-mono">
+                    VRAM: {hwReport?.vram_gb ?? 0} GB • RAM: {hwReport?.ram_gb ?? 0} GB • {hwReport?.cpu_cores ?? 0} Cores
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={fetchHwReport}
+                  disabled={isCheckingHw}
+                  className="h-7 px-2.5 text-[11px] gap-1 border-cinema-border bg-cinema-card hover:bg-cinema-deck text-zinc-300 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isCheckingHw ? 'animate-spin' : ''}`} />
+                  <span>Quét lại</span>
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setShowHwDetails(!showHwDetails)}
+                  className="text-[11px] text-purple-400 hover:text-purple-300 underline font-medium cursor-pointer"
+                >
+                  {showHwDetails ? 'Thu gọn' : 'Chi tiết'}
+                </button>
+              </div>
+            </div>
+
+            {/* Summary message */}
+            {hwReport?.summary && (
+              <div className={`p-2.5 rounded-xl border text-[11px] leading-relaxed ${
+                hwReport.tier === 'optimal' || hwReport.tier === 'compatible'
+                  ? 'bg-emerald-500/5 border-emerald-500/20 text-emerald-200'
+                  : 'bg-amber-500/10 border-amber-500/25 text-amber-200'
+              }`}>
+                {hwReport.summary}
+              </div>
+            )}
+
+            {/* Expandable Details: Model Compatibility Matrix + Docker status */}
+            {showHwDetails && hwReport && (
+              <div className="pt-2 border-t border-cinema-border/60 space-y-3 animate-fadeIn">
+                {/* Model Compatibility Grid */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold block">
+                    KHẢ NĂNG TƯƠNG THÍCH MÔ HÌNH (MODEL COMPATIBILITY)
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    {Object.entries(hwReport.models || {}).map(([key, m]) => (
+                      <div
+                        key={key}
+                        className={`p-2 rounded-xl border flex items-start gap-2 ${
+                          m.supported
+                            ? 'bg-emerald-500/5 border-emerald-500/20 text-zinc-200'
+                            : 'bg-zinc-900/60 border-cinema-border text-zinc-400'
+                        }`}
+                      >
+                        <div className="mt-0.5">
+                          {m.supported ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          ) : (
+                            <X className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-[11px] uppercase tracking-tight flex items-center justify-between">
+                            <span className={m.supported ? 'text-zinc-100' : 'text-zinc-400'}>
+                              {key.replace('_', ' ')}
+                            </span>
+                            {m.precision && (
+                              <span className="text-[9px] font-mono px-1 rounded bg-black/40 text-purple-300">
+                                {m.precision}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-zinc-400 truncate mt-0.5">
+                            {m.note}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Docker GPU Status */}
+                <div className="p-2.5 rounded-xl bg-cinema-card border border-cinema-border text-xs flex items-center gap-2.5">
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${
+                    hwReport.docker_gpu_status?.supported ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'
+                  }`} />
+                  <div className="text-[11px] text-zinc-300">
+                    <span className="font-bold">ComfyUI qua Docker: </span>
+                    <span>{hwReport.docker_gpu_status?.message || 'Chưa kiểm tra'}</span>
+                  </div>
+                </div>
+
+                {/* Recommended Advice */}
+                {hwReport.recommendations && hwReport.recommendations.length > 0 && (
+                  <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs space-y-1">
+                    <span className="text-[10px] uppercase font-bold text-purple-300 tracking-wider block">
+                      💡 LỜI KHUYÊN DÀNH CHO BẠN:
+                    </span>
+                    <ul className="text-[11px] text-purple-100 list-disc list-inside space-y-0.5">
+                      {hwReport.recommendations.map((rec, i) => (
+                        <li key={i}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>

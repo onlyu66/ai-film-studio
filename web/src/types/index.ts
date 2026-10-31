@@ -707,3 +707,21 @@ export interface ComfyUISamplingProgress {
   percent: number
   engine?: 'image' | 'video'
 }
+
+export interface ComfyUIHardwareReport {
+  gpu_name: string
+  vram_gb: number
+  ram_gb: number
+  cpu_cores: number
+  tier: 'optimal' | 'compatible' | 'minimal' | 'low_vram_warning' | 'cpu_only'
+  badge_color: 'emerald' | 'cyan' | 'amber' | 'rose'
+  summary: string
+  models: Record<string, { supported: boolean; precision?: string; resolution?: string; note: string }>
+  recommended_engine: 'comfyui' | 'pollinations'
+  recommended_flags: string[]
+  docker_gpu_status: {
+    supported: boolean
+    message: string
+  }
+  recommendations: string[]
+}
