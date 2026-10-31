@@ -1,3 +1,4 @@
+import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -610,6 +611,102 @@ class LumaDreamMachineProvider(BaseVideoProvider):
         return False
 
 
+class ComfyUIVideoProvider(BaseVideoProvider):
+    """ComfyUI Image-to-Video provider using AnimateDiff or Wan 2.1."""
+
+    def __init__(
+        self,
+        api_url: Optional[str] = None,
+        workflow_id: Optional[str] = None,
+        workflow_manager: Optional[Any] = None,
+        config: Optional[Any] = None,
+        poll_interval: float = 2.0,
+        max_poll_seconds: float = 240.0,
+        **kwargs,
+    ):
+        self.api_url = (api_url or os.environ.get("COMFYUI_URL", "http://127.0.0.1:8188")).rstrip("/")
+        self.workflow_id = workflow_id
+        self.workflow_manager = workflow_manager
+        self.config = config
+        self.poll_interval = poll_interval
+        self.max_poll_seconds = max_poll_seconds
+
+    def render_shot_video(
+        self,
+        image_path: Path,
+        output_path: Path,
+        prompt: str,
+        duration: float,
+        aspect_ratio: str = "16:9",
+        trajectory: Optional[Any] = None,
+    ) -> bool:
+        image_path = Path(image_path)
+        output_path = Path(output_path)
+        if not image_path.exists():
+            return False
+
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            from studio.comfyui.client import ComfyUIClient
+            from studio.comfyui.manager import WorkflowManager
+            from studio.comfyui.mapper import SmartNodeMapper
+            from studio.image_providers import _run_coroutine_sync
+
+            mgr = self.workflow_manager or WorkflowManager()
+            wf_id = self.workflow_id or (getattr(self.config, "video_workflow", None) if self.config else None) or "animatediff_v3"
+            workflow = mgr.get_workflow(wf_id)
+            if not workflow:
+                workflow = mgr.get_workflow("animatediff_v3")
+            if not workflow:
+                raise RuntimeError(f"Video workflow '{wf_id}' could not be loaded")
+
+            client = ComfyUIClient(api_url=self.api_url)
+
+            # Upload source image to ComfyUI
+            uploaded_name = _run_coroutine_sync(client.upload_image(image_path))
+
+            # Determine dimensions
+            if aspect_ratio == "9:16":
+                w, h = 480, 832
+            else:
+                w, h = 832, 480
+
+            mapper = SmartNodeMapper()
+            mutated_wf = mapper.inject_parameters(
+                workflow=workflow,
+                prompt=prompt,
+                seed=42,
+                width=w,
+                height=h,
+                image_path=uploaded_name,
+                steps=getattr(self.config, "steps", None) if self.config else None,
+                cfg=getattr(self.config, "cfg", None) if self.config else None,
+            )
+
+            shot_id = output_path.stem
+            outputs = _run_coroutine_sync(
+                client.queue_and_wait(
+                    mutated_wf,
+                    shot_id=shot_id,
+                    output_dir=output_path.parent,
+                    timeout_sec=self.max_poll_seconds,
+                )
+            )
+
+            if outputs and len(outputs) > 0:
+                primary = outputs[0]
+                if primary != output_path and primary.exists():
+                    shutil.copyfile(primary, output_path)
+                if output_path.exists() and output_path.stat().st_size > 100:
+                    return True
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning(f"[ComfyUIVideoProvider] Video generation failed: {e}")
+
+        return False
+
+
 def get_video_provider(
     provider_type: str = "replicate",
     api_token: Optional[str] = None,
@@ -623,7 +720,15 @@ def get_video_provider(
     p_lower = (provider_type or "").lower().strip()
     m_lower = (model or "").lower().strip()
 
-    if p_lower == "kling" or ("kling-v1-6" in m_lower) or ("kling" in m_lower and "standard" not in m_lower and "replicate" not in m_lower):
+    if p_lower in ("comfyui", "comfy"):
+        return ComfyUIVideoProvider(
+            api_url=kwargs.get("api_url"),
+            workflow_id=kwargs.get("workflow_id"),
+            workflow_manager=kwargs.get("workflow_manager"),
+            config=kwargs.get("config"),
+            **{k: v for k, v in kwargs.items() if k not in ("api_url", "workflow_id", "workflow_manager", "config")}
+        )
+    elif p_lower == "kling" or ("kling-v1-6" in m_lower) or ("kling" in m_lower and "standard" not in m_lower and "replicate" not in m_lower):
         actual_model = model if (model and "kling" in model.lower()) else "kling-v1-6"
         return KlingDirectVideoProvider(api_key=api_token, model=actual_model, **kwargs)
     elif p_lower == "luma" or "luma" in m_lower:

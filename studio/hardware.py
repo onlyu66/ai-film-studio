@@ -119,12 +119,20 @@ def get_optimal_concurrency(
     Calculate optimal worker pool concurrency for a specific stage
     based on configuration or detected hardware capabilities.
     """
-    # 1. Direct explicit config override
+    # 1. ComfyUI engine GPU safety serialization (forces concurrency = 1)
     if config is not None:
-        if stage == "image" and getattr(config, "image_concurrency", None):
-            return max(1, int(config.image_concurrency))
-        if stage == "motion" and getattr(config, "motion_concurrency", None):
-            return max(1, int(config.motion_concurrency))
+        if stage == "image":
+            img_engine = getattr(config, "image_engine", "")
+            if str(img_engine).lower() in ("comfyui", "comfy"):
+                return 1
+            if getattr(config, "image_concurrency", None):
+                return max(1, int(config.image_concurrency))
+        if stage == "motion":
+            mot_engine = getattr(config, "motion_engine", "")
+            if str(mot_engine).lower() in ("comfyui", "comfy"):
+                return 1
+            if getattr(config, "motion_concurrency", None):
+                return max(1, int(config.motion_concurrency))
         if stage == "tts" and getattr(config, "tts_concurrency", None):
             return max(1, int(config.tts_concurrency))
 

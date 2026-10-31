@@ -141,6 +141,27 @@ class ComfyUIClient:
             logger.warning(f"[ComfyUIClient] Failed to get available nodes: {e}")
         return []
 
+    async def upload_image(self, image_path: Path, subfolder: str = "") -> str:
+        """Uploads an image to ComfyUI /upload/image and returns the stored filename."""
+        endpoint = f"{self.api_url}/upload/image"
+        image_path = Path(image_path)
+        if not image_path.exists():
+            return image_path.name
+
+        try:
+            with open(image_path, "rb") as f:
+                files = {"image": (image_path.name, f.read(), "image/png")}
+                data = {"subfolder": subfolder, "overwrite": "true"}
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    resp = await client.post(endpoint, files=files, data=data)
+                    if resp.status_code == 200:
+                        res_data = resp.json()
+                        return res_data.get("name", image_path.name)
+        except Exception as e:
+            logger.warning(f"[ComfyUIClient] upload_image failed: {e}")
+
+        return image_path.name
+
     async def queue_prompt(self, workflow: Dict[str, Any], client_id: str) -> str:
         """Sends workflow to ComfyUI /prompt endpoint and returns prompt_id."""
         endpoint = f"{self.api_url}/prompt"

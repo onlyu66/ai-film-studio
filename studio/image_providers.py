@@ -6,6 +6,23 @@ import base64
 import time
 import requests
 import urllib.parse
+import asyncio
+import logging
+import shutil
+
+logger = logging.getLogger(__name__)
+
+def _run_coroutine_sync(coro):
+    try:
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = None
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    else:
+        return asyncio.run(coro)
 
 def _is_valid_image_bytes(content: bytes) -> bool:
     """Validate that downloaded payload is genuine binary image and not error JSON or HTML."""
@@ -177,10 +194,21 @@ class SDWebUIProvider(BaseImageProvider):
 
 
 class ComfyUIProvider(BaseImageProvider):
-    """Local ComfyUI integration via prompt graph API."""
+    """Local ComfyUI integration via prompt graph API and WebSocket listener."""
 
-    def __init__(self, api_url: Optional[str] = None):
+    def __init__(
+        self,
+        api_url: Optional[str] = None,
+        workflow_id: Optional[str] = None,
+        workflow_manager: Optional[Any] = None,
+        config: Optional[Any] = None,
+        fallback_provider: Optional[BaseImageProvider] = None,
+    ):
         super().__init__(api_url or os.environ.get("COMFYUI_URL", "http://127.0.0.1:8188"))
+        self.workflow_id = workflow_id
+        self.workflow_manager = workflow_manager
+        self.config = config
+        self.fallback_provider = fallback_provider
 
     def generate(
         self,
@@ -190,88 +218,58 @@ class ComfyUIProvider(BaseImageProvider):
         seed: int,
         output_path: Path,
     ) -> bool:
-        prompt_endpoint = f"{self.api_url}/prompt"
-        # Standard txt2img workflow graph for ComfyUI
-        workflow = {
-            "3": {
-                "class_type": "KSampler",
-                "inputs": {
-                    "cfg": 8,
-                    "denoise": 1,
-                    "latent_image": ["5", 0],
-                    "model": ["4", 0],
-                    "negative": ["7", 0],
-                    "positive": ["6", 0],
-                    "sampler_name": "euler",
-                    "scheduler": "normal",
-                    "seed": seed,
-                    "steps": 20,
-                },
-            },
-            "4": {
-                "class_type": "CheckpointLoaderSimple",
-                "inputs": {"ckpt_name": "v1-5-pruned-emaonly.safetensors"},
-            },
-            "5": {
-                "class_type": "EmptyLatentImage",
-                "inputs": {"batch_size": 1, "height": height, "width": width},
-            },
-            "6": {
-                "class_type": "CLIPTextEncode",
-                "inputs": {"clip": ["4", 1], "text": prompt},
-            },
-            "7": {
-                "class_type": "CLIPTextEncode",
-                "inputs": {
-                    "clip": ["4", 1],
-                    "text": "blurry, low quality, distorted, deformed, watermark",
-                },
-            },
-            "8": {
-                "class_type": "VAEDecode",
-                "inputs": {"samples": ["3", 0], "vae": ["4", 2]},
-            },
-            "9": {
-                "class_type": "SaveImage",
-                "inputs": {"filename_prefix": "Studio", "images": ["8", 0]},
-            },
-        }
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            resp = requests.post(prompt_endpoint, json={"prompt": workflow}, timeout=30)
-            if resp.status_code == 200:
-                prompt_id = resp.json().get("prompt_id")
-                if not prompt_id:
-                    return False
+            from studio.comfyui.client import ComfyUIClient
+            from studio.comfyui.manager import WorkflowManager
+            from studio.comfyui.mapper import SmartNodeMapper
 
-                # Poll history for output image
-                for attempt in range(60):
-                    if attempt > 0:
-                        time.sleep(1.0)
-                    hist_resp = requests.get(f"{self.api_url}/history/{prompt_id}", timeout=5)
-                    if hist_resp.status_code == 200:
-                        hist_data = hist_resp.json().get(prompt_id, {})
-                        outputs = hist_data.get("outputs", {})
-                        for _, node_output in outputs.items():
-                            images = node_output.get("images", [])
-                            if images:
-                                img_info = images[0]
-                                view_url = (
-                                    f"{self.api_url}/view?"
-                                    f"filename={img_info['filename']}&"
-                                    f"subfolder={img_info.get('subfolder', '')}&"
-                                    f"type={img_info.get('type', 'output')}"
-                                )
-                                img_resp = requests.get(view_url, timeout=10)
-                                if img_resp.status_code == 200 and _is_valid_image_bytes(img_resp.content):
-                                    output_path.parent.mkdir(parents=True, exist_ok=True)
-                                    with open(output_path, "wb") as f:
-                                        f.write(img_resp.content)
-                                    return True
-        except Exception:
-            pass
+            mgr = self.workflow_manager or WorkflowManager()
+            wf_id = self.workflow_id or (getattr(self.config, "image_workflow", None) if self.config else None) or "flux_schnell"
+            workflow = mgr.get_workflow(wf_id)
+            if not workflow:
+                workflow = mgr.get_workflow("flux_schnell")
+            if not workflow:
+                raise RuntimeError(f"Workflow '{wf_id}' could not be loaded")
 
-        return False
+            mapper = SmartNodeMapper()
+            mutated_wf = mapper.inject_parameters(
+                workflow=workflow,
+                prompt=prompt,
+                seed=seed,
+                width=width,
+                height=height,
+                checkpoint=getattr(self.config, "checkpoint", None) if self.config else None,
+                lora=getattr(self.config, "lora", None) if self.config else None,
+                lora_weight=getattr(self.config, "lora_weight", 0.8) if self.config else 0.8,
+                steps=getattr(self.config, "steps", None) if self.config else None,
+                cfg=getattr(self.config, "cfg", None) if self.config else None,
+            )
+
+            client = ComfyUIClient(api_url=self.api_url)
+            shot_id = output_path.stem
+            outputs = _run_coroutine_sync(
+                client.queue_and_wait(mutated_wf, shot_id=shot_id, output_dir=output_path.parent)
+            )
+
+            if outputs and len(outputs) > 0:
+                primary = outputs[0]
+                if primary != output_path and primary.exists():
+                    shutil.copyfile(primary, output_path)
+                if output_path.exists() and output_path.stat().st_size > 1000:
+                    return True
+        except Exception as e:
+            logger.warning(f"[ComfyUIProvider] ComfyUI generation failed: {e}. Falling back to Pollinations.")
+
+        # Graceful fallback to PollinationsProvider
+        fallback = self.fallback_provider or PollinationsProvider()
+        try:
+            return fallback.generate(prompt, width, height, seed, output_path)
+        except Exception as fb_err:
+            logger.error(f"[ComfyUIProvider] Fallback provider also failed: {fb_err}")
+            return False
 
     def check_health(self) -> Dict[str, Any]:
         endpoint = f"{self.api_url}/system_stats"
@@ -281,6 +279,10 @@ class ComfyUIProvider(BaseImageProvider):
                 stats = resp.json()
                 devices = stats.get("devices", [])
                 device_name = devices[0].get("name", "GPU") if devices else "CPU"
+                vram_info = ""
+                if devices:
+                    free_gb = round(devices[0].get("vram_free", 0) / (1024**3), 1)
+                    vram_info = f" ({free_gb} GB VRAM free)"
                 return {
                     "id": "comfyui",
                     "name": "Local ComfyUI",
@@ -288,7 +290,7 @@ class ComfyUIProvider(BaseImageProvider):
                     "is_local": True,
                     "url": self.api_url,
                     "devices": [device_name],
-                    "message": f"Online (Thiết bị: {device_name})",
+                    "message": f"Online (Thiết bị: {device_name}{vram_info})",
                 }
         except Exception:
             pass

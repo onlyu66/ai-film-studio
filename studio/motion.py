@@ -170,7 +170,7 @@ def render_motion_for_shot(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if engine in ("replicate", "kling", "luma") or (video_model and ("kling" in video_model or "luma" in video_model)):
+    if engine in ("replicate", "kling", "luma", "comfyui", "comfy") or (video_model and ("kling" in video_model or "luma" in video_model or "comfy" in video_model)):
         from studio.video_providers import get_video_provider
         provider = get_video_provider(
             provider_type=engine,
