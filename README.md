@@ -12,9 +12,15 @@
    - [Cách 1: Khởi chạy Web UI qua Docker (Khuyên dùng)](#cách-1-khởi-chạy-web-ui-qua-docker-khuyên-dùng)
    - [Cách 2: Chạy qua giao diện dòng lệnh (CLI)](#cách-2-chạy-qua-giao-diện-dòng-lệnh-cli)
    - [Cách 3: Chạy Native Môi trường Development](#cách-3-chạy-native-môi-trường-development)
-5. [Cấu hình môi trường (.env)](#-cấu-hình-môi-trường-env)
-6. [Tài liệu REST API & WebSocket](#-tài-liệu-rest-api--websocket)
-7. [Kiểm thử & Đảm bảo chất lượng (Quality Assurance)](#-kiểm-thử--đảm-bảo-chất-lượng)
+5. [Hướng dẫn ComfyUI Hub & Cấu hình Phần cứng (Local & Cloud)](#-hướng-dẫn-comfyui-hub--cấu-hình-phần-cứng-local--cloud)
+   - [1. Bản chất API của ComfyUI (Self-hosted vs Cloud)](#1-bản-chất-api-của-comfyui-self-hosted-vs-cloud)
+   - [2. Kết nối ComfyUI từ xa (Remote GPU / Cloud)](#2-kết-nối-comfyui-từ-xa-remote-gpu--cloud)
+   - [3. Chạy ComfyUI bằng Docker](#3-chạy-comfyui-bằng-docker)
+   - [4. Đánh giá Phần cứng & Phân hạng VRAM](#4-đánh-giá-phần-cứng--phân-hạng-vram)
+   - [5. Cơ chế Fail-Safe tuyệt đối (Cloud Pollinations)](#5-cơ-chế-fail-safe-tuyệt-đối-cloud-pollinations)
+6. [Cấu hình môi trường (.env)](#-cấu-hình-môi-trường-env)
+7. [Tài liệu REST API & WebSocket](#-tài-liệu-rest-api--websocket)
+8. [Kiểm thử & Đảm bảo chất lượng (Quality Assurance)](#-kiểm-thử--đảm-bảo-chất-lượng)
 
 ---
 
@@ -197,6 +203,57 @@ Dành cho lập trình viên muốn chỉnh sửa code và debug trực tiếp:
 
 ---
 
+## ⚡ Hướng dẫn ComfyUI Hub & Cấu hình Phần cứng (Local & Cloud)
+
+AI Film Studio tích hợp ComfyUI như một **Động cơ Kép (Dual Engine)** cho cả Sinh Ảnh nghệ thuật (Flux Schnell, SDXL) và Hoạt Cảnh Video (Wan 2.1, AnimateDiff).
+
+### 1. Bản chất API của ComfyUI (Self-hosted vs Cloud)
+- **ComfyUI là một Self-hosted API:** Khác với OpenAI, Replicate hay Midjourney cung cấp sẵn Cloud API Key thương mại, ComfyUI là phần mềm nguồn mở. Bản thân nó **có sẵn toàn bộ hệ sinh thái REST API & WebSocket** (`/prompt`, `/history`, `/view`, `/system_stats`), nhưng yêu cầu phải có một máy chủ vật lý hoặc máy ảo GPU chạy ứng dụng.
+- **Không bắt buộc phải chạy trên máy tính cá nhân:** Bạn có thể chạy ComfyUI cục bộ trên Windows, trong Docker, hoặc kết nối từ xa tới máy chủ GPU đám mây.
+
+### 2. Kết nối ComfyUI từ xa (Remote GPU / Cloud)
+Nếu máy tính của bạn không có GPU mạnh hoặc bạn muốn tận dụng GPU đám mây (A100, H100, RTX 4090):
+1. Khởi tạo một instance GPU trên **RunPod, Vast.ai, Lambda Labs, Google Colab hoặc Modal**.
+2. Khởi động ComfyUI trên máy chủ đó với cờ lắng nghe công khai:
+   ```bash
+   python main.py --listen 0.0.0.0 --port 8188 --highvram
+   ```
+3. Trong giao diện AI Film Studio (cửa sổ **ComfyUI Studio Hub** hoặc phần cấu hình trong **Production Form**), nhập URL máy chủ Cloud vào ô **Server URL** (ví dụ: `https://xxxx-8188.proxy.runpod.net` hoặc `http://IP_SERVER:8188`) và bấm **Kiểm tra**. Studio sẽ điều khiển GPU Cloud từ xa tương tự như máy cục bộ.
+4. **Studio hỗ trợ 3 nút chuyển nhanh URL:**
+   - **Localhost** (`http://127.0.0.1:8188`): Chạy ComfyUI trực tiếp ngoài Windows (`run_nvidia_gpu.bat`).
+   - **Docker Host** (`http://host.docker.internal:8188`): ComfyUI chạy ngoài Windows và Studio chạy trong Docker container.
+   - **Docker Net** (`http://comfyui:8188`): ComfyUI chạy như một container Docker trong cùng mạng nội bộ.
+
+### 3. Chạy ComfyUI bằng Docker
+Dự án đã định nghĩa sẵn dịch vụ `comfyui` trong `docker-compose.yml` với volume lưu trữ model bền vững:
+```bash
+# Khởi động ComfyUI container
+docker compose --profile comfyui up -d
+
+# Xem log khởi động
+docker compose logs -f comfyui
+```
+* **Yêu cầu Docker GPU trên Windows:** Cần card đồ họa NVIDIA với **Driver >= 510+** hỗ trợ NVIDIA Container Toolkit qua WSL2. Đối với các dòng GPU đời cũ (như GTX 900M Maxwell driver 399.01), Docker WSL2 sẽ không nhận diện được adapter đồ họa (`WSL environment detected but no adapters were found`). Khi đó, bạn nên chạy ComfyUI trực tiếp trên Windows hoặc sử dụng Cloud.
+
+### 4. Đánh giá Phần cứng & Phân hạng VRAM
+Studio cung cấp công cụ chẩn đoán phần cứng tự động tại endpoint `GET /api/comfyui/hardware-check` và hiển thị trực tiếp trên giao diện:
+
+| Phân hạng | Dung lượng VRAM | Khả năng tương thích Mô hình | Khuyến nghị cấu hình |
+| :--- | :--- | :--- | :--- |
+| 🟢 **Tối Ưu (Optimal)** | `>= 12 GB` (RTX 3060 12GB, 4070, 4080, 4090) | **Flux Schnell, SDXL, Wan 2.1 Video, AnimateDiff** | `--highvram`. Tốc độ cực nhanh, hỗ trợ đầy đủ video AI và LoRA. |
+| 🔵 **Tương Thích (Compatible)** | `6 GB - 11 GB` (RTX 2060, 3060 6GB, 3070, 4060) | **Flux Schnell (FP8/NF4), SDXL Turbo, AnimateDiff (512x512)** | `--lowvram --fp8_e4m3fn-text-enc`. Dùng model lượng tử hóa FP8 để tiết kiệm VRAM. |
+| 🟡 **Tối Thiểu (Minimal)** | `4 GB - 5.9 GB` (GTX 1650, 1050Ti) | **Stable Diffusion 1.5, SDXL Turbo nhỏ** | `--lowvram`. Model Flux rất dễ gặp lỗi tràn bộ nhớ (CUDA Out of Memory). |
+| 🔴 **VRAM Thấp / CPU** | `< 4 GB` (GTX 950M 2GB, Intel HD Graphics) | **Chỉ chạy được SD 1.5 với cờ --lowvram** | Không nên chạy Flux/Wan 2.1 cục bộ. **Khuyến nghị sử dụng Cloud Pollinations**. |
+
+### 5. Cơ chế Fail-Safe tuyệt đối (Cloud Pollinations)
+Hệ thống AI Film Studio được xây dựng theo triết lý **Không bao giờ làm gián đoạn sáng tạo**:
+- Nếu máy tính của bạn không có GPU rời, ComfyUI bị tắt, hoặc GPU gặp sự cố tràn bộ nhớ (OOM), Studio sẽ **tự động chuyển hướng (Auto-fallback 100%)** sang:
+  - **Cloud Pollinations (Flux Schnell):** Sinh ảnh 4K hoàn toàn miễn phí trên máy chủ Cloud, tốc độ 3-5 giây/ảnh, không tốn VRAM máy trạm.
+  - **Hiệu ứng Ken Burns 2.5D:** Tạo hoạt cảnh camera điện ảnh mượt mà cho từng khung hình.
+- Nhờ đó, bạn luôn có thể bấm **"Bắt đầu sản xuất phim"** bất kỳ lúc nào mà không cần lo lắng về cấu hình máy tính.
+
+---
+
 ## ⚙️ Cấu hình môi trường (.env)
 
 Tạo file `.env` tại thư mục gốc với các tùy chọn tương ứng:
@@ -258,6 +315,11 @@ WEBHOOK_URL=https://discord.com/api/webhooks/...  # URL Discord/Telegram/Custom 
 | `POST` | `/api/characters/generate-headshot` | Sinh ảnh chân dung đại diện cho nhân vật bằng AI |
 | `POST` | `/api/characters/upload-headshot` | Tải ảnh chân dung tùy chọn từ máy tính lên |
 | `POST` | `/api/settings/test-webhook` | Kiểm tra kết nối gửi thông báo đến Webhook URL |
+| `GET` | `/api/comfyui/status` | Kiểm tra trạng thái ComfyUI Server, GPU và VRAM |
+| `GET` | `/api/comfyui/hardware-check` | Chẩn đoán chi tiết phần cứng máy trạm & bảng tương thích model |
+| `GET` | `/api/comfyui/models` | Liệt kê các Checkpoint, LoRA và VAE đã cài đặt trong ComfyUI |
+| `GET` | `/api/comfyui/workflows` | Liệt kê workflow built-in (Flux, SDXL, Wan, AnimateDiff) và custom |
+| `POST` | `/api/comfyui/config` | Lưu cấu hình kích hoạt độc lập Image/Video và tham số sinh hình |
 | `GET` | `/api/projects/{id}/video` | Tải về hoặc stream file video hoàn thiện (.mp4) |
 | `GET` | `/api/projects/{id}/thumbnail` | Xem ảnh Thumbnail bìa YouTube độ nét cao |
 
