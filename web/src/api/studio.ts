@@ -685,29 +685,28 @@ export async function snapTimelineToBeat(params: {
 
 // ─── ComfyUI Dual Engine Hub API ──────────────────────────────────
 
-export async function getComfyUIStatus(): Promise<import('../types').ComfyUIStatusResponse> {
-  const response = await apiClient.get<import('../types').ComfyUIStatusResponse>('/api/comfyui/status')
+export async function getComfyUIStatus(): Promise<import('../types').ComfyUIHealthStatus> {
+  const response = await apiClient.get<import('../types').ComfyUIHealthStatus>('/api/comfyui/status')
   return response.data
 }
 
 export async function getComfyUIModels(): Promise<import('../types').ComfyUIModels> {
-  const response = await apiClient.get<import('../types').ComfyUIModels>('/api/comfyui/models')
-  return response.data
+  const response = await apiClient.get<{ success: boolean; models: import('../types').ComfyUIModels }>('/api/comfyui/models')
+  return response.data?.models || { checkpoints: [], loras: [], vaes: [] }
 }
 
-export async function getComfyUIWorkflows(): Promise<import('../types').ComfyUIWorkflowsResponse> {
-  const response = await apiClient.get<import('../types').ComfyUIWorkflowsResponse>('/api/comfyui/workflows')
-  return response.data
+export async function getComfyUIWorkflows(): Promise<import('../types').ComfyUIWorkflowItem[]> {
+  const response = await apiClient.get<{ success: boolean; workflows: import('../types').ComfyUIWorkflowItem[] }>('/api/comfyui/workflows')
+  return response.data?.workflows || []
 }
 
-export async function uploadComfyUIWorkflow(file: File): Promise<{ success: boolean; workflow_id: string; message: string }> {
-  const formData = new FormData()
-  formData.append('file', file)
-  const response = await apiClient.post<{ success: boolean; workflow_id: string; message: string }>(
-    '/api/comfyui/workflows/upload',
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } }
-  )
+export async function uploadComfyUIWorkflow(params: {
+  name: string
+  workflow_json: Record<string, unknown>
+  category?: 'image' | 'video'
+  description?: string
+}): Promise<{ success: boolean; workflow?: { id: string; name: string; category: string }; message?: string }> {
+  const response = await apiClient.post('/api/comfyui/workflows/upload', params)
   return response.data
 }
 

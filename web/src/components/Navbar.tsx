@@ -10,6 +10,7 @@ export interface NavbarProps {
   isCleaning: boolean
   onWatchMovie: () => void
   onOpenLibrary: () => void
+  onOpenComfyUI?: () => void
   onToggleConsole?: () => void
   showConsole?: boolean
   logsCount?: number
@@ -23,6 +24,7 @@ export default function Navbar({
   isCleaning,
   onWatchMovie,
   onOpenLibrary,
+  onOpenComfyUI,
   onToggleConsole,
   showConsole = false,
   logsCount = 0,
@@ -212,7 +214,7 @@ export default function Navbar({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowComfyUI(true)}
+            onClick={onOpenComfyUI || (() => setShowComfyUI(true))}
             className="gap-1 sm:gap-1.5 text-xs h-7.5 sm:h-8 px-2 sm:px-3 border-purple-500/30 text-purple-300 hover:bg-purple-500/10 cursor-pointer shrink-0"
             title="ComfyUI Studio Hub"
           >
@@ -243,8 +245,10 @@ export default function Navbar({
           </Button>
         </div>
       </div>
-      {/* ComfyUI Studio Hub Modal */}
-      <ComfyUIModal isOpen={showComfyUI} onClose={() => setShowComfyUI(false)} />
+      {/* ComfyUI Studio Hub Modal fallback */}
+      {!onOpenComfyUI && (
+        <ComfyUIModal isOpen={showComfyUI} onClose={() => setShowComfyUI(false)} />
+      )}
     </header>
   )
 }

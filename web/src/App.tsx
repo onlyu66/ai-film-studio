@@ -7,6 +7,7 @@ import ProductionForm from './components/ProductionForm'
 import ProgressStage from './components/ProgressStage'
 import TerminalLogs from './components/TerminalLogs'
 import StoryboardView from './components/StoryboardView'
+import ComfyUIModal from './components/ComfyUIModal'
 import { Button } from './components/ui/button'
 
 const VideoPlayerModal = lazy(() => import('./components/VideoPlayerModal'))
@@ -31,6 +32,7 @@ export default function App() {
   const [showLibraryModal, setShowLibraryModal] = useState<boolean>(false)
   const [showSeoModal, setShowSeoModal] = useState<boolean>(false)
   const [showConsole, setShowConsole] = useState<boolean>(false)
+  const [showComfyUI, setShowComfyUI] = useState<boolean>(false)
   const [activeSeoProjectId, setActiveSeoProjectId] = useState<string | null>(null)
   const [seriesInitialData, setSeriesInitialData] = useState<Partial<ProductionFormData> | null>(null)
   const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null)
@@ -260,6 +262,7 @@ export default function App() {
         isCleaning={cleanMutation.isPending}
         onWatchMovie={handlePlayCurrentMovie}
         onOpenLibrary={() => setShowLibraryModal(true)}
+        onOpenComfyUI={() => setShowComfyUI(true)}
         onToggleConsole={() => setShowConsole(!showConsole)}
         showConsole={showConsole}
         logsCount={displayLogs.length}
@@ -488,6 +491,14 @@ export default function App() {
             setActiveSeoProjectId(null)
           }}
         />
+
+        {/* ComfyUI Dual Engine Hub Modal */}
+        {showComfyUI && (
+          <ComfyUIModal
+            isOpen={showComfyUI}
+            onClose={() => setShowComfyUI(false)}
+          />
+        )}
       </Suspense>
 
       {/* Global Toast Notification System (Sonner) */}
