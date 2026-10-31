@@ -51,7 +51,7 @@
   - `GET /api/audio/waveform?sfx_key={key}` returning `{ success: True, duration, peaks, beat_times }`
   - `UpdateShotRequest.fade_in`, `UpdateShotRequest.fade_out`
 
-- [ ] **Step 1: Write the failing test for SFX waveform and Shot fade fields**
+- [x] **Step 1: Write the failing test for SFX waveform and Shot fade fields**
 
 Thêm test vào `tests/test_server.py`:
 ```python
@@ -85,23 +85,23 @@ def test_update_shot_fade_controls(tmp_path, monkeypatch):
     assert updated["shots"][0]["fade_out"] == 0.8
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/test_server.py::test_api_sfx_waveform_endpoint -v`  
 Expected: FAIL (tham số `sfx_key` chưa được xử lý trong endpoint `/api/audio/waveform`).
 
-- [ ] **Step 3: Implement SFX waveform support and Fade fields**
+- [x] **Step 3: Implement SFX waveform support and Fade fields**
 
 1. Cập nhật `Shot` dataclass trong `studio/storyboard.py`: thêm `fade_in: float = 0.0` và `fade_out: float = 0.0` vào constructor, `to_dict()` và `from_dict()`.
 2. Cập nhật `UpdateShotRequest` trong `studio/routers/storyboard.py`: thêm `fade_in: Optional[float] = None` và `fade_out: Optional[float] = None`, cập nhật shot dict tương ứng.
 3. Cập nhật `api_get_audio_waveform` trong `studio/routers/audio.py`: thêm param `sfx_key: Optional[str] = None`. Nếu có `sfx_key`, kiểm tra `assets/sfx/{sfx_key}.mp3` hoặc `.wav`, gọi `detect_beats` phân tích và trả về peaks.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_server.py::test_api_sfx_waveform_endpoint tests/test_server.py::test_update_shot_fade_controls -v`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add studio/storyboard.py studio/routers/audio.py studio/routers/storyboard.py tests/test_server.py
@@ -120,7 +120,7 @@ git commit -m "feat(audio): add sfx waveform support and shot fade-in/fade-out f
 - Consumes: `shot.fade_in`, `shot.fade_out` from `Shot`
 - Produces: `mix_sfx_into_shot_audio` & `build_master_audio` with applied `fade_in` and `fade_out`
 
-- [ ] **Step 1: Write the failing test for assembly audio fading**
+- [x] **Step 1: Write the failing test for assembly audio fading**
 
 Thêm test vào `tests/test_assembly.py`:
 ```python
@@ -145,12 +145,12 @@ def test_mix_sfx_fade_in_fade_out(tmp_path):
     assert res.stat().st_size > 0
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `pytest tests/test_assembly.py::test_mix_sfx_fade_in_fade_out -v`  
 Expected: FAIL (`mix_sfx_into_shot_audio` unexpected keyword argument `fade_in_sec`).
 
-- [ ] **Step 3: Implement Fade handling in `studio/assembly.py`**
+- [x] **Step 3: Implement Fade handling in `studio/assembly.py`**
 
 Trong `mix_sfx_into_shot_audio`:
 1. Thêm tham số `fade_in_sec: float = 0.0` và `fade_out_sec: float = 0.0`.
@@ -158,12 +158,12 @@ Trong `mix_sfx_into_shot_audio`:
 3. Nếu `fade_out_sec > 0`: `audio = audio.fade_out(int(fade_out_sec * 1000))`.
 4. Trong `build_master_audio`: truyền `getattr(shot, 'fade_in', 0.0)` và `getattr(shot, 'fade_out', 0.0)` vào lời gọi hàm.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_assembly.py -v`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add studio/assembly.py tests/test_assembly.py
@@ -189,7 +189,7 @@ git commit -m "feat(assembly): apply shot fade_in and fade_out in master audio m
   - `setTrackVolume(track, volume)`
   - `destroy()`
 
-- [ ] **Step 1: Write unit test for `WebAudioMixer`**
+- [x] **Step 1: Write unit test for `WebAudioMixer`**
 
 Tạo `web/src/utils/WebAudioMixer.test.ts`:
 ```typescript
@@ -226,12 +226,12 @@ describe('WebAudioMixer', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd web && npx vitest run src/utils/WebAudioMixer.test.ts` (hoặc kiểm tra file tồn tại).  
 Expected: FAIL (`WebAudioMixer` not defined).
 
-- [ ] **Step 3: Implement `WebAudioMixer.ts`**
+- [x] **Step 3: Implement `WebAudioMixer.ts`**
 
 Tạo `web/src/utils/WebAudioMixer.ts`:
 1. Quản lý `AudioContext` singleton (tạo khi người dùng click lần đầu để pass browser Autoplay policy).
@@ -243,12 +243,12 @@ Tạo `web/src/utils/WebAudioMixer.ts`:
 5. Phương thức `pause()`: dừng toàn bộ source node đang chạy.
 6. Hỗ trợ `setTrackMute` và `setTrackVolume`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd web && npx vitest run src/utils/WebAudioMixer.test.ts`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/src/utils/WebAudioMixer.ts web/src/utils/WebAudioMixer.test.ts
@@ -267,7 +267,7 @@ git commit -m "feat(audio): implement in-browser WebAudioMixer multi-track live 
   - `duckingRegions?: Array<{ startSec: number, endSec: number, duckRatio?: number }>`
 - Produces: Enhanced Canvas rendering showing mirrored waveforms with smooth concave dip curves in ducking zones.
 
-- [ ] **Step 1: Write visual test / prop contract for `AudioWaveformTrack`**
+- [x] **Step 1: Write visual test / prop contract for `AudioWaveformTrack`**
 
 Cập nhật interface `AudioWaveformTrackProps`:
 ```typescript
@@ -292,12 +292,12 @@ export interface AudioWaveformTrackProps {
 }
 ```
 
-- [ ] **Step 2: Verify existing build status**
+- [x] **Step 2: Verify existing build status**
 
 Run: `cd web && npm run build`  
 Expected: PASS trước khi sửa.
 
-- [ ] **Step 3: Implement Auto-Ducking curve rendering in Canvas**
+- [x] **Step 3: Implement Auto-Ducking curve rendering in Canvas**
 
 Trong `useEffect` vẽ canvas của `AudioWaveformTrack.tsx`:
 1. Khi vẽ từng thanh bar `x`:
@@ -307,13 +307,13 @@ Trong `useEffect` vẽ canvas của `AudioWaveformTrack.tsx`:
    - Nhân `barH = barH * currentDuckFactor`.
    - Tô màu vùng ducking với ánh tím mờ hoặc đường dốc mỏng để người dùng nhận diện ngay đây là khoảng nhạc nền đang né giọng thoại.
 
-- [ ] **Step 4: Test canvas rendering with ducking regions**
+- [x] **Step 4: Test canvas rendering with ducking regions**
 
 Kiểm tra build frontend không có lỗi TypeScript:
 Run: `cd web && npm run build`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/src/components/AudioWaveformTrack.tsx
@@ -332,7 +332,7 @@ git commit -m "feat(ui): add visual auto-ducking dip curve to AudioWaveformTrack
 - Consumes: `shots` with optional `audioDuration` (độ dài thoại thực tế)
 - Produces: `snapShotsToBeatTimes` enforcing `chosenDuration >= Math.max(1.5, shot.audioDuration)`
 
-- [ ] **Step 1: Write test for protected cut-to-beat snapping**
+- [x] **Step 1: Write test for protected cut-to-beat snapping**
 
 Tạo/cập nhật `web/src/utils/audioWaveform.test.ts`:
 ```typescript
@@ -354,12 +354,12 @@ describe('snapShotsToBeatTimes', () => {
 })
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd web && npx vitest run src/utils/audioWaveform.test.ts`  
 Expected: FAIL (thuật toán cũ chưa xét `audioDuration` của shot).
 
-- [ ] **Step 3: Implement protected snapping in `audioWaveform.ts`**
+- [x] **Step 3: Implement protected snapping in `audioWaveform.ts`**
 
 Trong `snapShotsToBeatTimes`:
 1. Với mỗi shot, tính `minRequired = Math.max(minDur, Number(shot.audioDuration || 0))`.
@@ -367,12 +367,12 @@ Trong `snapShotsToBeatTimes`:
 3. Chọn phách gần `accumulatedTime + origDur` nhất.
 4. Gán `result.push({ id: shot.id, duration: chosenDuration })`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd web && npx vitest run src/utils/audioWaveform.test.ts`  
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/src/utils/audioWaveform.ts web/src/utils/audioWaveform.test.ts
@@ -398,11 +398,11 @@ git commit -m "feat(audio): enforce speech duration protection in snapShotsToBea
   - Drag handles Fade-in và Fade-out trên từng shot dialogue
   - Nút Play/Pause kích hoạt Web Audio multi-track live playback
 
-- [ ] **Step 1: Update TypeScript interfaces in `types/index.ts`**
+- [x] **Step 1: Update TypeScript interfaces in `types/index.ts`**
 
 Bổ sung `fade_in?: number` và `fade_out?: number` vào interface `Shot` trong `web/src/types/index.ts`.
 
-- [ ] **Step 2: Wire WebAudioMixer into TimelineScrubber Play/Pause loop**
+- [x] **Step 2: Wire WebAudioMixer into TimelineScrubber Play/Pause loop**
 
 Trong `TimelineScrubber.tsx`:
 1. Khởi tạo instance `webAudioMixerRef = useRef(new WebAudioMixer())`.
@@ -412,19 +412,19 @@ Trong `TimelineScrubber.tsx`:
 3. Khi người dùng kéo Playhead (Scrubbing / Seeking): đồng bộ `webAudioMixerRef.current.seek(targetSec)`.
 4. Khi toggle Mute trên từng Track Header: gọi `webAudioMixerRef.current.setTrackMute(trackType, isMuted)`.
 
-- [ ] **Step 3: Integrate Voice Real Waveform & Fade Handles on Track 2**
+- [x] **Step 3: Integrate Voice Real Waveform & Fade Handles on Track 2**
 
 1. Tải sóng âm thật cho từng shot có thoại bằng `fetchWaveformData(undefined, shot.id)`.
 2. Thay thế các cột sóng giả lập cứng bằng `AudioWaveformTrack` màu cyan.
 3. Thêm 2 núm tam giác nhỏ ở góc trên trái (Fade In) và góc trên phải (Fade Out) của block thoại. Kéo rê chuột sang ngang để cập nhật `fade_in` và `fade_out` (0.0s – 2.0s), gọi `onUpdateShot` lưu metadata.
 
-- [ ] **Step 4: Integrate SFX Real Waveform on Track 3**
+- [x] **Step 4: Integrate SFX Real Waveform on Track 3**
 
 1. Khi shot có `shot.sfx`, gọi `fetchWaveformData(undefined, undefined, shot.sfx)` để lấy sóng âm hiệu ứng.
 2. Vẽ waveform amber trên block SFX, đặt vị trí chính xác theo `sfx_offset_ms`.
 3. Cho phép kéo chuột để dịch chuyển mốc phát trong phạm vi phân cảnh.
 
-- [ ] **Step 5: Integrate BGM Auto-Ducking Curve on Track 4**
+- [x] **Step 5: Integrate BGM Auto-Ducking Curve on Track 4**
 
 1. Tính toán danh sách `duckingRegions` từ các shot có dialogue:
    ```typescript
@@ -434,7 +434,7 @@ Trong `TimelineScrubber.tsx`:
    ```
 2. Truyền `duckingRegions` vào `AudioWaveformTrack` của track BGM.
 
-- [ ] **Step 6: Add Cut-to-Beat Assistant button on Toolbar**
+- [x] **Step 6: Add Cut-to-Beat Assistant button on Toolbar**
 
 Bổ sung nút bấm trên thanh công cụ Timeline:
 ```tsx
@@ -449,12 +449,12 @@ Bổ sung nút bấm trên thanh công cụ Timeline:
 </button>
 ```
 
-- [ ] **Step 7: Verify frontend build passes without warnings**
+- [x] **Step 7: Verify frontend build passes without warnings**
 
 Run: `cd web && npm run build`  
 Expected: `✓ built in ...ms` không có lỗi Type hay cú pháp.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add web/src/components/TimelineScrubber.tsx web/src/types/index.ts
@@ -468,22 +468,22 @@ git commit -m "feat(ui): complete multi-track audio visualizer, live playback, c
 **Files:**
 - Entire workspace
 
-- [ ] **Step 1: Run complete backend pytest suite**
+- [x] **Step 1: Run complete backend pytest suite**
 
 Run: `python -m pytest tests/test_server.py tests/test_assembly.py tests/test_storage.py -v`  
 Expected: Tất cả các test cases đạt PASS 100%.
 
-- [ ] **Step 2: Run complete frontend build check**
+- [x] **Step 2: Run complete frontend build check**
 
 Run: `cd web && npm run build`  
 Expected: Build thành công tạo bundle `web/dist/`.
 
-- [ ] **Step 3: Verification of key flows**
+- [x] **Step 3: Verification of key flows**
 1. Kiểm tra endpoint `/api/audio/waveform?sfx_key=thunder` trả về đúng peaks SFX.
 2. Kiểm tra `storyboard.json` lưu thành công `fade_in` và `fade_out`.
 3. Kiểm tra Web Audio Mixer khởi tạo an toàn và mute/solo hoạt động.
 
-- [ ] **Step 4: Final commit**
+- [x] **Step 4: Final commit**
 
 ```bash
 git commit --allow-empty -m "chore(audio-suite): complete and verify multi-track audio suite"

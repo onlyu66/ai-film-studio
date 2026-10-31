@@ -54,7 +54,7 @@
   - `calculate_snap_to_beats(shots: List[Dict[str, Any]], beat_times: List[float], min_shot_duration: float = 1.5, max_shot_duration: float = 12.0) -> List[Dict[str, Any]]`:
     Thuật toán phân bổ lại thời lượng của danh sách phân cảnh: duyệt từ t=0, căn chỉnh điểm kết thúc phân cảnh khớp với phách gần nhất sao cho thời lượng phân cảnh nằm trong `[min_shot_duration, max_shot_duration]`.
 
-- [ ] **Step 1: Viết test kiểm tra phân tích sóng âm, beat detection và snap-to-beat trong `tests/test_audio_beat.py`**
+- [x] **Step 1: Viết test kiểm tra phân tích sóng âm, beat detection và snap-to-beat trong `tests/test_audio_beat.py`**
 
 ```python
 from pathlib import Path
@@ -126,24 +126,24 @@ def test_calculate_snap_to_beats_empty_beats_fallback():
     assert snapped[1]["duration"] == 5.0
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_audio_beat.py -v`
 Expected: FAIL with `ModuleNotFoundError: No module named 'studio.audio_beat_detector'`
 
-- [ ] **Step 3: Cài đặt `studio/audio_beat_detector.py`**
+- [x] **Step 3: Cài đặt `studio/audio_beat_detector.py`**
 
 Triển khai logic:
 - `extract_audio_peaks`: Sử dụng `pydub.AudioSegment.from_file`, chuyển đổi `get_array_of_samples()`, nhóm thành `num_peaks` khối, tính giá trị cực đại của từng khối, chuẩn hóa chia cho giá trị max amplitude.
 - `detect_beats`: Chia audio thành các frame (ví dụ 40ms). Với mỗi frame tính năng lượng RMS. Sử dụng moving average qua cửa sổ 10-15 frames làm ngưỡng động (adaptive energy threshold). Điểm nào vượt `threshold_ratio * avg` và cách điểm trước tối thiểu `min_interval_sec` được đánh dấu là beat onset. Ước lượng BPM dựa trên trung vị chu kỳ `60.0 / median_interval`.
 - `calculate_snap_to_beats`: Căn chỉnh tích lũy thời gian của từng shot vào beat timestamp gần nhất phù hợp.
 
-- [ ] **Step 4: Chạy test để xác nhận test pass**
+- [x] **Step 4: Chạy test để xác nhận test pass**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_audio_beat.py -v`
 Expected: PASS (4/4 tests passing)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add studio/audio_beat_detector.py tests/test_audio_beat.py
@@ -186,7 +186,7 @@ git commit -m "feat(audio): add audio waveform peak extraction and beat onset de
     Tính toán và tự động cập nhật `duration` của các shots trong `outputs/storyboard.json`.
     Trả về danh sách shots sau khi snap, BPM, và tổng thời lượng mới.
 
-- [ ] **Step 1: Viết test cho router endpoints trong `tests/test_audio_beat_router.py`**
+- [x] **Step 1: Viết test cho router endpoints trong `tests/test_audio_beat_router.py`**
 
 ```python
 from fastapi.testclient import TestClient
@@ -230,23 +230,23 @@ def test_api_audio_snap_to_beats():
     assert "tempo_bpm" in data
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận thất bại**
+- [x] **Step 2: Chạy test để xác nhận thất bại**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_audio_beat_router.py -v`
 Expected: FAIL with 404 Not Found on `/api/audio/waveform`
 
-- [ ] **Step 3: Triển khai các router endpoints trong `studio/routers/audio.py`**
+- [x] **Step 3: Triển khai các router endpoints trong `studio/routers/audio.py`**
 
 Thêm các endpoint:
 - `GET /api/audio/waveform`: Tìm file trong `assets/bgm/{track}.mp3` hoặc `outputs/audio/{shot_id}.mp3`. Nếu tìm thấy, gọi `detect_beats`. Nếu không, tạo mảng peaks và beat_times giả định (fallback) để giao diện không bị gián đoạn.
 - `POST /api/audio/beat-sync/snap`: Đọc storyboard hiện tại (hoặc từ project meta), trích xuất shots, lấy phách từ BGM chỉ định (hoặc từ `storyboard.json`), áp dụng `calculate_snap_to_beats`. Nếu `save_to_storyboard` là True, cập nhật trực tiếp vào file `outputs/storyboard.json` với `atomic_write_json`.
 
-- [ ] **Step 4: Chạy test để xác nhận thành công**
+- [x] **Step 4: Chạy test để xác nhận thành công**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_audio_beat_router.py -v`
 Expected: PASS (3/3 tests passing)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add studio/routers/audio.py tests/test_audio_beat_router.py
@@ -276,14 +276,14 @@ git commit -m "feat(audio): add GET /api/audio/waveform and POST /api/audio/beat
   - `snapShotsToBeatTimes(shots: Array<{ id: string; duration: number }>, beatTimes: number[], minDur?: number): Array<{ id: string; duration: number }>`: Client-side snap utility tức thời.
   - `requestSnapToBeat(bgmTrack: string, minShotDuration?: number): Promise<{ success: boolean; shots: Array<{ id: string; duration: number }>; tempoBpm: number }>`: Gọi POST `/api/audio/beat-sync/snap`.
 
-- [ ] **Step 1: Tạo `web/src/utils/audioWaveform.ts`**
+- [x] **Step 1: Tạo `web/src/utils/audioWaveform.ts`**
 
 Cung cấp các hàm phân tích sóng âm:
 - `fetchWaveformData(track, shotId)`: Gọi axios apiClient tới `/api/audio/waveform`.
 - Caching kết quả dạng Map theo key `track_${track}_shot_${shotId}` để tránh lặp request khi người dùng scrub timeline.
 - `snapShotsToBeatTimes(shots, beatTimes, minDur = 1.5)`: Tính toán snap client-side ngay lập tức để UI phản hồi 0ms trước khi backend lưu.
 
-- [ ] **Step 2: Thêm API client helper vào `web/src/api/studio.ts`**
+- [x] **Step 2: Thêm API client helper vào `web/src/api/studio.ts`**
 
 Export hàm:
 ```typescript
@@ -303,12 +303,12 @@ export async function snapTimelineToBeat(params: {
 }
 ```
 
-- [ ] **Step 3: Kiểm tra TypeScript build**
+- [x] **Step 3: Kiểm tra TypeScript build**
 
 Run: `npm run build` trong thư mục `web/`
 Expected: 0 TS compilation errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add web/src/utils/audioWaveform.ts web/src/api/studio.ts
@@ -344,19 +344,19 @@ git commit -m "feat(web): add client-side audio waveform and beat-sync utilities
     - Highlight vùng sóng âm bên trái playhead (đã phát) với độ sáng cao hơn vùng bên phải (chưa phát).
     - Tự động điều chỉnh kích thước theo Retina display qua `window.devicePixelRatio`.
 
-- [ ] **Step 1: Cài đặt component `web/src/components/AudioWaveformTrack.tsx`**
+- [x] **Step 1: Cài đặt component `web/src/components/AudioWaveformTrack.tsx`**
 
 Sử dụng `useRef<HTMLCanvasElement>` và `useEffect` render canvas 2D:
 - Tính tọa độ X của từng peak: `(i / peaks.length) * timelineWidth`.
 - Vẽ các cột sóng đối xứng quanh trục trung tâm (mirror bars), có bo góc và gradient fill (từ màu sắc chỉ định xuống tông màu sẫm hơn).
 - Nếu `showBeatMarkers = true`: Với mỗi `beat` trong `beatTimes`, tính `(beat / totalDuration) * timelineWidth`, vẽ vạch dọc màu hổ phách vàng (`#f59e0b`) tinh tế với độ trong suốt 0.6 và chấm nhỏ trên đỉnh.
 
-- [ ] **Step 2: Kiểm tra TypeScript build**
+- [x] **Step 2: Kiểm tra TypeScript build**
 
 Run: `npm run build` trong thư mục `web/`
 Expected: Thành công không có lỗi type.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add web/src/components/AudioWaveformTrack.tsx
@@ -383,7 +383,7 @@ git commit -m "feat(web): add high-performance HTML5 Canvas AudioWaveformTrack c
     - Cập nhật state nội bộ và phát sự kiện `onBatchUpdateDurations` / `onUpdateShotDuration` lên `StoryboardView`.
     - Bắn thông báo `toast.success("Đã bắt nhịp thành công! X phân cảnh đã được khớp với nhịp điệu bài nhạc (BPM ~Y).")` qua Sonner.
 
-- [ ] **Step 1: Cập nhật `TimelineScrubberProps` để nhận `onBatchUpdateDurations` và `currentBgmTrack`**
+- [x] **Step 1: Cập nhật `TimelineScrubberProps` để nhận `onBatchUpdateDurations` và `currentBgmTrack`**
 
 Cập nhật props trong `web/src/components/TimelineScrubber.tsx`:
 ```typescript
@@ -399,7 +399,7 @@ export interface TimelineScrubberProps {
 }
 ```
 
-- [ ] **Step 2: Thêm state quản lý Waveform & Beat trong `TimelineScrubber.tsx`**
+- [x] **Step 2: Thêm state quản lý Waveform & Beat trong `TimelineScrubber.tsx`**
 
 - `waveformData`: lưu kết quả từ `fetchWaveformData(bgmTrack)`.
 - `showBeatGrid`: boolean toggle (mặc định true).
@@ -409,22 +409,22 @@ export interface TimelineScrubberProps {
   - Cập nhật các phân cảnh qua `onBatchUpdateDurations`.
   - Hiển thị `toast.success` thông báo số lượng phân cảnh đã được khớp nhịp chuẩn xác.
 
-- [ ] **Step 3: Thay thế simulated waveform ở Track A1 & A3 bằng `AudioWaveformTrack`**
+- [x] **Step 3: Thay thế simulated waveform ở Track A1 & A3 bằng `AudioWaveformTrack`**
 
 - Track A3: Thay thế div tĩnh bằng component `<AudioWaveformTrack peaks={waveformData.peaks} beatTimes={waveformData.beatTimes} totalDuration={totalDuration} timelineWidth={timelineWidth} playheadPositionPx={playheadPositionPx} color="purple" showBeatMarkers={showBeatGrid} />`.
 - Track Header A3: Thêm badge BPM `🎵 ${waveformData.tempoBpm} BPM` và nút toggle icon nhịp điệu.
 - Thêm nút "Snap to Beat" trên Top Scrubber Control Bar bên cạnh nút "Cắt Phân Cảnh (Split)".
 
-- [ ] **Step 4: Nối `onBatchUpdateDurations` tại `StoryboardView.tsx`**
+- [x] **Step 4: Nối `onBatchUpdateDurations` tại `StoryboardView.tsx`**
 
 Cập nhật mutation hoặc batch handler trong `web/src/components/StoryboardView.tsx` để cập nhật query cache của storyboard khi nhận `onBatchUpdateDurations`.
 
-- [ ] **Step 5: Kiểm tra TypeScript build**
+- [x] **Step 5: Kiểm tra TypeScript build**
 
 Run: `npm run build` trong thư mục `web/`
 Expected: 0 errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/components/TimelineScrubber.tsx web/src/components/StoryboardView.tsx
@@ -439,22 +439,22 @@ git commit -m "feat(timeline): integrate real waveform tracks, beat grid and sna
 - Create: `tests/verify_beat_sync_cdp.py`
 - Test: Full Pytest Suite + Chrome CDP Browser Interaction
 
-- [ ] **Step 1: Khởi động lại container backend để tải route mới**
+- [x] **Step 1: Khởi động lại container backend để tải route mới**
 
 Run: `docker restart ai-film-studio-ui-1`
 Expected: Container restarted, healthcheck / endpoint `/api/audio/waveform` phản hồi 200 OK.
 
-- [ ] **Step 2: Chạy toàn bộ backend pytest suite**
+- [x] **Step 2: Chạy toàn bộ backend pytest suite**
 
 Run: `docker exec ai-film-studio-ui-1 pytest -v`
 Expected: Toàn bộ 212+ pytests passing (100% pass rate).
 
-- [ ] **Step 3: Chạy build frontend production**
+- [x] **Step 3: Chạy build frontend production**
 
 Run: `cd web && npm run build`
 Expected: `✓ built in ...ms` không có bất kỳ cảnh báo hoặc lỗi TypeScript nào.
 
-- [ ] **Step 4: Chạy script Chrome CDP kiểm tra giao diện trực tiếp**
+- [x] **Step 4: Chạy script Chrome CDP kiểm tra giao diện trực tiếp**
 
 Viết script python kết nối Chrome qua cổng CDP 9222:
 - Điều hướng tới `http://localhost:8080/`.
@@ -463,7 +463,7 @@ Viết script python kết nối Chrome qua cổng CDP 9222:
 - Nhấp nút "Snap to Beat" và xác nhận xuất hiện thông báo toast của Sonner.
 - Chụp ảnh màn hình lưu vào `.gemini/antigravity-cli/brain/edfe7aad-59b7-4f89-ac33-6efb6125efaf/waveform_beat_sync_verified.png`.
 
-- [ ] **Step 5: Commit ảnh minh chứng và hoàn tất hướng 3.3**
+- [x] **Step 5: Commit ảnh minh chứng và hoàn tất hướng 3.3**
 
 ```bash
 git add tests/verify_beat_sync_cdp.py
