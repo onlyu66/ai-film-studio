@@ -38,6 +38,12 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
   })
   const [models, setModels] = useState<ComfyUIModels>({ checkpoints: [], loras: [], vaes: [] })
   const [workflows, setWorkflows] = useState<ComfyUIWorkflowItem[]>([])
+  const [customUrl, setCustomUrl] = useState('http://127.0.0.1:8188')
+  const customUrlRef = useRef(customUrl)
+  useEffect(() => {
+    customUrlRef.current = customUrl
+  }, [customUrl])
+
   const [activeTab, setActiveTab] = useState<TabId>('image')
   const [isChecking, setIsChecking] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -47,13 +53,14 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
   const [uploadStatus, setUploadStatus] = useState<string | null>(null)
   const dropRef = useRef<HTMLDivElement>(null)
 
-  const fetchAll = useCallback(async () => {
+  const fetchAll = useCallback(async (overrideUrl?: string) => {
     setIsChecking(true)
+    const targetUrl = overrideUrl || customUrlRef.current
     try {
       const [statusRes, modelsRes, wfRes, cfgRes] = await Promise.allSettled([
-        getComfyUIStatus(),
-        getComfyUIModels(),
-        getComfyUIWorkflows(),
+        getComfyUIStatus(targetUrl),
+        getComfyUIModels(targetUrl),
+        getComfyUIWorkflows(targetUrl),
         getComfyUIConfig(projectId),
       ])
 
@@ -72,6 +79,9 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
       }
       if (cfgRes.status === 'fulfilled' && cfgRes.value) {
         setConfig((prev) => ({ ...prev, ...cfgRes.value }))
+        if (cfgRes.value.api_url && !overrideUrl) {
+          setCustomUrl(cfgRes.value.api_url)
+        }
       }
     } catch (err) {
       console.error('[ComfyUIModal] fetchAll error:', err)
@@ -89,7 +99,12 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await saveComfyUIConfig({ ...config, save_as_global: saveAsGlobal, project_id: projectId })
+      await saveComfyUIConfig({
+        ...config,
+        api_url: customUrl.trim(),
+        save_as_global: saveAsGlobal,
+        project_id: projectId,
+      })
       onClose()
     } catch (err) {
       console.error('[ComfyUIModal] handleSave error:', err)
@@ -102,7 +117,7 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
     setIsTesting(true)
     setTestResult(null)
     try {
-      const res = await testComfyUIGeneration()
+      const res = await testComfyUIGeneration(customUrl.trim())
       setTestResult(res)
     } catch {
       setTestResult({ success: false, message: 'Không thể kết nối ComfyUI server' })
@@ -220,7 +235,7 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
                   <div className="text-[11px] text-zinc-400 font-mono">
                     {connected && health?.device_name
                       ? `Thiết bị: ${health.device_name}`
-                      : 'Cổng mặc định: http://127.0.0.1:8188'}
+                      : `Đang trỏ tới: ${customUrl || 'http://127.0.0.1:8188'}`}
                   </div>
                 </div>
               </div>
@@ -229,7 +244,7 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={fetchAll}
+                  onClick={() => fetchAll()}
                   disabled={isChecking}
                   className="h-7.5 px-3 text-xs gap-1.5 border-cinema-border bg-cinema-card hover:bg-cinema-deck text-zinc-300 cursor-pointer"
                 >
@@ -248,6 +263,79 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
                 </Button>
               </div>
             </div>
+
+            {/* Server URL Input & Presets */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 border-t border-cinema-border/60">
+              <div className="flex-1 flex items-center gap-2 bg-cinema-card px-3 py-1.5 rounded-xl border border-cinema-border focus-within:border-purple-500/50">
+                <Monitor className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                <span className="text-[11px] text-zinc-400 shrink-0 font-medium">Server URL:</span>
+                <input
+                  type="text"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder="http://127.0.0.1:8188"
+                  className="bg-transparent text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none font-mono flex-1 min-w-0"
+                />
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const u = 'http://127.0.0.1:8188'
+                    setCustomUrl(u)
+                    fetchAll(u)
+                  }}
+                  className={`text-[10px] font-mono px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                    customUrl === 'http://127.0.0.1:8188'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                      : 'bg-cinema-card text-zinc-400 border-cinema-border hover:text-zinc-200'
+                  }`}
+                  title="Dùng localhost nếu ComfyUI chạy trực tiếp trên Windows"
+                >
+                  Localhost
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const u = 'http://host.docker.internal:8188'
+                    setCustomUrl(u)
+                    fetchAll(u)
+                  }}
+                  className={`text-[10px] font-mono px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                    customUrl === 'http://host.docker.internal:8188'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                      : 'bg-cinema-card text-zinc-400 border-cinema-border hover:text-zinc-200'
+                  }`}
+                  title="Dùng host.docker.internal nếu Studio chạy trong Docker container"
+                >
+                  Docker Host
+                </button>
+              </div>
+            </div>
+
+            {/* Helper guidance when offline */}
+            {!connected && !isChecking && (
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs space-y-2 animate-fadeIn">
+                <div className="flex items-center gap-2 font-semibold text-amber-300">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>ComfyUI chưa chạy trên máy (Port 8188 offline)</span>
+                </div>
+                <div className="text-[11px] text-zinc-300 space-y-1 pl-6">
+                  <p>
+                    1. Mở thư mục cài đặt ComfyUI trên máy tính và chạy file <span className="font-mono bg-black/40 px-1.5 py-0.5 rounded text-amber-300 font-bold">run_nvidia_gpu.bat</span> (hoặc <span className="font-mono bg-black/40 px-1.5 py-0.5 rounded text-amber-300 font-bold">run_cpu.bat</span>).
+                  </p>
+                  <p>
+                    2. Chờ terminal hiện <span className="font-mono text-zinc-200 bg-black/30 px-1 rounded">http://127.0.0.1:8188</span> rồi bấm nút <strong>Kiểm tra</strong> ở trên.
+                  </p>
+                  <p>
+                    3. Nếu đang chạy AI Film Studio qua Docker, hãy chọn nút <strong>Docker Host</strong> (<code className="text-cyan-300">http://host.docker.internal:8188</code>).
+                  </p>
+                </div>
+                <p className="text-[10px] text-zinc-400 pl-6 border-t border-amber-500/15 pt-1.5">
+                  * Hệ thống luôn an toàn: Nếu ComfyUI offline, Studio sẽ tự động chuyển sang Cloud Pollinations & hiệu ứng Ken Burns mà không làm gián đoạn tiến trình.
+                </p>
+              </div>
+            )}
 
             {/* GPU VRAM Progress Meter */}
             {connected && vramTotal > 0 && (

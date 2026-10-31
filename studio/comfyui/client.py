@@ -39,45 +39,53 @@ class ComfyUIClient:
         return f"{scheme}://{parsed.netloc}/ws"
 
     async def check_health(self) -> ComfyUIHealthStatus:
-        """Checks connection status and reports GPU VRAM availability."""
-        endpoint = f"{self.api_url}/system_stats"
-        try:
-            async with httpx.AsyncClient(timeout=3.0) as client:
-                resp = await client.get(endpoint)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    devices = data.get("devices", [])
-                    device_name = "CPU"
-                    vram_total = 0.0
-                    vram_free = 0.0
-                    if devices:
-                        primary_device = devices[0]
-                        device_name = primary_device.get("name", "GPU")
-                        vram_total = round(primary_device.get("vram_total", 0) / (1024**3), 1)
-                        vram_free = round(primary_device.get("vram_free", 0) / (1024**3), 1)
+        """Checks connection status and reports GPU VRAM availability with smart host fallback."""
+        candidates = [self.api_url]
+        if "127.0.0.1" in self.api_url or "localhost" in self.api_url:
+            candidates.append("http://host.docker.internal:8188")
+        elif "host.docker.internal" in self.api_url:
+            candidates.append("http://127.0.0.1:8188")
 
-                    version = data.get("system", {}).get("python_version", "1.0")
+        for url in candidates:
+            endpoint = f"{url}/system_stats"
+            try:
+                async with httpx.AsyncClient(timeout=2.0) as client:
+                    resp = await client.get(endpoint)
+                    if resp.status_code == 200:
+                        self.api_url = url
+                        data = resp.json()
+                        devices = data.get("devices", [])
+                        device_name = "CPU"
+                        vram_total = 0.0
+                        vram_free = 0.0
+                        if devices:
+                            primary_device = devices[0]
+                            device_name = primary_device.get("name", "GPU")
+                            vram_total = round(primary_device.get("vram_total", 0) / (1024**3), 1)
+                            vram_free = round(primary_device.get("vram_free", 0) / (1024**3), 1)
 
-                    # Query queue length
-                    queue_remaining = 0
-                    try:
-                        q_resp = await client.get(f"{self.api_url}/prompt", timeout=2.0)
-                        if q_resp.status_code == 200:
-                            q_data = q_resp.json()
-                            queue_remaining = q_data.get("exec_info", {}).get("queue_remaining", 0)
-                    except Exception:
-                        pass
+                        version = data.get("system", {}).get("python_version", "1.0")
 
-                    return ComfyUIHealthStatus(
-                        connected=True,
-                        device_name=device_name,
-                        vram_total_gb=vram_total,
-                        vram_free_gb=vram_free,
-                        queue_remaining=queue_remaining,
-                        version=version,
-                    )
-        except Exception as e:
-            logger.debug(f"[ComfyUIClient] Health check failed for {self.api_url}: {e}")
+                        # Query queue length
+                        queue_remaining = 0
+                        try:
+                            q_resp = await client.get(f"{url}/prompt", timeout=2.0)
+                            if q_resp.status_code == 200:
+                                q_data = q_resp.json()
+                                queue_remaining = q_data.get("exec_info", {}).get("queue_remaining", 0)
+                        except Exception:
+                            pass
+
+                        return ComfyUIHealthStatus(
+                            connected=True,
+                            device_name=device_name,
+                            vram_total_gb=vram_total,
+                            vram_free_gb=vram_free,
+                            queue_remaining=queue_remaining,
+                            version=version,
+                        )
+            except Exception as e:
+                logger.debug(f"[ComfyUIClient] Health check failed for {url}: {e}")
 
         return ComfyUIHealthStatus(connected=False)
 

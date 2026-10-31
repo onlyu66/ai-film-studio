@@ -291,28 +291,36 @@ class ComfyUIProvider(BaseImageProvider):
             return False
 
     def check_health(self) -> Dict[str, Any]:
-        endpoint = f"{self.api_url}/system_stats"
-        try:
-            resp = requests.get(endpoint, timeout=2.0)
-            if resp.status_code == 200:
-                stats = resp.json()
-                devices = stats.get("devices", [])
-                device_name = devices[0].get("name", "GPU") if devices else "CPU"
-                vram_info = ""
-                if devices:
-                    free_gb = round(devices[0].get("vram_free", 0) / (1024**3), 1)
-                    vram_info = f" ({free_gb} GB VRAM free)"
-                return {
-                    "id": "comfyui",
-                    "name": "Local ComfyUI",
-                    "is_available": True,
-                    "is_local": True,
-                    "url": self.api_url,
-                    "devices": [device_name],
-                    "message": f"Online (Thiết bị: {device_name}{vram_info})",
-                }
-        except Exception:
-            pass
+        candidates = [self.api_url]
+        if "127.0.0.1" in self.api_url or "localhost" in self.api_url:
+            candidates.append("http://host.docker.internal:8188")
+        elif "host.docker.internal" in self.api_url:
+            candidates.append("http://127.0.0.1:8188")
+
+        for url in candidates:
+            endpoint = f"{url}/system_stats"
+            try:
+                resp = requests.get(endpoint, timeout=2.0)
+                if resp.status_code == 200:
+                    self.api_url = url
+                    stats = resp.json()
+                    devices = stats.get("devices", [])
+                    device_name = devices[0].get("name", "GPU") if devices else "CPU"
+                    vram_info = ""
+                    if devices:
+                        free_gb = round(devices[0].get("vram_free", 0) / (1024**3), 1)
+                        vram_info = f" ({free_gb} GB VRAM free)"
+                    return {
+                        "id": "comfyui",
+                        "name": "Local ComfyUI",
+                        "is_available": True,
+                        "is_local": True,
+                        "url": self.api_url,
+                        "devices": [device_name],
+                        "message": f"Online (Thiết bị: {device_name}{vram_info})",
+                    }
+            except Exception:
+                pass
 
         return {
             "id": "comfyui",

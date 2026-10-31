@@ -685,18 +685,21 @@ export async function snapTimelineToBeat(params: {
 
 // ─── ComfyUI Dual Engine Hub API ──────────────────────────────────
 
-export async function getComfyUIStatus(): Promise<import('../types').ComfyUIHealthStatus> {
-  const response = await apiClient.get<import('../types').ComfyUIHealthStatus>('/api/comfyui/status')
+export async function getComfyUIStatus(url?: string): Promise<import('../types').ComfyUIHealthStatus> {
+  const params = url ? { url } : {}
+  const response = await apiClient.get<import('../types').ComfyUIHealthStatus>('/api/comfyui/status', { params })
   return response.data
 }
 
-export async function getComfyUIModels(): Promise<import('../types').ComfyUIModels> {
-  const response = await apiClient.get<{ success: boolean; models: import('../types').ComfyUIModels }>('/api/comfyui/models')
+export async function getComfyUIModels(url?: string): Promise<import('../types').ComfyUIModels> {
+  const params = url ? { url } : {}
+  const response = await apiClient.get<{ success: boolean; models: import('../types').ComfyUIModels }>('/api/comfyui/models', { params })
   return response.data?.models || { checkpoints: [], loras: [], vaes: [] }
 }
 
-export async function getComfyUIWorkflows(): Promise<import('../types').ComfyUIWorkflowItem[]> {
-  const response = await apiClient.get<{ success: boolean; workflows: import('../types').ComfyUIWorkflowItem[] }>('/api/comfyui/workflows')
+export async function getComfyUIWorkflows(url?: string): Promise<import('../types').ComfyUIWorkflowItem[]> {
+  const params = url ? { url } : {}
+  const response = await apiClient.get<{ success: boolean; workflows: import('../types').ComfyUIWorkflowItem[] }>('/api/comfyui/workflows', { params })
   return response.data?.workflows || []
 }
 
@@ -723,11 +726,12 @@ export async function saveComfyUIConfig(
   return response.data
 }
 
-export async function testComfyUIGeneration(): Promise<{ success: boolean; message: string; output_path?: string }> {
+export async function testComfyUIGeneration(url?: string): Promise<{ success: boolean; message: string; output_path?: string }> {
+  const params = url ? { url } : {}
   const response = await apiClient.post<{ success: boolean; message: string; output_path?: string }>(
     '/api/comfyui/test',
     {},
-    { timeout: 120000 }
+    { params, timeout: 120000 }
   )
   return response.data
 }

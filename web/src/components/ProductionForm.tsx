@@ -23,6 +23,7 @@ import {
   EyeOff,
   RefreshCw,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   FileEdit,
   Smartphone,
@@ -2019,6 +2020,35 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                       />
                     </div>
 
+                    {imageEngine === 'comfyui' && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleImageApiUrlChange('http://127.0.0.1:8188')}
+                          className={`text-[10px] font-mono px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                            imageApiUrl === 'http://127.0.0.1:8188' || !imageApiUrl
+                              ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                              : 'bg-studio-input text-zinc-400 border-studio-border hover:text-zinc-200'
+                          }`}
+                          title="Dùng localhost nếu ComfyUI chạy trực tiếp trên Windows"
+                        >
+                          Localhost
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleImageApiUrlChange('http://host.docker.internal:8188')}
+                          className={`text-[10px] font-mono px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                            imageApiUrl === 'http://host.docker.internal:8188'
+                              ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                              : 'bg-studio-input text-zinc-400 border-studio-border hover:text-zinc-200'
+                          }`}
+                          title="Dùng host.docker.internal nếu Studio chạy trong Docker container"
+                        >
+                          Docker Host
+                        </button>
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       disabled={testImageEngineMutation.isPending}
@@ -2035,10 +2065,32 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                   </div>
 
                   {testImageEngineStatus && (
-                    <p className={`text-[11px] font-mono flex items-center gap-1.5 ${testImageEngineStatus.is_available ? 'text-emerald-400' : 'text-amber-400'}`}>
-                      {testImageEngineStatus.is_available ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
-                      <span>{testImageEngineStatus.message}</span>
-                    </p>
+                    <div className="space-y-2">
+                      <p className={`text-[11px] font-mono flex items-center gap-1.5 ${testImageEngineStatus.is_available ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        {testImageEngineStatus.is_available ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
+                        <span>{testImageEngineStatus.message}</span>
+                      </p>
+
+                      {!testImageEngineStatus.is_available && imageEngine === 'comfyui' && (
+                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs space-y-1.5 animate-fadeIn">
+                          <div className="flex items-center gap-1.5 font-semibold text-amber-300">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                            <span>ComfyUI chưa chạy trên máy trạm (Port 8188 offline)</span>
+                          </div>
+                          <div className="text-[11px] text-zinc-300 space-y-1 pl-5">
+                            <p>
+                              1. Mở thư mục ComfyUI và nhấp đúp file <span className="font-mono bg-black/40 px-1 py-0.5 rounded text-amber-300 font-bold">run_nvidia_gpu.bat</span> (hoặc <span className="font-mono bg-black/40 px-1 py-0.5 rounded text-amber-300 font-bold">run_cpu.bat</span>).
+                            </p>
+                            <p>
+                              2. Nếu bạn đang chạy Studio qua Docker, hãy bấm nút <strong>Docker Host</strong> (<code className="text-cyan-300">http://host.docker.internal:8188</code>).
+                            </p>
+                            <p className="text-zinc-400 text-[10.5px]">
+                              * Cơ chế An toàn: Nếu ComfyUI offline, Studio sẽ tự động chuyển sang Cloud (Pollinations) mà không làm hỏng tiến trình phim.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

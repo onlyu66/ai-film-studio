@@ -26,12 +26,16 @@ def get_manager() -> WorkflowManager:
 
 def get_client() -> ComfyUIClient:
     global _client
-    if _client is None:
-        _client = ComfyUIClient()
+    manager = get_manager()
+    cfg = manager.get_config()
+    target_url = cfg.api_url or "http://127.0.0.1:8188"
+    if _client is None or _client.api_url != target_url:
+        _client = ComfyUIClient(api_url=target_url)
     return _client
 
 
 class SaveConfigPayload(BaseModel):
+    api_url: Optional[str] = "http://127.0.0.1:8188"
     is_image_enabled: bool = False
     is_video_enabled: bool = False
     image_workflow: str = "flux_schnell"
@@ -55,9 +59,9 @@ class UploadWorkflowPayload(BaseModel):
 
 
 @router.get("/status")
-async def get_comfyui_status():
+async def get_comfyui_status(url: Optional[str] = Query(None)):
     """Reports ComfyUI connection health, GPU device name, and VRAM availability."""
-    client = get_client()
+    client = ComfyUIClient(api_url=url) if url else get_client()
     status = await client.check_health()
     return {
         "connected": status.connected,
@@ -70,9 +74,9 @@ async def get_comfyui_status():
 
 
 @router.get("/models")
-async def get_comfyui_models():
+async def get_comfyui_models(url: Optional[str] = Query(None)):
     """Scans and lists installed checkpoints, LoRAs, and VAEs."""
-    client = get_client()
+    client = ComfyUIClient(api_url=url) if url else get_client()
     models = await client.get_models()
     return {
         "success": True,
@@ -81,10 +85,10 @@ async def get_comfyui_models():
 
 
 @router.get("/workflows")
-async def list_comfyui_workflows():
+async def list_comfyui_workflows(url: Optional[str] = Query(None)):
     """Lists built-in and user-uploaded workflows with node compatibility status."""
     manager = get_manager()
-    client = get_client()
+    client = ComfyUIClient(api_url=url) if url else get_client()
 
     available_nodes: Optional[List[str]] = None
     try:
@@ -151,6 +155,7 @@ def save_comfyui_config(payload: SaveConfigPayload):
     """Saves ComfyUI config either as global default or per-project override."""
     manager = get_manager()
     config = ComfyUIConfig(
+        api_url=payload.api_url or "http://127.0.0.1:8188",
         is_image_enabled=payload.is_image_enabled,
         is_video_enabled=payload.is_video_enabled,
         image_workflow=payload.image_workflow,
@@ -175,9 +180,9 @@ def save_comfyui_config(payload: SaveConfigPayload):
 
 
 @router.post("/test")
-async def test_comfyui_connection():
+async def test_comfyui_connection(url: Optional[str] = Query(None)):
     """Performs a quick smoke check to verify ComfyUI responsiveness."""
-    client = get_client()
+    client = ComfyUIClient(api_url=url) if url else get_client()
     status = await client.check_health()
     if not status.connected:
         return {

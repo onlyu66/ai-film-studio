@@ -677,6 +677,7 @@ export interface ComfyUIWorkflowItem {
 }
 
 export interface ComfyUIConfig {
+  api_url?: string
   is_image_enabled: boolean
   is_video_enabled: boolean
   image_workflow: string

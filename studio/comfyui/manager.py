@@ -25,6 +25,7 @@ class WorkflowInfo:
 
 @dataclass
 class ComfyUIConfig:
+    api_url: str = "http://127.0.0.1:8188"
     is_image_enabled: bool = False
     is_video_enabled: bool = False
     image_workflow: str = "flux_schnell"
