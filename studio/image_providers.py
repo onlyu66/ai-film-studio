@@ -165,22 +165,29 @@ class SDWebUIProvider(BaseImageProvider):
         return False
 
     def check_health(self) -> Dict[str, Any]:
-        endpoint = f"{self.api_url}/sdapi/v1/sd-models"
-        try:
-            resp = requests.get(endpoint, timeout=2.0)
-            if resp.status_code == 200:
-                models = [m.get("model_name", m.get("title", "")) for m in resp.json()]
-                return {
-                    "id": "sd_webui",
-                    "name": "Local SD WebUI (A1111/Forge)",
-                    "is_available": True,
-                    "is_local": True,
-                    "url": self.api_url,
-                    "models": models,
-                    "message": f"Online ({len(models)} models sẵn sàng)",
-                }
-        except Exception:
-            pass
+        candidates = [self.api_url]
+        for c in ["http://host.docker.internal:7860", "http://127.0.0.1:7860"]:
+            if c and c not in candidates:
+                candidates.append(c)
+
+        for url in candidates:
+            endpoint = f"{url}/sdapi/v1/sd-models"
+            try:
+                resp = requests.get(endpoint, timeout=0.8)
+                if resp.status_code == 200:
+                    self.api_url = url
+                    models = [m.get("model_name", m.get("title", "")) for m in resp.json()]
+                    return {
+                        "id": "sd_webui",
+                        "name": "Local SD WebUI (A1111/Forge)",
+                        "is_available": True,
+                        "is_local": True,
+                        "url": self.api_url,
+                        "models": models,
+                        "message": f"Online ({len(models)} models sẵn sàng)",
+                    }
+            except Exception:
+                pass
 
         return {
             "id": "sd_webui",
@@ -299,7 +306,7 @@ class ComfyUIProvider(BaseImageProvider):
         for url in candidates:
             endpoint = f"{url}/system_stats"
             try:
-                resp = requests.get(endpoint, timeout=2.0)
+                resp = requests.get(endpoint, timeout=0.8)
                 if resp.status_code == 200:
                     self.api_url = url
                     stats = resp.json()
@@ -350,48 +357,12 @@ def discover_image_engines() -> List[Dict[str, Any]]:
     engines = []
 
     # 1. Cloud Pollinations
-    pollinations = PollinationsProvider()
-    engines.append(pollinations.check_health())
+    engines.append(PollinationsProvider().check_health())
 
     # 2. Local SD WebUI
-    # In Docker, check host.docker.internal first if configured
-    candidates_sd = [
-        os.environ.get("SD_WEBUI_URL"),
-        "http://host.docker.internal:7860",
-        "http://127.0.0.1:7860",
-    ]
-    sd_active_provider = None
-    for url in candidates_sd:
-        if url:
-            p = SDWebUIProvider(api_url=url)
-            h = p.check_health()
-            if h.get("is_available"):
-                sd_active_provider = h
-                break
-
-    if sd_active_provider:
-        engines.append(sd_active_provider)
-    else:
-        engines.append(SDWebUIProvider().check_health())
+    engines.append(SDWebUIProvider().check_health())
 
     # 3. Local ComfyUI
-    candidates_comfy = [
-        os.environ.get("COMFYUI_URL"),
-        "http://host.docker.internal:8188",
-        "http://127.0.0.1:8188",
-    ]
-    comfy_active_provider = None
-    for url in candidates_comfy:
-        if url:
-            p = ComfyUIProvider(api_url=url)
-            h = p.check_health()
-            if h.get("is_available"):
-                comfy_active_provider = h
-                break
-
-    if comfy_active_provider:
-        engines.append(comfy_active_provider)
-    else:
-        engines.append(ComfyUIProvider().check_health())
+    engines.append(ComfyUIProvider().check_health())
 
     return engines
