@@ -292,10 +292,9 @@ class ComfyUIProvider(BaseImageProvider):
 
     def check_health(self) -> Dict[str, Any]:
         candidates = [self.api_url]
-        if "127.0.0.1" in self.api_url or "localhost" in self.api_url:
-            candidates.append("http://host.docker.internal:8188")
-        elif "host.docker.internal" in self.api_url:
-            candidates.append("http://127.0.0.1:8188")
+        for c in ["http://host.docker.internal:8188", "http://comfyui:8188", "http://127.0.0.1:8188"]:
+            if c not in candidates:
+                candidates.append(c)
 
         for url in candidates:
             endpoint = f"{url}/system_stats"

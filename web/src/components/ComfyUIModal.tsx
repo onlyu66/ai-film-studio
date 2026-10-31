@@ -325,9 +325,25 @@ export default function ComfyUIModal({ isOpen, onClose, projectId }: ComfyUIModa
                       ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
                       : 'bg-cinema-card text-zinc-400 border-cinema-border hover:text-zinc-200'
                   }`}
-                  title="Dùng host.docker.internal nếu Studio chạy trong Docker container"
+                  title="Dùng host.docker.internal nếu ComfyUI chạy trên host Windows và Studio chạy trong Docker"
                 >
                   Docker Host
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const u = 'http://comfyui:8188'
+                    setCustomUrl(u)
+                    fetchAll(u)
+                  }}
+                  className={`text-[10px] font-mono px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                    customUrl === 'http://comfyui:8188'
+                      ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                      : 'bg-cinema-card text-zinc-400 border-cinema-border hover:text-zinc-200'
+                  }`}
+                  title="Dùng comfyui:8188 nếu ComfyUI chạy như một container trong cùng docker-compose network"
+                >
+                  Docker Net
                 </button>
               </div>
             </div>

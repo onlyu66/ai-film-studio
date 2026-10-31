@@ -67,6 +67,30 @@ services:
     volumes:
       - sadtalker_checkpoints:/root/.cache
 
+  comfyui:
+    image: yanwk/comfyui-boot:cu124
+    container_name: studio_comfyui
+    profiles: ["comfyui", "gpu"]
+    restart: unless-stopped
+    ports:
+      - "8188:8188"
+    environment:
+      - CLI_ARGS=--listen 0.0.0.0 --port 8188 --lowvram
+    volumes:
+      - comfyui_models:/root/ComfyUI/models
+      - comfyui_custom_nodes:/root/ComfyUI/custom_nodes
+      - comfyui_output:/root/ComfyUI/output
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
 volumes:
   ollama_models:
   sadtalker_checkpoints:
+  comfyui_models:
+  comfyui_custom_nodes:
+  comfyui_output:

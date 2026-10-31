@@ -2046,6 +2046,18 @@ export default function ProductionForm({ onSubmit, isRunning, initialData, onRes
                         >
                           Docker Host
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => handleImageApiUrlChange('http://comfyui:8188')}
+                          className={`text-[10px] font-mono px-2 py-1 rounded-lg border transition-colors cursor-pointer ${
+                            imageApiUrl === 'http://comfyui:8188'
+                              ? 'bg-purple-500/20 text-purple-300 border-purple-500/40'
+                              : 'bg-studio-input text-zinc-400 border-studio-border hover:text-zinc-200'
+                          }`}
+                          title="Dùng comfyui:8188 nếu ComfyUI chạy như một container Docker"
+                        >
+                          Docker Net
+                        </button>
                       </div>
                     )}
 
