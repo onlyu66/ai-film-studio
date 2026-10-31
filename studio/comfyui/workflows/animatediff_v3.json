@@ -1,0 +1,68 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "input_shot.png"
+    }
+  },
+  "2": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "v1-5-pruned-emaonly.safetensors"
+    }
+  },
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "cfg": 7.5,
+      "denoise": 0.85,
+      "latent_image": ["6", 0],
+      "model": ["2", 0],
+      "negative": ["5", 0],
+      "positive": ["4", 0],
+      "sampler_name": "euler_a",
+      "scheduler": "karras",
+      "seed": 0,
+      "steps": 20
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["2", 1],
+      "text": "Smooth cinematic motion, camera moving forward"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["2", 1],
+      "text": "static, blurry, jitter"
+    }
+  },
+  "6": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["1", 0],
+      "vae": ["2", 2]
+    }
+  },
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["3", 0],
+      "vae": ["2", 2]
+    }
+  },
+  "8": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "crf": 20,
+      "filename_prefix": "Studio_AnimateDiff",
+      "format": "video/h264-mp4",
+      "fps": 12,
+      "images": ["7", 0],
+      "save_output": true
+    }
+  }
+}

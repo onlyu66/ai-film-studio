@@ -1,0 +1,68 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "input_shot.png"
+    }
+  },
+  "2": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "wan2.1_i2v_720p.safetensors"
+    }
+  },
+  "3": {
+    "class_type": "KSampler",
+    "inputs": {
+      "cfg": 6.0,
+      "denoise": 1.0,
+      "latent_image": ["6", 0],
+      "model": ["2", 0],
+      "negative": ["5", 0],
+      "positive": ["4", 0],
+      "sampler_name": "uni_pc",
+      "scheduler": "normal",
+      "seed": 0,
+      "steps": 25
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["2", 1],
+      "text": "High quality cinematic motion, fluid camera movement"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": ["2", 1],
+      "text": "artifacts, jerky motion, low quality"
+    }
+  },
+  "6": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["1", 0],
+      "vae": ["2", 2]
+    }
+  },
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["3", 0],
+      "vae": ["2", 2]
+    }
+  },
+  "8": {
+    "class_type": "VHS_VideoCombine",
+    "inputs": {
+      "crf": 18,
+      "filename_prefix": "Studio_Wan2_1",
+      "format": "video/h264-mp4",
+      "fps": 16,
+      "images": ["7", 0],
+      "save_output": true
+    }
+  }
+}
