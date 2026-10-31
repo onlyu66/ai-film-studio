@@ -1,6 +1,6 @@
 import base64
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 import pytest
 
 from studio.image_providers import (
@@ -86,48 +86,21 @@ def test_sd_webui_check_health():
 def test_comfyui_provider_generate_success(tmp_path: Path):
     provider = ComfyUIProvider(api_url="http://127.0.0.1:8188")
     target_file = tmp_path / "shot_comfy.png"
+    dummy_source = tmp_path / "comfy_output.png"
+    dummy_source.write_bytes(SAMPLE_PNG_BYTES + b"0" * 2000)
 
-    mock_prompt_resp = MagicMock()
-    mock_prompt_resp.status_code = 200
-    mock_prompt_resp.json.return_value = {"prompt_id": "prompt_abc_123"}
-
-    mock_history_resp = MagicMock()
-    mock_history_resp.status_code = 200
-    mock_history_resp.json.return_value = {
-        "prompt_abc_123": {
-            "outputs": {
-                "9": {
-                    "images": [
-                        {"filename": "ComfyUI_00001_.png", "subfolder": "", "type": "output"}
-                    ]
-                }
-            }
-        }
-    }
-
-    mock_view_resp = MagicMock()
-    mock_view_resp.status_code = 200
-    mock_view_resp.content = SAMPLE_PNG_BYTES
-
-    def mock_requests_get(url, *args, **kwargs):
-        if "/history" in url:
-            return mock_history_resp
-        elif "/view" in url:
-            return mock_view_resp
-        return MagicMock(status_code=404)
-
-    with patch("requests.post", return_value=mock_prompt_resp):
-        with patch("requests.get", side_effect=mock_requests_get):
-            success = provider.generate(
-                prompt="Epic fantasy castle at sunset",
-                width=1280,
-                height=720,
-                seed=777,
-                output_path=target_file,
-            )
-            assert success is True
-            assert target_file.exists()
-            assert target_file.stat().st_size > 10
+    with patch("studio.comfyui.client.ComfyUIClient.queue_and_wait", new_callable=AsyncMock) as mock_queue:
+        mock_queue.return_value = [dummy_source]
+        success = provider.generate(
+            prompt="Epic fantasy castle at sunset",
+            width=1280,
+            height=720,
+            seed=777,
+            output_path=target_file,
+        )
+        assert success is True
+        assert target_file.exists()
+        assert target_file.stat().st_size > 10
 
 
 def test_discover_image_engines():
