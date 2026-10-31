@@ -56,7 +56,7 @@
   - `compile_luma_camera_prompt(trajectory: Camera3DTrajectory, base_prompt: str) -> str`: Biên dịch tham số 3D thành visual motion cues cho Luma.
   - `compile_ffmpeg_3d_transform(trajectory: Camera3DTrajectory, duration: float) -> str`: Sinh bộ lọc FFmpeg zoompan/perspective khi chạy fallback.
 
-- [ ] **Step 1: Viết test kiểm tra module toán học và biên dịch quỹ đạo 3D trong `tests/test_camera_3d.py`**
+- [x] **Step 1: Viết test kiểm tra module toán học và biên dịch quỹ đạo 3D trong `tests/test_camera_3d.py`**
 
 ```python
 from studio.camera_3d import (
@@ -109,20 +109,20 @@ def test_luma_camera_prompt_compilation():
     assert "dolly zoom" in prompt.lower() or "vertigo" in prompt.lower()
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_camera_3d.py`
 Expected: FAIL with `ModuleNotFoundError: No module named 'studio.camera_3d'`
 
-- [ ] **Step 3: Cài đặt `studio/camera_3d.py`**
+- [x] **Step 3: Cài đặt `studio/camera_3d.py`**
 Xây dựng Pydantic model `Camera3DTrajectory`, danh mục 6 preset kinh điển, và các hàm biên dịch `compile_kling_camera_control`, `compile_luma_camera_prompt`, `compile_ffmpeg_3d_transform`.
 
-- [ ] **Step 4: Chạy test để xác nhận test thành công**
+- [x] **Step 4: Chạy test để xác nhận test thành công**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_camera_3d.py`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add studio/camera_3d.py tests/test_camera_3d.py
@@ -147,7 +147,7 @@ git commit -m "feat(video): triển khai module toán học quỹ đạo camera 
     ```
   - `check_kling_token(token: str) -> Dict[str, Any]`: Xác thực Kling API key / JWT qua API Kling Account / Tasks endpoint.
 
-- [ ] **Step 1: Viết unit tests giả lập (Mocking) quy trình Kling Video trong `tests/test_kling_provider.py`**
+- [x] **Step 1: Viết unit tests giả lập (Mocking) quy trình Kling Video trong `tests/test_kling_provider.py`**
 
 ```python
 from pathlib import Path
@@ -208,20 +208,20 @@ def test_kling_provider_render_success(tmp_path: Path):
         assert out_file.read_bytes() == b"kling_video_mp4_binary_stream"
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_kling_provider.py`
 Expected: FAIL with `ImportError: cannot import name 'KlingDirectVideoProvider'`
 
-- [ ] **Step 3: Cài đặt `KlingDirectVideoProvider` và `check_kling_token` trong `studio/video_providers.py`**
+- [x] **Step 3: Cài đặt `KlingDirectVideoProvider` và `check_kling_token` trong `studio/video_providers.py`**
 Tích hợp OpenAPI của Kling AI: endpoint `https://api.klingai.com/v1/videos/image2video`, mã hóa ảnh base64, gắn camera_control JSON từ `compile_kling_camera_control`, và xử lý polling status + download stream an toàn.
 
-- [ ] **Step 4: Chạy test để xác nhận test thành công**
+- [x] **Step 4: Chạy test để xác nhận test thành công**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_kling_provider.py`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add studio/video_providers.py tests/test_kling_provider.py
@@ -246,7 +246,7 @@ git commit -m "feat(video): tích hợp provider kling ai video openapi trực t
     ```
   - `check_luma_token(token: str) -> Dict[str, Any]`: Xác thực API Key Luma Labs qua endpoint `/dream-machine/v1/generations`.
 
-- [ ] **Step 1: Viết unit tests giả lập Luma Dream Machine trong `tests/test_luma_provider.py`**
+- [x] **Step 1: Viết unit tests giả lập Luma Dream Machine trong `tests/test_luma_provider.py`**
 
 ```python
 from pathlib import Path
@@ -304,20 +304,20 @@ def test_luma_provider_render_success(tmp_path: Path):
         assert out_file.read_bytes() == b"luma_video_stream_content"
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_luma_provider.py`
 Expected: FAIL with `ImportError: cannot import name 'LumaDreamMachineProvider'`
 
-- [ ] **Step 3: Cài đặt `LumaDreamMachineProvider` và `check_luma_token` trong `studio/video_providers.py`**
+- [x] **Step 3: Cài đặt `LumaDreamMachineProvider` và `check_luma_token` trong `studio/video_providers.py`**
 Tích hợp endpoint `https://api.lumalabs.ai/dream-machine/v1/generations`, nạp `keyframes.frame0` data URI, nhúng camera trajectory cues vào prompt, và xử lý polling status ('queued' | 'dreaming' | 'completed') + download video stream.
 
-- [ ] **Step 4: Chạy test để xác nhận test thành công**
+- [x] **Step 4: Chạy test để xác nhận test thành công**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_luma_provider.py`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add studio/video_providers.py tests/test_luma_provider.py
@@ -342,7 +342,7 @@ git commit -m "feat(video): tích hợp provider luma dream machine api với ch
   - `POST /api/video/camera-3d/preview`: Nhận tham số 3D, trả về visual cues và thông số vector biên dịch sẵn.
   - `POST /api/video/render-shot`: Render video clip cho phân cảnh dựa trên `shot_id`, `provider` ('kling' | 'luma' | 'replicate' | 'kenburns') và `trajectory` (3D Camera Trajectory).
 
-- [ ] **Step 1: Viết test cho router endpoint trong `tests/test_video_router_3d.py`**
+- [x] **Step 1: Viết test cho router endpoint trong `tests/test_video_router_3d.py`**
 
 ```python
 from fastapi.testclient import TestClient
@@ -380,20 +380,20 @@ def test_api_camera_3d_preview():
     assert "luma_prompt" in data
 ```
 
-- [ ] **Step 2: Chạy test để xác nhận test thất bại**
+- [x] **Step 2: Chạy test để xác nhận test thất bại**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_video_router_3d.py`
 Expected: FAIL with `404 Not Found`
 
-- [ ] **Step 3: Cài đặt router endpoints trong `studio/routers/video.py` và đăng ký vào `studio/server.py`**
+- [x] **Step 3: Cài đặt router endpoints trong `studio/routers/video.py` và đăng ký vào `studio/server.py`**
 Cập nhật `AI_VIDEO_MODELS` bổ sung các model Kling và Luma; xây dựng Factory function `get_video_provider(provider_type, **kwargs)`; viết các endpoint `/api/video/models`, `/api/video/test-token`, `/api/video/camera-3d/presets`, `/api/video/camera-3d/preview`, `/api/video/render-shot`.
 
-- [ ] **Step 4: Chạy test để xác nhận test thành công**
+- [x] **Step 4: Chạy test để xác nhận test thành công**
 
 Run: `docker exec ai-film-studio-ui-1 pytest tests/test_video_router_3d.py`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add studio/routers/video.py studio/video_providers.py studio/server.py tests/test_video_router_3d.py
@@ -424,21 +424,21 @@ git commit -m "feat(api): bổ sung video provider factory và api endpoints đi
   - Nút chọn AI Video Engine: Kling 1.6 Pro, Luma Dream Machine, Replicate Wan 2.1, Ken Burns 3D.
   - Nút "Render Video Clip Với Quỹ Đạo 3D" kết nối trực tiếp với backend qua Sonner Toast.
 
-- [ ] **Step 1: Định nghĩa kiểu dữ liệu `Camera3DTrajectory` và queries API trong `web/src/types/index.ts` & `web/src/api/queries.ts`**
+- [x] **Step 1: Định nghĩa kiểu dữ liệu `Camera3DTrajectory` và queries API trong `web/src/types/index.ts` & `web/src/api/queries.ts`**
 Thêm types `Camera3DTrajectory`, `Camera3DPresetItem`, `Camera3DPreviewResponse`, và React Query hooks: `useCamera3DPresets`, `useCamera3DPreview`, `useRender3DShotVideo`.
 
-- [ ] **Step 2: Xây dựng Canvas 3D Trajectory Visualizer Component tại `web/src/components/Camera3DTrajectoryPanel.tsx`**
+- [x] **Step 2: Xây dựng Canvas 3D Trajectory Visualizer Component tại `web/src/components/Camera3DTrajectoryPanel.tsx`**
 Vẽ phối cảnh 3D Wireframe trên HTML5 Canvas với góc xoay tương tác theo các thanh trượt Pan, Tilt, Roll; hiển thị vector mũi tên đường bay camera và tia nhìn hướng vào tâm chủ thể.
 
-- [ ] **Step 3: Tích hợp Tab "Quỹ Đạo 3D (3D Trajectory Pro)" vào `web/src/components/CameraDirectorModal.tsx`**
+- [x] **Step 3: Tích hợp Tab "Quỹ Đạo 3D (3D Trajectory Pro)" vào `web/src/components/CameraDirectorModal.tsx`**
 Thêm Tab thứ ba bên cạnh "Multi-Angle Coverage" và "Visual Director Canvas"; cho phép chọn preset, điều chỉnh thanh trượt và bấm Render Video trực tiếp với toast notification từ `sonner`.
 
-- [ ] **Step 4: Chạy `npm run build` để kiểm tra biên dịch TypeScript**
+- [x] **Step 4: Chạy `npm run build` để kiểm tra biên dịch TypeScript**
 
 Run: `cd web && npm run build`
 Expected: 0 errors, build thành công
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/src/components/Camera3DTrajectoryPanel.tsx web/src/components/CameraDirectorModal.tsx web/src/api/queries.ts web/src/types/index.ts
@@ -460,25 +460,25 @@ git commit -m "feat(ui): xây dựng bộ điều khiển quỹ đạo camera 3d
 - `StoryboardView.tsx`: Thẻ phân cảnh hiển thị huy hiệu quỹ đạo 3D (ví dụ: `🎥 Orbit 360° • Kling AI`) và cho phép bấm mở nhanh Modal Camera 3D.
 - Pipeline `studio/video.py`: Khi tạo video clip cho shot, tự động nhận diện `camera_3d_trajectory` để chuyển hướng render qua Kling / Luma provider tương ứng, hoặc fallback về Ken Burns an toàn.
 
-- [ ] **Step 1: Cập nhật `ProductionForm.tsx` bổ sung cài đặt Kling & Luma API Keys**
+- [x] **Step 1: Cập nhật `ProductionForm.tsx` bổ sung cài đặt Kling & Luma API Keys**
 Thêm tab/input cho Kling AI (`studio_kling_key`) và Luma Dream Machine (`studio_luma_key`) với nút test token sử dụng `toast.success` / `toast.error`.
 
-- [ ] **Step 2: Cập nhật Storyboard Shot Card hiển thị thông tin 3D Trajectory**
+- [x] **Step 2: Cập nhật Storyboard Shot Card hiển thị thông tin 3D Trajectory**
 Nếu shot có cấu hình quỹ đạo 3D, hiển thị badge màu xanh ngọc / tím nổi bật trên thẻ phân cảnh; bấm vào sẽ mở trực tiếp Modal Quỹ Đạo 3D.
 
-- [ ] **Step 3: Cập nhật hàm `render_video_for_shot` trong `studio/video.py`**
+- [x] **Step 3: Cập nhật hàm `render_video_for_shot` trong `studio/video.py`**
 Tự động dispatch qua `get_video_provider` khi shot được cấu hình engine Kling hoặc Luma.
 
-- [ ] **Step 4: Chạy toàn bộ test suite backend và frontend build**
+- [x] **Step 4: Chạy toàn bộ test suite backend và frontend build**
 
 Run:
 1. `docker exec ai-film-studio-ui-1 pytest` -> Yêu cầu toàn bộ tests (bao gồm các test mới) PASS.
 2. `cd web && npm run build` -> Yêu cầu 0 lỗi TypeScript.
 
-- [ ] **Step 5: Kiểm thử thực tế bằng Chrome CDP Browser Verification**
+- [x] **Step 5: Kiểm thử thực tế bằng Chrome CDP Browser Verification**
 Viết kịch bản CDP kiểm tra mở Modal Camera Director, chuyển sang tab Quỹ Đạo 3D, thử chọn preset Vertigo / Orbit 360°, kéo thanh trượt, và bấm render thử nghiệm.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add web/src/components/ProductionForm.tsx web/src/components/StoryboardView.tsx studio/video.py
