@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Film, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit, Clapperboard, Terminal, Square } from 'lucide-react'
+import { Film, Trash2, CheckCircle2, Loader2, AlertCircle, MonitorPlay, FileEdit, Clapperboard, Terminal, Square, Zap } from 'lucide-react'
 import { Button } from './ui/button'
+import ComfyUIModal from './ComfyUIModal'
 import type { StudioStatus } from '../types'
 
 export interface NavbarProps {
@@ -29,6 +30,7 @@ export default function Navbar({
   isCancelling = false,
 }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
+  const [showComfyUI, setShowComfyUI] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
@@ -206,6 +208,18 @@ export default function Navbar({
             </Button>
           )}
 
+          {/* ComfyUI Hub Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowComfyUI(true)}
+            className="gap-1 sm:gap-1.5 text-xs h-7.5 sm:h-8 px-2 sm:px-3 border-purple-500/30 text-purple-300 hover:bg-purple-500/10 cursor-pointer shrink-0"
+            title="ComfyUI Studio Hub"
+          >
+            <Zap className="w-3.5 h-3.5 text-purple-400" />
+            <span className="hidden sm:inline">ComfyUI</span>
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -229,6 +243,8 @@ export default function Navbar({
           </Button>
         </div>
       </div>
+      {/* ComfyUI Studio Hub Modal */}
+      <ComfyUIModal isOpen={showComfyUI} onClose={() => setShowComfyUI(false)} />
     </header>
   )
 }

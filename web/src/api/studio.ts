@@ -682,3 +682,53 @@ export async function snapTimelineToBeat(params: {
 
 
 
+
+// ─── ComfyUI Dual Engine Hub API ──────────────────────────────────
+
+export async function getComfyUIStatus(): Promise<import('../types').ComfyUIStatusResponse> {
+  const response = await apiClient.get<import('../types').ComfyUIStatusResponse>('/api/comfyui/status')
+  return response.data
+}
+
+export async function getComfyUIModels(): Promise<import('../types').ComfyUIModels> {
+  const response = await apiClient.get<import('../types').ComfyUIModels>('/api/comfyui/models')
+  return response.data
+}
+
+export async function getComfyUIWorkflows(): Promise<import('../types').ComfyUIWorkflowsResponse> {
+  const response = await apiClient.get<import('../types').ComfyUIWorkflowsResponse>('/api/comfyui/workflows')
+  return response.data
+}
+
+export async function uploadComfyUIWorkflow(file: File): Promise<{ success: boolean; workflow_id: string; message: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await apiClient.post<{ success: boolean; workflow_id: string; message: string }>(
+    '/api/comfyui/workflows/upload',
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } }
+  )
+  return response.data
+}
+
+export async function getComfyUIConfig(projectId?: string): Promise<import('../types').ComfyUIConfig> {
+  const params = projectId ? { project_id: projectId } : {}
+  const response = await apiClient.get<import('../types').ComfyUIConfig>('/api/comfyui/config', { params })
+  return response.data
+}
+
+export async function saveComfyUIConfig(
+  config: Partial<import('../types').ComfyUIConfig> & { save_as_global?: boolean; project_id?: string }
+): Promise<{ success: boolean; message: string }> {
+  const response = await apiClient.post<{ success: boolean; message: string }>('/api/comfyui/config', config)
+  return response.data
+}
+
+export async function testComfyUIGeneration(): Promise<{ success: boolean; message: string; output_path?: string }> {
+  const response = await apiClient.post<{ success: boolean; message: string; output_path?: string }>(
+    '/api/comfyui/test',
+    {},
+    { timeout: 120000 }
+  )
+  return response.data
+}

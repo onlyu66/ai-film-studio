@@ -647,3 +647,54 @@ export interface VideoModelItem {
 
 
 
+
+// ─── ComfyUI Dual Engine Hub Types ──────────────────────────────────
+
+export interface ComfyUIHealthStatus {
+  connected: boolean
+  device_name: string
+  vram_total_gb: number
+  vram_free_gb: number
+  queue_remaining: number
+  version: string
+}
+
+export interface ComfyUIModels {
+  checkpoints: string[]
+  loras: string[]
+  vaes: string[]
+}
+
+export interface ComfyUIWorkflowItem {
+  id: string
+  name: string
+  category: 'image' | 'video'
+  description: string
+  is_builtin: boolean
+  required_nodes: string[]
+  missing_nodes: string[]
+  is_compatible: boolean
+}
+
+export interface ComfyUIConfig {
+  is_image_enabled: boolean
+  is_video_enabled: boolean
+  image_workflow: string
+  video_workflow: string
+  checkpoint: string | null
+  lora: string | null
+  lora_weight: number
+  steps: number
+  cfg: number
+  video_frames: number
+  video_fps: number
+}
+
+export interface ComfyUIStatusResponse {
+  connected: boolean
+  health: ComfyUIHealthStatus
+}
+
+export interface ComfyUIWorkflowsResponse {
+  workflows: ComfyUIWorkflowItem[]
+}
