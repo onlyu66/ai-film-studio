@@ -743,6 +743,7 @@ from studio.routers.audio import router as audio_router
 from studio.routers.video import router as video_router
 from studio.routers.projects import router as projects_router
 from studio.routers.events import router as events_router
+from studio.routers.comfyui import router as comfyui_router
 
 app.include_router(storyboard_router)
 app.include_router(vault_router)
@@ -751,6 +752,7 @@ app.include_router(audio_router)
 app.include_router(video_router)
 app.include_router(projects_router)
 app.include_router(events_router)
+app.include_router(comfyui_router)
 
 # --- Re-export Request Models for backwards compatibility ---
 from studio.routers.storyboard import (
